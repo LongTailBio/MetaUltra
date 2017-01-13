@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import click
-
+import refs
+import conf
 
 @click.group()
 def main():
@@ -12,15 +13,17 @@ def main():
 @click.option('--name', default=None, help='Reference Name')
 @click.option('--ref', prompt='FILE PATH', help='Location of reference')
 def add_reference(tool,name,ref):
-    pass
+    refs.add_reference(tool,name,ref)
 
 @main.command()
 def list_references():
-    pass
+    refs.list_references()
 
 @main.command()
-def conf():
-    pass
+@click.option('--pairs/--single', default=False, help='Reads are pairwise')
+@click.argument('samples', nargs=-1)
+def new_conf(pairs,samples):
+    conf.build_conf(samples,pairs=pairs)
 
 @main.command()
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')

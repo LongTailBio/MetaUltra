@@ -9,9 +9,9 @@ READ_2_EXT: '_2.fastq.gz'
 # Tools to run
 RUN_SHORTBRED=True
 
-# SHORTBRED
 
+# SHORTBRED
 SHORTBRED_EXT: '.shortbred.csv'
 SHORTBRED_DB: 
-SHORTBRED_THREADS:
+SHORTBRED_THREADS: 4
 SHORTBRED_ALL: 'all-samples.shortbred.csv'
