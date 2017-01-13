@@ -85,17 +85,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/meta_ultra.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/precision_metagenomics_pipeline.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/meta_ultra.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/precision_metagenomics_pipeline.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/meta_ultra"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/meta_ultra"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/precision_metagenomics_pipeline"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/precision_metagenomics_pipeline"
 	@echo "# devhelp"
 
 epub:

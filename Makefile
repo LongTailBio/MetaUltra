@@ -48,7 +48,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
-	flake8 precision_metagenomics_pipeline tests
+	flake8 meta_ultra tests
 
 test: ## run tests quickly with the default Python
 	
@@ -59,16 +59,16 @@ test-all: ## run tests on every Python version with tox
 
 coverage: ## check code coverage quickly with the default Python
 	
-		coverage run --source precision_metagenomics_pipeline setup.py test
+		coverage run --source meta_ultra setup.py test
 	
 		coverage report -m
 		coverage html
 		$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/precision_metagenomics_pipeline.rst
+	rm -f docs/meta_ultra.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ precision_metagenomics_pipeline
+	sphinx-apidoc -o docs/ meta_ultra
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

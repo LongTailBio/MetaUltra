@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-test_meta_ultra
+test_precision_metagenomics_pipeline
 ----------------------------------
 
-Tests for `meta_ultra` module.
+Tests for `precision_metagenomics_pipeline` module.
 """
 
 
@@ -14,8 +14,8 @@ import unittest
 from contextlib import contextmanager
 from click.testing import CliRunner
 
-from meta_ultra import meta_ultra
-from meta_ultra import cli
+from precision_metagenomics_pipeline import precision_metagenomics_pipeline
+from precision_metagenomics_pipeline import cli
 
 
 
@@ -34,7 +34,7 @@ class TestPrecision_metagenomics_pipeline(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli.main)
         assert result.exit_code == 0
-        assert 'meta_ultra.cli.main' in result.output
+        assert 'precision_metagenomics_pipeline.cli.main' in result.output
         help_result = runner.invoke(cli.main, ['--help'])
         assert help_result.exit_code == 0
         assert '--help  Show this message and exit.' in help_result.output

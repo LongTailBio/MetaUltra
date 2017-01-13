@@ -3,18 +3,18 @@ Precision Metagenomics Pipeline
 ===============================
 
 
-.. image:: https://img.shields.io/pypi/v/precision_metagenomics_pipeline.svg
-        :target: https://pypi.python.org/pypi/precision_metagenomics_pipeline
+.. image:: https://img.shields.io/pypi/v/meta_ultra.svg
+        :target: https://pypi.python.org/pypi/meta_ultra
 
-.. image:: https://img.shields.io/travis/dcdanko/precision_metagenomics_pipeline.svg
-        :target: https://travis-ci.org/dcdanko/precision_metagenomics_pipeline
+.. image:: https://img.shields.io/travis/dcdanko/meta_ultra.svg
+        :target: https://travis-ci.org/dcdanko/meta_ultra
 
 .. image:: https://readthedocs.org/projects/precision-metagenomics-pipeline/badge/?version=latest
         :target: https://precision-metagenomics-pipeline.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/dcdanko/precision_metagenomics_pipeline/shield.svg
-     :target: https://pyup.io/repos/github/dcdanko/precision_metagenomics_pipeline/
+.. image:: https://pyup.io/repos/github/dcdanko/meta_ultra/shield.svg
+     :target: https://pyup.io/repos/github/dcdanko/meta_ultra/
      :alt: Updates
 
 

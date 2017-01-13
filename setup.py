@@ -19,28 +19,28 @@ test_requirements = [
 ]
 
 setup(
-    name='precision_metagenomics_pipeline',
+    name='meta_ultra',
     version='0.1.0',
     description="Cohesive pipelines for precision metagenomics",
     long_description=readme + '\n\n' + history,
     author="David C Danko",
     author_email='dcd3001@med.cornell.edu',
-    url='https://github.com/dcdanko/precision_metagenomics_pipeline',
+    url='https://github.com/dcdanko/meta_ultra',
     packages=[
-        'precision_metagenomics_pipeline',
+        'meta_ultra',
     ],
-    package_dir={'precision_metagenomics_pipeline':
-                 'precision_metagenomics_pipeline'},
+    package_dir={'meta_ultra':
+                 'meta_ultra'},
     entry_points={
         'console_scripts': [
-            'precision_metagenomics_pipeline=precision_metagenomics_pipeline.cli:main'
+            'meta_ultra=meta_ultra.cli:main'
         ]
     },
     include_package_data=True,
     install_requires=requirements,
     license="MIT license",
     zip_safe=False,
-    keywords='precision_metagenomics_pipeline',
+    keywords='meta_ultra',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

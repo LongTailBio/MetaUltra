@@ -1,0 +1,35 @@
+import pandas as pd
+
+
+def getReads(wildcards):
+    return ' '.join(config[wildcards.sample])
+
+rule shortbred_single:
+     input: getReads
+     output: '{sample}'+config['SHORTBRED_EXT']
+     params:
+	markers=config['SHORTBRED_DB'],
+	shortbred=config['SHORTBRED_EXC'],
+	tmp=config['TMP_DIR']
+     threads: config['SHORTBRED_THREADS']
+     shell:
+	'{params.shortbred} --markers {params.markers} --wgs {input.reads} ' 
+	'--results {output} --threads {threads} --tmp {params.tmp}'
+	
+
+rule shortbred_all:
+     input:
+	expand('{sample}'+config['SHORTBRED_EXT'],sample=config['SAMPLES'])
+     output:
+	config['SHORTBRED_ALL']
+     params:
+	ext=config['SHORTBRED_EXT']
+     run:
+	cols = {}                                                 
+	for resultf in input:                                  
+	    sample = resultf.split(params.ext)[0]    
+	    r = pd.read_csv(resultf,sep='\t',index_col=0)             
+	    cols[sample] = r['Count']                                                                                       
+	df = pd.concat(cols,axis=1) 
+	with open(output, 'w') as oF:
+	     oF.write(df.to_string())                              
