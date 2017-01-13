@@ -1,7 +1,4 @@
-
-SAMPLES:
-
-
+# Basic Settings
 TMP_DIR: '/tmp'
 READ_1_EXT: '_1.fastq.gz'
 READ_2_EXT: '_2.fastq.gz'
@@ -15,3 +12,5 @@ SHORTBRED_EXT: '.shortbred.csv'
 SHORTBRED_DB: 
 SHORTBRED_THREADS: 4
 SHORTBRED_ALL: 'all-samples.shortbred.csv'
+
+# Samples go below here

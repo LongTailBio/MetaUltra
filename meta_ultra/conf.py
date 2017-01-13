@@ -2,7 +2,7 @@ import config
 from yaml import dump
 
 def build_conf(samples,pairs=False):
-    print(samples)
+
     print( open(config.default_conf).read())
     if not pairs:
         samples = {sample:[sample] for sample in samples}
