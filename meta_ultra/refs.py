@@ -1,5 +1,5 @@
 
-import config 
+import meta_ultra.config as config 
 
 def add_reference(tool,name,path):
     with open(config.ref_file,'a') as rf:

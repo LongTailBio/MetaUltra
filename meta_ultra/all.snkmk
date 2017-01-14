@@ -13,12 +13,12 @@ rule shortbred_single:
      input: shortbredGetReads
      output: '{sample}'+config['SHORTBRED_EXT']
      params:
-	markers=config['SHORTBRED_DB'],
+	ref=config['SHORTBRED_DB'],
 	shortbred=config['SHORTBRED_EXC'],
 	tmp=config['TMP_DIR']
      threads: config['SHORTBRED_THREADS']
      shell:
-	'{params.shortbred} --markers {params.markers} --wgs {input.reads} ' 
+	'{params.shortbred} --markers {params.ref} --wgs {input.reads} ' 
 	'--results {output} --threads {threads} --tmp {params.tmp}'
 	
 rule shortbred_all:

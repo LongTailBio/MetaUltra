@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import click
-import refs
-import conf
+import meta_ultra.refs as refs
+import meta_ultra.conf as conf
+import meta_ultra.pipeline_runner as pipeline_runner
 
 @click.group()
 def main():
@@ -26,9 +27,11 @@ def new_conf(pairs,samples):
     conf.build_conf(samples,pairs=pairs)
 
 @main.command()
+@click.option('--dryrun/--normal',default=False,help='Print schedule but dont run anything')
+@click.option('--jobs',default=1,help='Number of jobs to run')
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
-def run(conf):
-    pass
+def run(dryrun,jobs,conf):
+    pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs)
 
 if __name__ == "__main__":
     main()
