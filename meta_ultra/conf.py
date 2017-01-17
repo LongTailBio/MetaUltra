@@ -100,8 +100,14 @@ def build_conf(samples, pairs=False):
 	shortbred.add_field('EXT', '.shortbred.csv')
 	shortbred.add_field('EXC', 'shortbred_quantify.py')
 	shortbred.add_field('DB', RefChoice('ShortBred DB',get_references(tool='shortbred'))),
-	shortbred.add_field('THREADS',4)
+	shortbred.add_field('THREADS', 4)
 
+	# metaphlan2
+        metaphlan2 = conf.add_tool('METAPHLAN2')
+        metaphlan2.add_field('EXT', '.metaphlan2.txt')
+        metaphlan2.add_field('EXC', 'metaphlan2.py')
+        metaphlan2.add_field('THREADS', 4)
+        
 	return conf.to_dict()
 	
 

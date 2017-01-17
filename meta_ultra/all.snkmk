@@ -2,32 +2,32 @@ import pandas as pd
 
 rule all:
 	input:
-		config['SHORTBRED_ALL']
+		config['SHORTBRED']['ALL']
 
 # ShortBred
 
 def shortbredGetReads(wildcards):
-	return ' '.join(config[wildcards.sample])
+	return ' '.join(config['READS'][wildcards.sample])
 
 rule shortbred_single:
 	input: shortbredGetReads
-	output: '{sample}'+config['SHORTBRED_EXT']
+	output: '{sample}'+config['SHORTBRED']['EXT']
 	params:
-		ref=config['SHORTBRED_DB'],
-		shortbred=config['SHORTBRED_EXC'],
+		ref=config['SHORTBRED']['DB'],
+		shortbred=config['SHORTBRED']['EXC'],
 		tmp=config['TMP_DIR'],
-	threads: config['SHORTBRED_THREADS']
+	threads: config['SHORTBRED']['THREADS']
 	shell:
 		'{params.shortbred} --markers {params.ref} --wgs {input.reads} '
 		'--results {output} --threads {threads} --tmp {params.tmp}'
 
 rule shortbred_all:
 	input:
-		expand('{sample}'+config['SHORTBRED_EXT'],sample=config['SAMPLES'])
+		expand('{sample}'+config['SHORTBRED']['EXT'],sample=config['SAMPLES'])
 	output:
-		config['SHORTBRED_ALL']
+		config['SHORTBRED']['ALL']
 	params:
-		ext=config['SHORTBRED_EXT']
+		ext=config['SHORTBRED']['EXT']
 	run:
 		cols = {}
 		for resultf in input:
@@ -37,3 +37,29 @@ rule shortbred_all:
 		df = pd.concat(cols,axis=1)
 		with open(output, 'w') as oF:
 			 oF.write(df.to_string())							  
+
+# MetaPhlAn2
+
+def metaphlan2GetReads(wildcards):
+        return ','.join( config['READS'][wildcards.sample])
+
+rule metaphlan2_single:
+    input: metaphlan2GetReads
+    output: '{sample}' + config['METAPHLAN2']['EXT']
+    threads: config['METAPHLAN2']['THREADS']
+    params:
+        metaphlan2=config['METAPHLAN2']['EXC']
+    shell:
+	'{params.metaphlan2} {input} --nproc {threads} > {output}'
+
+# HUMANN
+
+rule humann_blastx:
+    input:
+    output: '{sample}.humann.blasttab.gz'
+    params:
+        db=config['HUMANN']['DB']
+    shell:
+        'blastx | gzip > {output}'
+
+
