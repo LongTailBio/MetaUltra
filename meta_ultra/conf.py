@@ -1,6 +1,5 @@
 import meta_ultra.config as config
 from meta_ultra.refs import get_references
-from yaml import dump
 import sys
 
 class RefChoice:
@@ -92,6 +91,8 @@ def build_conf(samples, pairs=False):
 	
 	# global opts
 	conf.add_global_field('TMP_DIR', UserInput('Please select a temporary directory', '/tmp'))
+	conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '_1.fastq.gz'))
+	conf.add_global_field('READ_2_EXT', UserInput('Please give the suffix for reverse read files', '_2.fastq.gz'))
 
 
 	# shortbred
@@ -100,8 +101,9 @@ def build_conf(samples, pairs=False):
 	shortbred.add_field('EXC', 'shortbred_quantify.py')
 	shortbred.add_field('DB', RefChoice('ShortBred DB',get_references(tool='shortbred'))),
 	shortbred.add_field('THREADS',4)
+
+	return conf.to_dict()
 	
-	print( dump( conf.to_dict()))
 
 def resolve_dict(el):
 	if type(el) == str:
