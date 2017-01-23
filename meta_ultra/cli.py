@@ -2,9 +2,10 @@
 
 import click
 import meta_ultra.refs as refs
-import meta_ultra.conf as conf
+import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
-import yaml
+import os.path
+import json
 
 @click.group()
 def main():
@@ -12,7 +13,7 @@ def main():
 
 @main.command()
 @click.option('--tool', prompt='TOOL', help='The tool that the reference is intended to be used with')
-@click.option('--name', default=None, help='Reference Name')
+@click.option('--name', prompt='NAME',default=None, help='Reference Name')
 @click.option('--ref', prompt='FILE PATH', help='Location of reference')
 def add_reference(tool,name,ref):
     refs.add_reference(tool,name,ref)
@@ -25,8 +26,8 @@ def list_references():
 @click.option('--pairs/--single', default=False, help='Reads are pairwise')
 @click.argument('samples', nargs=-1)
 def new_conf(pairs,samples):
-    myconf = conf.build_conf(samples,pairs=pairs)
-    print( yaml.dump(myconf))
+    myconf = conf_builder.build_conf(samples,pairs=pairs)
+    print( json.dumps(myconf, sort_keys=True, indent=4))
 
 @main.command()
 @click.option('--dryrun/--normal',default=False,help='Print schedule but dont run anything')

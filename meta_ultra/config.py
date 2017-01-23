@@ -1,3 +1,6 @@
+import os.path
 
-ref_file='references'
-snake_file='all.snkmk'
+lib_root = os.path.dirname(__file__)
+
+ref_file = os.path.join( lib_root, 'references')
+snake_file = os.path.join( lib_root, 'all.snkmk')
