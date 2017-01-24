@@ -1,59 +1,69 @@
 import pandas as pd
 
+
+def all_input(wildcards):
+	inp = []
+        
+	if 'SHORTBRED' in config:
+		inp += expand('{sample}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys())
+                
+	if 'METAPHLAN2' in config:
+		inp += expand('{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
+
+	return inp
+
 rule all:
 	input:
-		config['SHORTBRED']['ALL']
+		all_input
 
 # ShortBred
 
 def shortbredGetReads(wildcards):
-	return ' '.join(config['READS'][wildcards.sample])
+	return ' '.join(config['SAMPLES'][wildcards.sample])
 
 rule shortbred_single:
-	input: shortbredGetReads
+	input:
+            f1 = '{sample}' + config['READ_1_EXT'],
+            f2 = '{sample}' + config['READ_2_EXT']
 	output: '{sample}'+config['SHORTBRED']['EXT']
 	params:
 		ref=config['SHORTBRED']['DB'],
 		shortbred=config['SHORTBRED']['EXC'],
 		tmp=config['TMP_DIR'],
-	threads: config['SHORTBRED']['THREADS']
+                job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single',
+	threads: int(config['SHORTBRED']['THREADS'])
+        resources:
+            time=int(config['SHORTBRED']['TIME']),
+            n_gb_ram=int(config['SHORTBRED']['RAM'])
 	shell:
-		'{params.shortbred} --markers {params.ref} --wgs {input.reads} '
+		'{params.shortbred} --markers {params.ref} --wgs {input.f1} {input.f2}'
 		'--results {output} --threads {threads} --tmp {params.tmp}'
-
-rule shortbred_all:
-	input:
-		expand('{sample}'+config['SHORTBRED']['EXT'],sample=config['SAMPLES'])
-	output:
-		config['SHORTBRED']['ALL']
-	params:
-		ext=config['SHORTBRED']['EXT']
-	run:
-		cols = {}
-		for resultf in input:
-			sample = resultf.split(params.ext)[0]
-			r = pd.read_csv(resultf,sep='\t',index_col=0)
-			cols[sample] = r['Count']
-		df = pd.concat(cols,axis=1)
-		with open(output, 'w') as oF:
-			 oF.write(df.to_string())							  
 
 # MetaPhlAn2
 
 def metaphlan2GetReads(wildcards):
-        return ','.join( config['READS'][wildcards.sample])
+        return ','.join( config['SAMPLES'][wildcards.sample])
 
 rule metaphlan2_single:
-    input: metaphlan2GetReads
-    output: '{sample}' + config['METAPHLAN2']['EXT']
-    threads: config['METAPHLAN2']['THREADS']
-    params:
-        metaphlan2=config['METAPHLAN2']['EXC']
-    shell:
-	'{params.metaphlan2} {input} --nproc {threads} > {output}'
+	input:
+        	f1 = '{sample}' + config['READ_1_EXT'],
+        	f2 = '{sample}' + config['READ_2_EXT'],
+	output: '{sample}' + config['METAPHLAN2']['EXT']
+	threads: int(config['METAPHLAN2']['THREADS'])
+	params:
+        	metaphlan2=config['METAPHLAN2']['EXC'],
+                job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single',
+	resources:
+            	time=int(config['SHORTBRED']['TIME']),
+		n_gb_ram=int(config['SHORTBRED']['RAM'])
 
+	shell:
+		'{params.metaphlan2} {input.f1},{input.f2} --nproc {threads} > {output}'
+
+
+            
 # HUMANN
-
+'''
 rule humann_blastx:
     input:
     output: '{sample}.humann.blasttab.gz'
@@ -61,5 +71,4 @@ rule humann_blastx:
         db=config['HUMANN']['DB']
     shell:
         'blastx | gzip > {output}'
-
-
+'''

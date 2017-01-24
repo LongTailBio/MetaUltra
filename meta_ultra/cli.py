@@ -23,22 +23,25 @@ def list_references():
     refs.list_references()
 
 @main.command()
-@click.option('--pairs/--single', default=False, help='Reads are pairwise')
+@click.option('--single/--pairs', default=False, help='Reads are not pairwise')
+@click.option('--defaults/--no-defaults',default=False,help='Use defaults')
 @click.argument('samples', nargs=-1)
-def new_conf(pairs,samples):
-    myconf = conf_builder.build_conf(samples,pairs=pairs)
+def new_conf(single, defaults, samples):
+    pairs = not single
+    myconf = conf_builder.build_conf(samples, pairs=pairs, use_defaults=defaults)
     print( json.dumps(myconf, sort_keys=True, indent=4))
 
 @main.command()
 @click.option('--dryrun/--normal',default=False,help='Print schedule but dont run anything')
+@click.option('--unlock/--no-unlock',default=False,help='Unlock the working directory')
 @click.option('--jobs',default=1,help='Number of jobs to run')
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
-def run(dryrun,jobs,conf):
+def run( dryrun, unlock, jobs, conf):
     if not os.path.isfile(conf):
         sys.stderr.write('Conf file {} not found. Exiting...'.format(conf))
         sys.exit(1)
         
-    pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs)
+    pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock)
 
 if __name__ == "__main__":
     main()
