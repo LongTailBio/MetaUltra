@@ -5,22 +5,22 @@ def all_input(wildcards):
 	inp = []
         
 	if 'SHORTBRED' in config:
-		inp += expand('{sample}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys())
                 
 	if 'METAPHLAN2' in config:
-		inp += expand('{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
 
         if 'PANPHLAN' in config:
-                inp += expand('{sample}.{species}'+config['PANPHLAN']['EXT'], sample=config['SAMPLES'].keys(), species=config['PANPHLAN']['DBS'])
+                inp += expand(config['OUTPUT_DIR']+'{sample}.{species}'+config['PANPHLAN']['EXT'], sample=config['SAMPLES'].keys(), species=config['PANPHLAN']['DBS'])
 
         if 'MICROBE_CENSUS' in config:
-                inp += expand('{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
+                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
 
         if 'KRAKEN' in config:
-                inp += expand('{sample}'+config['KRAKEN']['EXT'], sample=config['SAMPLES'].keys())
+                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['KRAKEN']['EXT'], sample=config['SAMPLES'].keys())
 
         if 'CLARK' in config:
-                inp += expand('{sample}'+config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
+                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
 
         if 'HUMANN2' in config:
                 pass
@@ -40,7 +40,7 @@ rule shortbred_single:
 	input:
             f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
             f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT']
-	output: '{sample}'+config['SHORTBRED']['EXT']
+	output: config['OUTPUT_DIR']+'{sample}'+config['SHORTBRED']['EXT']
 	params:
 		ref=config['SHORTBRED']['DB'],
 		shortbred=config['SHORTBRED']['EXC'],
@@ -64,7 +64,7 @@ rule metaphlan2_single:
         	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
         	f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
 	output:
-		main='{sample}' + config['METAPHLAN2']['EXT'],
+		main=config['OUTPUT_DIR']+'{sample}' + config['METAPHLAN2']['EXT'],
 		bt2=temp('{sample}' + config['METAPHLAN2']['EXT'] + '.bt2')
 	threads: int(config['METAPHLAN2']['THREADS'])
 	params:
@@ -85,7 +85,7 @@ rule kraken_single:
         	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
                 f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
         output:
-		main = '{sample}' + config['KRAKEN']['EXT']
+		main = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['EXT']
         threads: int( config['KRAKEN']['THREADS'])
         params:
             kraken = config['KRAKEN']['EXC'],
@@ -132,7 +132,7 @@ rule panphlan_map_single:
         f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
         db = config['PANPHLAN']['DB_DIR'] + '{species}'
     output:
-        main = '{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
+        main = config['OUTPUT_DIR']+'{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
     threads: int( config['PANPHLAN']['THREADS'])
     params:
         p_map = config['PANPHLAN']['EXC']
@@ -149,7 +149,7 @@ rule microbe_census_single:
        	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT']
         f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
     output:
-        main = '{sample}' + config['MICROBE_CENSUS']['EXT']
+        main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
     threads: int( config['MICROBE_CENSUS']['THREADS'])
     params:
         mic_census = config['MICROBE_CENSUS']['EXC']
@@ -188,7 +188,7 @@ rule clark_all:
         s2='clark_samples_2.txt',
         r='clark_results.txt'
     output:
-        expand( '{sample}' + config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
+        expand(config['OUTPUT_DIR']+ '{sample}' + config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
     threads: int( config['CLARK']['THREADS'])
     params:
         clark_classify = config['CLARk']['EXC']

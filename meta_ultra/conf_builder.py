@@ -128,6 +128,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	conf = ConfBuilder(use_defaults)
 
 	# global opts
+        conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', './'))
 	conf.add_global_field('PAIRED_END', str(pairs))
 	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', './'))
 	if not pairs:
