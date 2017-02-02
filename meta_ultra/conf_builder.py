@@ -179,7 +179,60 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	metaphlan2.add_field('THREADS', UserInput('How many threads would you like for metaphlan2', conf.get_global_field('THREADS'), type=int))
 	metaphlan2.add_field('TIME', UserInput('How many hours does metaphlan2 need', 1, type=int))
 	metaphlan2.add_field('RAM', UserInput('How many GB of RAM does metaphlan2 need', 5, type=int))
-	
+
+        # panphlan
+        panphlan = conf.add_tool('PANPHLAN')
+        panphlan.add_field('EXT', '.panphlan.csv')
+        panphlan.add_field('EXC', 'panphlan_map.py')
+        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+        
+        # microbe census
+        micCensus = conf.add_tool('MICROBE_CENSUS')
+        micCensus.add_field('EXT', '.mic_census.txt')
+        micCensus.add_field('EXC', 'run_microbe_census.py')
+        micCensus.add_field('THREADS', UserInput('How many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
+        micCensus.add_field('TIME', UserInput('How many hours does MicrobeCensus need', 1, type=int))
+        micCensus.add_field('RAM', UserInput('How many GB of RAM does MicrobeCensus need', 10, type=int))
+        
+        # kraken
+        kraken = conf.add_tool('KRAKEN')
+        kraken.add_field('EXT', '.kraken.csv')
+        kraken.add_field('EXC', 'kraken')
+	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
+        kraken.add_field('THREADS', UserInput('How many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
+        kraken.add_field('TIME', UserInput('How many hours does kraken need', 1, type=int))
+        kraken.add_field('RAM', UserInput('How many GB of RAM does kraken need', 10, type=int))
+
+        # clark
+        clark = conf.add_tool('CLARK')
+        clark.add_field('EXT', '.panphlan.csv')
+        clark.add_field('EXC', 'panphlan_map.py')
+        clark.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+        clark.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+        clark.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+
+        '''
+        # humann2
+        humann2 = conf.add_tool('HUMANN2')
+        panphlan.add_field('EXT', '.panphlan.csv')
+        panphlan.add_field('EXC', 'panphlan_map.py')
+        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+        '''
+
+        '''
+        # ancestry mapper
+        humann2 = conf.add_tool('HUMANN2')
+        panphlan.add_field('EXT', '.panphlan.csv')
+        panphlan.add_field('EXC', 'panphlan_map.py')
+        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+        '''
+        
 	return conf.to_dict(use_defaults=use_defaults)
 	
 '''
