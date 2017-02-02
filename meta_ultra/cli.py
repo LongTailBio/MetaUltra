@@ -2,10 +2,12 @@
 
 import click
 import meta_ultra.refs as refs
+from meta_ultra.utils import *
 import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
 import os.path
 import json
+from time import clock
 
 @click.group()
 def main():
@@ -37,11 +39,11 @@ def new_conf(single, defaults, samples):
 @click.option('--jobs',default=1,help='Number of jobs to run')
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
 def run( dryrun, unlock, jobs, conf):
-    if not os.path.isfile(conf):
-        sys.stderr.write('Conf file {} not found. Exiting...'.format(conf))
-        sys.exit(1)
+	if not os.path.isfile(conf):
+		sys.stderr.write('No conf file found. Exiting.\n')
+		sys.exit(1)
         
-    pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock)
+	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock)
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,8 @@
 import meta_ultra.config as config
 from meta_ultra.refs import get_references
+from meta_ultra.utils import *
 import sys
 import json
-
-def err_input(prompt):
-	sys.stderr.write(prompt)
-	inp = input('')
-	return inp
 
 class Resolvable:
 	def __init__(self):
@@ -133,6 +129,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 
 	# global opts
 	conf.add_global_field('PAIRED_END', str(pairs))
+	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', './'))
 	if not pairs:
 		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '.fastq.gz'))
 		samples = {sample:{'1' : sample} for sample in samples}
@@ -144,6 +141,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 		samplePairs = {}
 		for sample in samples:
 			forward_file = True
+			sample = sample.split('/')[-1]
 			sampleid = sample.split(conf.get_global_field('READ_1_EXT'))[0]
 			if sampleid == sample: # dealing with a reverse read file
 				forward_file = False
