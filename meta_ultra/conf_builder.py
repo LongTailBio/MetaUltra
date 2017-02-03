@@ -4,6 +4,7 @@ from meta_ultra.tools import get_tools
 from meta_ultra.utils import *
 import sys
 import json
+import os
 
 class Resolvable:
 	def __init__(self):
@@ -26,25 +27,25 @@ class ToolChoice( Resolvable):
 
 	def _resolve(self, use_defaults):
 		if len(self.options) == 1:
-			return self.options[0].exc
+			return self.options[0] # return the tool itself
 		if len(self.options) == 0:
 			sys.stderr.write('No entries for tool: {} found. You can register tools with the \'add_tool\' command\n'.format(self.name))
 			sys.exit(1)
 		if use_defaults:
 			return self.options[0].path
 		
-		sys.stderr.write('Please select an option for {}:\n'.format(self.name))
+		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
 		for i, el in enumerate(self.options):
-			sys.stderr.write('\t[{}] {} {}\n'.format(i, el.name, el.version))
-		choice = err_input('Please enter the index of your choice [0]: ')
+			sys.stderr.write('\t\t[{}] {} {}\n'.format(i, el.name, el.version))
+		choice = err_input('\tPlease enter the index of your choice [0]: ')
 		try:
 			choice = int(choice)
 		except ValueError:
 			choice = 0
 		
-		return self.options[choice].exc
+		return self.options[choice] # return the tool itself. 
 
-        
+	
 class RefChoice( Resolvable):
 	def __init__(self, name, options):
 		super(RefChoice, self).__init__()
@@ -60,10 +61,10 @@ class RefChoice( Resolvable):
 		if use_defaults:
 			return self.options[0].path
 		
-		sys.stderr.write('Please select an option for {}:\n'.format(self.name))
+		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
 		for i, el in enumerate(self.options):
-			sys.stderr.write('\t[{}] {}\n'.format(i, el.name))
-		choice = err_input('Please enter the index of your choice [0]: ')
+			sys.stderr.write('\t\t[{}] {}\n'.format(i, el.name))
+		choice = err_input('\tPlease enter the index of your choice [0]: ')
 		try:
 			choice = int(choice)
 		except ValueError:
@@ -89,10 +90,10 @@ class MultiRefChoice( Resolvable):
 		choices = []
 		select_more_refs = True
 		while select_more_refs:
-			sys.stderr.write('Please select an option for {}:\n'.format(self.name))
+			sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
 			for i, el in enumerate(self.options):
-				sys.stderr.write('\t[{}] {}\n'.format(i, el.name))
-			choice = err_input('Please enter the index of your choice [0]: ')
+				sys.stderr.write('\t\t[{}] {}\n'.format(i, el.name))
+			choice = err_input('\tPlease enter the index of your choice [0]: ')
 			try:
 				choice = int(choice)
 			except ValueError:
@@ -176,6 +177,11 @@ class ToolBuilder:
 		self.name = tool_name
 		self.fields = {}
 		self.use_defaults = use_defaults
+
+		toolChoice = ToolChoice(tool_name, get_tools(name=tool_name))
+		tool = toolChoice.resolve(use_defaults=self.use_defaults)
+		self.fields['EXC'] = tool.exc
+		self.fields['VERSION'] = tool.version
 	
 	def add_field(self,key,value):
 		if type(value) not in [str, dict, list]:
@@ -190,9 +196,9 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	conf = ConfBuilder(use_defaults)
 
 	# global opts
-	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', './'))
+	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/'))
 	conf.add_global_field('PAIRED_END', str(pairs))
-	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', './'))
+	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', os.getcwd() + '/results/'))
 	if not pairs:
 		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '.fastq.gz'))
 		samples = {sample:{'1' : sample} for sample in samples}
@@ -228,53 +234,47 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# shortbred
 	shortbred = conf.add_tool('SHORTBRED')
 	shortbred.add_field('EXT', '.shortbred.csv')
-	shortbred.add_field('EXC', ToolChoice('Shortbred', get_tools(name='shortbred')))
 	shortbred.add_field('DBS', MultiRefChoice('ShortBred DBs',get_references(tool='shortbred'))),
-	shortbred.add_field('THREADS', UserInput('How many threads would you like for shortbred', conf.get_global_field('THREADS'), type=int))
-	shortbred.add_field('TIME', UserInput('How many hours does shortbred need', 1, type=int))
-	shortbred.add_field('RAM', UserInput('How many GB of RAM does shortbred need', 5, type=int))
+	shortbred.add_field('THREADS', UserInput('\tHow many threads would you like for shortbred', conf.get_global_field('THREADS'), type=int))
+	shortbred.add_field('TIME', UserInput('\tHow many hours does shortbred need', 1, type=int))
+	shortbred.add_field('RAM', UserInput('\tHow many GB of RAM does shortbred need per thread', 5, type=int))
 
 	# metaphlan2
 	metaphlan2 = conf.add_tool('METAPHLAN2')
 	metaphlan2.add_field('EXT', '.metaphlan2.txt')
-	metaphlan2.add_field('EXC', ToolChoice('MetaPhlAn2', get_tools(name='metaphlan2')))
 	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',get_references(tool='metaphlan2'))),
-	metaphlan2.add_field('THREADS', UserInput('How many threads would you like for metaphlan2', conf.get_global_field('THREADS'), type=int))
-	metaphlan2.add_field('TIME', UserInput('How many hours does metaphlan2 need', 1, type=int))
-	metaphlan2.add_field('RAM', UserInput('How many GB of RAM does metaphlan2 need', 5, type=int))
+	metaphlan2.add_field('THREADS', UserInput('\tHow many threads would you like for metaphlan2', conf.get_global_field('THREADS'), type=int))
+	metaphlan2.add_field('TIME', UserInput('\tHow many hours does metaphlan2 need', 1, type=int))
+	metaphlan2.add_field('RAM', UserInput('\tHow many GB of RAM does metaphlan2 need per thread', 5, type=int))
 
 	# panphlan
 	panphlan = conf.add_tool('PANPHLAN')
 	panphlan.add_field('EXT', '.panphlan.csv')
-	panphlan.add_field('EXC', ToolChoice('PanPhlAn', get_tools(name='panphlan')))
-	panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-	panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-	panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+	panphlan.add_field('THREADS', UserInput('\tHow many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+	panphlan.add_field('TIME', UserInput('\tHow many hours does panphlan need', 1, type=int))
+	panphlan.add_field('RAM', UserInput('\tHow many GB of RAM does panphlan need per thread', 10, type=int))
 	
 	# microbe census
 	micCensus = conf.add_tool('MICROBE_CENSUS')
 	micCensus.add_field('EXT', '.mic_census.txt')
-	micCensus.add_field('EXC', ToolChoice('Microbe Census', get_tools(name='microbe_census')))
-	micCensus.add_field('THREADS', UserInput('How many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
-	micCensus.add_field('TIME', UserInput('How many hours does MicrobeCensus need', 1, type=int))
-	micCensus.add_field('RAM', UserInput('How many GB of RAM does MicrobeCensus need', 10, type=int))
+	micCensus.add_field('THREADS', UserInput('\tHow many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
+	micCensus.add_field('TIME', UserInput('\tHow many hours does MicrobeCensus need', 1, type=int))
+	micCensus.add_field('RAM', UserInput('\tHow many GB of RAM does MicrobeCensus need per thread', 10, type=int))
 	
 	# kraken
 	kraken = conf.add_tool('KRAKEN')
 	kraken.add_field('EXT', '.kraken.csv')
-	kraken.add_field('EXC', ToolChoice('kraken', get_tools(name='kraken')))
 	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
-	kraken.add_field('THREADS', UserInput('How many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
-	kraken.add_field('TIME', UserInput('How many hours does kraken need', 1, type=int))
-	kraken.add_field('RAM', UserInput('How many GB of RAM does kraken need', 10, type=int))
+	kraken.add_field('THREADS', UserInput('\tHow many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
+	kraken.add_field('TIME', UserInput('\tHow many hours does kraken need', 1, type=int))
+	kraken.add_field('RAM', UserInput('\tHow many GB of RAM does kraken need per thread', 10, type=int))
 
 	# clark
 	clark = conf.add_tool('CLARK')
-	clark.add_field('EXT', '.panphlan.csv')
-	clark.add_field('EXC', ToolChoice('Clark', get_tools(name='clark')))
-	clark.add_field('THREADS', UserInput('How many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
-	clark.add_field('TIME', UserInput('How many hours does clark need', 1, type=int))
-	clark.add_field('RAM', UserInput('How many GB of RAM does clark need', 10, type=int))
+	clark.add_field('EXT', '.clark')
+	clark.add_field('THREADS', UserInput('\tHow many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
+	clark.add_field('TIME', UserInput('\tHow many hours does clark need', 1, type=int))
+	clark.add_field('RAM', UserInput('\tHow many GB of RAM does clark need per thread', 10, type=int))
 
 	
 	return conf.to_dict(use_defaults=use_defaults)

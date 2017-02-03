@@ -17,6 +17,10 @@ def list_references():
     for ref in refs.all():
         print('{}\t{}\t{}'.format(ref['tool'], ref['name'], ref['path']))
 
+def remove_reference(eid):
+    refTbl = TinyDB(config.db_file).table(config.db_reference_table)
+    refTbl.remove(eids=[eid])
+    
 class Reference:
      def __init__(self, tool, name, path):
          self.tool = tool

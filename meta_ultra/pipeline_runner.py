@@ -5,7 +5,7 @@ import sys
 
 def run(conf,njobs=1,dry_run=False,unlock=False):
     
-    cmd = 'snakemake --snakefile {snkf} --jobs {njobs} --configfile {conf} --cluster {cluster_wrapper} -k '
+    cmd = 'snakemake --snakefile {snkf} --jobs {njobs} --configfile {conf} --cluster {cluster_wrapper} -k --printshellcmds'
     cmd = cmd.format(snkf=config.snake_file,
                      njobs=njobs,
                      conf=conf,
@@ -18,4 +18,18 @@ def run(conf,njobs=1,dry_run=False,unlock=False):
         cmd += ' --unlock'
     sys.stderr.write('Running: {}\n'.format(cmd))        
     sp.call(cmd,shell=True)
+
+
+def result_info(conf, unlock=False):
     
+    cmd = 'snakemake --snakefile {snkf} --configfile {conf} --detailed-summary'
+    cmd = cmd.format(snkf=config.snake_file,
+                     conf=conf,
+                     )
+
+    if unlock:
+        cmd += ' --unlock'
+
+    sys.stderr.write('Running: {}\n'.format(cmd))        
+    sp.call(cmd,shell=True)
+

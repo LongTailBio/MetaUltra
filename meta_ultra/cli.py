@@ -26,6 +26,12 @@ def list_references():
     refs.list_references()
 
 @main.command()
+@click.option('-e','--eid', prompt='EID', type=int, default=None, help='Eid of reference record')
+def remove_reference(eid):
+    tools.remove_reference(eid)
+
+    
+@main.command()
 @click.option('-n','--name', prompt='NAME',default=None, help='Tool name')
 @click.option('-v','--version', prompt='VERSION', help='Version of tool')
 @click.option('-e','--exc', prompt='EXC PATH', help='Path to executable')
@@ -35,6 +41,11 @@ def add_tool(name, version, exc):
 @main.command()
 def list_tools():
     tools.list_tools()
+
+@main.command()
+@click.option('-e','--eid', prompt='EID',default=None, type=int, help='Eid of tool record')
+def remove_tool(eid):
+    tools.remove_tool(eid)
 
     
 @main.command()
@@ -58,5 +69,16 @@ def run( dryrun, unlock, jobs, conf):
         
 	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock)
 
+@main.command()
+@click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
+@click.option('--unlock/--no-unlock',default=False,help='Unlock the working directory')
+def result_info( conf, unlock):
+	if not os.path.isfile(conf):
+		sys.stderr.write('No conf file found. Exiting.\n')
+		sys.exit(1)
+        
+	pipeline_runner.result_info(conf, unlock=unlock)
+
+        
 if __name__ == "__main__":
     main()

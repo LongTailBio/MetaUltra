@@ -1,22 +1,36 @@
 import pandas as pd
+import sys
+import os.path
+import os
 
+if not os.path.isdir(config['OUTPUT_DIR']):
+	os.mkdir(config['OUTPUT_DIR'])
+
+onsuccess:
+    sys.stderr.write('MUP complete\n')
+
+onerror:
+    sys.stderr.write('An error occurred.')
+
+localrules: clark_make_sample_and_result_files
 
 def all_input(wildcards):
+	tools = config['TOOLS_TO_RUN']
 	inp = []
-	if 'SHORTBRED' in config:
+	if 'SHORTBRED' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys(), db_name=config['SHORTBRED']['DBS'].keys())
-	if 'METAPHLAN2' in config:
+	if 'METAPHLAN2' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
-	if 'PANPHLAN' in config:
-                pass
+	if 'PANPHLAN' in tools:
+		pass
 		#inp += expand(config['OUTPUT_DIR']+'{sample}.{species}'+config['PANPHLAN']['EXT'], sample=config['SAMPLES'].keys(), species=config['PANPHLAN']['DBS'])
-	if 'MICROBE_CENSUS' in config:
+	if 'MICROBE_CENSUS' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
-	if 'KRAKEN' in config:
+	if 'KRAKEN' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['KRAKEN']['EXT'], sample=config['SAMPLES'].keys())
-	if 'CLARK' in config:
+	if 'CLARK' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
-	if 'HUMANN2' in config:
+	if 'HUMANN2' in tools:
 		pass
 	return inp
 
@@ -40,6 +54,7 @@ rule shortbred_single:
 		tmp=config['TMP_DIR'],
 		job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single',
 	threads: int(config['SHORTBRED']['THREADS'])
+	version: config['SHORTBRED']['VERSION']
 	resources:
 		time=int(config['SHORTBRED']['TIME']),
 		n_gb_ram=int(config['SHORTBRED']['RAM'])
@@ -59,12 +74,13 @@ rule metaphlan2_single:
 		main=config['OUTPUT_DIR']+'{sample}' + config['METAPHLAN2']['EXT'],
 		bt2=temp('{sample}' + config['METAPHLAN2']['EXT'] + '.bt2')
 	threads: int(config['METAPHLAN2']['THREADS'])
+	version: config['METAPHLAN2']['VERSION']
 	params:
 		metaphlan2=config['METAPHLAN2']['EXC'],
 		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single',
 	resources:
-		time=int(config['SHORTBRED']['TIME']),
-		n_gb_ram=int(config['SHORTBRED']['RAM'])
+		time=int(config['METAPHLAN2']['TIME']),
+		n_gb_ram=int(config['METAPHLAN2']['RAM'])
 
 	shell:
 		'{params.metaphlan2} --input_type fastq {input.f1},{input.f2} --nproc {threads} --bowtie2out {output.bt2} > {output.main}'
@@ -79,9 +95,11 @@ rule kraken_single:
 	output:
 		main = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['EXT']
 	threads: int( config['KRAKEN']['THREADS'])
+	version: config['KRAKEN']['VERSION']
 	params:
 		kraken = config['KRAKEN']['EXC'],
 		db = config['KRAKEN']['DB'],
+		job_name=config['JOB_NAME_PREFIX'] + 'kraken_single'
 	resources:
 		time=int(config['KRAKEN']['TIME']),
 		n_gb_ram=int(config['KRAKEN']['RAM'])
@@ -117,13 +135,15 @@ rule microbe_census_single:
 	output:
 		main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
 	threads: int( config['MICROBE_CENSUS']['THREADS'])
+	version: config['MICROBE_CENSUS']['VERSION']
 	params:
-		mic_census = config['MICROBE_CENSUS']['EXC']
+		mic_census = config['MICROBE_CENSUS']['EXC'],
+		job_name=config['JOB_NAME_PREFIX'] + 'mic_census_single'
 	resources:
 		time=int(config['MICROBE_CENSUS']['TIME']),
 		n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
 	shell:
-		'{params.mic_census} -t {threads} {input.f1} {input.f2} {output.main}'
+		'{params.mic_census} -t {threads} {input.f1},{input.f2} {output.main}'
 	
 # MetaBGC
 	
@@ -139,14 +159,16 @@ rule clark_make_sample_and_result_files:
 		s2=temp('clark_samples_2.txt'),
 		r=temp('clark_results.txt')
 	threads: int( config['CLARK']['THREADS'])
+	version: config['CLARK']['VERSION']
 	params:
-		samples = config['SAMPLES']
+		samples = config['SAMPLES'],
+		job_name=config['JOB_NAME_PREFIX'] + 'clark_makefiles_single'
 	run:
 		with open(output.s1,'w') as s1, open(output.s2,'w') as s2, open(output.r, 'w') as r:
-			for sampleName, fileDict in params.sample.keys():
+			for sampleName, fileDict in params.samples.items():
 				s1.write(config['SAMPLE_DIR'] + fileDict['1'] + '\n')
-			 	s2.write(config['SAMPLE_DIR'] + fileDict['2'] + '\n')
-			 	r.write(sampleName + config['CLARK']['EXT'] + '\n')
+				s2.write(config['SAMPLE_DIR'] + fileDict['2'] + '\n')
+				r.write(sampleName + config['CLARK']['EXT'] + '\n')
 	
 rule clark_all:
 	input:
@@ -156,8 +178,10 @@ rule clark_all:
 	output:
 		expand(config['OUTPUT_DIR']+ '{sample}' + config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
 	threads: int( config['CLARK']['THREADS'])
+	version: config['CLARK']['VERSION']
 	params:
-		clark_classify = config['CLARK']['EXC']
+		clark_classify = config['CLARK']['EXC'],
+                job_name=config['JOB_NAME_PREFIX'] + 'clark_all'
 	resources:
 		time=int(config['CLARK']['TIME']),
 		n_gb_ram=int(config['CLARK']['RAM'])
