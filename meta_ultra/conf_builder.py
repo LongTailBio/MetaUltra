@@ -1,5 +1,6 @@
 import meta_ultra.config as config
 from meta_ultra.refs import get_references
+from meta_ultra.tools import get_tools
 from meta_ultra.utils import *
 import sys
 import json
@@ -17,7 +18,33 @@ class Resolvable:
 		self.resolved = True
 		return res
 
+class ToolChoice( Resolvable):
+	def __init__(self, name, options):
+		super(ToolChoice, self).__init__()
+		self.name = name
+		self.options = options
 
+	def _resolve(self, use_defaults):
+		if len(self.options) == 1:
+			return self.options[0].exc
+		if len(self.options) == 0:
+			sys.stderr.write('No entries for tool: {} found. You can register tools with the \'add_tool\' command\n'.format(self.name))
+			sys.exit(1)
+		if use_defaults:
+			return self.options[0].path
+		
+		sys.stderr.write('Please select an option for {}:\n'.format(self.name))
+		for i, el in enumerate(self.options):
+			sys.stderr.write('\t[{}] {} {}\n'.format(i, el.name, el.version))
+		choice = err_input('Please enter the index of your choice [0]: ')
+		try:
+			choice = int(choice)
+		except ValueError:
+			choice = 0
+		
+		return self.options[choice].exc
+
+        
 class RefChoice( Resolvable):
 	def __init__(self, name, options):
 		super(RefChoice, self).__init__()
@@ -201,7 +228,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# shortbred
 	shortbred = conf.add_tool('SHORTBRED')
 	shortbred.add_field('EXT', '.shortbred.csv')
-	shortbred.add_field('EXC', 'shortbred_quantify.py')
+	shortbred.add_field('EXC', ToolChoice('Shortbred', get_tools(name='shortbred')))
 	shortbred.add_field('DBS', MultiRefChoice('ShortBred DBs',get_references(tool='shortbred'))),
 	shortbred.add_field('THREADS', UserInput('How many threads would you like for shortbred', conf.get_global_field('THREADS'), type=int))
 	shortbred.add_field('TIME', UserInput('How many hours does shortbred need', 1, type=int))
@@ -210,7 +237,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# metaphlan2
 	metaphlan2 = conf.add_tool('METAPHLAN2')
 	metaphlan2.add_field('EXT', '.metaphlan2.txt')
-	metaphlan2.add_field('EXC', 'metaphlan2.py')
+	metaphlan2.add_field('EXC', ToolChoice('MetaPhlAn2', get_tools(name='metaphlan2')))
 	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',get_references(tool='metaphlan2'))),
 	metaphlan2.add_field('THREADS', UserInput('How many threads would you like for metaphlan2', conf.get_global_field('THREADS'), type=int))
 	metaphlan2.add_field('TIME', UserInput('How many hours does metaphlan2 need', 1, type=int))
@@ -219,7 +246,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# panphlan
 	panphlan = conf.add_tool('PANPHLAN')
 	panphlan.add_field('EXT', '.panphlan.csv')
-	panphlan.add_field('EXC', 'panphlan_map.py')
+	panphlan.add_field('EXC', ToolChoice('PanPhlAn', get_tools(name='panphlan')))
 	panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
 	panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
 	panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
@@ -227,7 +254,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# microbe census
 	micCensus = conf.add_tool('MICROBE_CENSUS')
 	micCensus.add_field('EXT', '.mic_census.txt')
-	micCensus.add_field('EXC', 'run_microbe_census.py')
+	micCensus.add_field('EXC', ToolChoice('Microbe Census', get_tools(name='microbe_census')))
 	micCensus.add_field('THREADS', UserInput('How many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
 	micCensus.add_field('TIME', UserInput('How many hours does MicrobeCensus need', 1, type=int))
 	micCensus.add_field('RAM', UserInput('How many GB of RAM does MicrobeCensus need', 10, type=int))
@@ -235,7 +262,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# kraken
 	kraken = conf.add_tool('KRAKEN')
 	kraken.add_field('EXT', '.kraken.csv')
-	kraken.add_field('EXC', 'kraken')
+	kraken.add_field('EXC', ToolChoice('kraken', get_tools(name='kraken')))
 	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
 	kraken.add_field('THREADS', UserInput('How many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
 	kraken.add_field('TIME', UserInput('How many hours does kraken need', 1, type=int))
@@ -244,10 +271,10 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# clark
 	clark = conf.add_tool('CLARK')
 	clark.add_field('EXT', '.panphlan.csv')
-	clark.add_field('EXC', 'panphlan_map.py')
-	clark.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-	clark.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-	clark.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+	clark.add_field('EXC', ToolChoice('Clark', get_tools(name='clark')))
+	clark.add_field('THREADS', UserInput('How many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
+	clark.add_field('TIME', UserInput('How many hours does clark need', 1, type=int))
+	clark.add_field('RAM', UserInput('How many GB of RAM does clark need', 10, type=int))
 
 	
 	return conf.to_dict(use_defaults=use_defaults)

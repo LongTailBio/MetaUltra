@@ -3,28 +3,21 @@ import pandas as pd
 
 def all_input(wildcards):
 	inp = []
-        
 	if 'SHORTBRED' in config:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys(), db_name=config['SHORTBRED']['DBS'].keys())
-                
 	if 'METAPHLAN2' in config:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
-
-        if 'PANPHLAN' in config:
-                inp += expand(config['OUTPUT_DIR']+'{sample}.{species}'+config['PANPHLAN']['EXT'], sample=config['SAMPLES'].keys(), species=config['PANPHLAN']['DBS'])
-
-        if 'MICROBE_CENSUS' in config:
-                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
-
-        if 'KRAKEN' in config:
-                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['KRAKEN']['EXT'], sample=config['SAMPLES'].keys())
-
-        if 'CLARK' in config:
-                inp += expand(config['OUTPUT_DIR']+'{sample}'+config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
-
-        if 'HUMANN2' in config:
+	if 'PANPHLAN' in config:
                 pass
-        
+		#inp += expand(config['OUTPUT_DIR']+'{sample}.{species}'+config['PANPHLAN']['EXT'], sample=config['SAMPLES'].keys(), species=config['PANPHLAN']['DBS'])
+	if 'MICROBE_CENSUS' in config:
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
+	if 'KRAKEN' in config:
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['KRAKEN']['EXT'], sample=config['SAMPLES'].keys())
+	if 'CLARK' in config:
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
+	if 'HUMANN2' in config:
+		pass
 	return inp
 
 rule all:
@@ -38,40 +31,39 @@ def shortbredGetReads(wildcards):
 
 rule shortbred_single:
 	input:
-            f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
-            f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT']
+		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
+		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT']
 	output: config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT']
 	params:
-		ref=config['SHORTBRED']['DBS'][wildcards.db_name],
+		ref=lambda wildcards: config['SHORTBRED']['DBS'][wildcards.db_name],
 		shortbred=config['SHORTBRED']['EXC'],
 		tmp=config['TMP_DIR'],
-                job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single',
+		job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single',
 	threads: int(config['SHORTBRED']['THREADS'])
-        resources:
-            time=int(config['SHORTBRED']['TIME']),
-            n_gb_ram=int(config['SHORTBRED']['RAM'])
+	resources:
+		time=int(config['SHORTBRED']['TIME']),
+		n_gb_ram=int(config['SHORTBRED']['RAM'])
 	shell:
 		'{params.shortbred} --markers {params.ref} --wgs {input.f1} {input.f2} '
 		'--results {output} --threads {threads} --tmp {params.tmp}'
 
 # MetaPhlAn2
-
 def metaphlan2GetReads(wildcards):
-        return ','.join( config['SAMPLES'][wildcards.sample].values())
+	return ','.join( config['SAMPLES'][wildcards.sample].values())
 
 rule metaphlan2_single:
 	input:
-        	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
-        	f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
+		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
+		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
 	output:
 		main=config['OUTPUT_DIR']+'{sample}' + config['METAPHLAN2']['EXT'],
 		bt2=temp('{sample}' + config['METAPHLAN2']['EXT'] + '.bt2')
 	threads: int(config['METAPHLAN2']['THREADS'])
 	params:
-        	metaphlan2=config['METAPHLAN2']['EXC'],
-                job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single',
+		metaphlan2=config['METAPHLAN2']['EXC'],
+		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single',
 	resources:
-            	time=int(config['SHORTBRED']['TIME']),
+		time=int(config['SHORTBRED']['TIME']),
 		n_gb_ram=int(config['SHORTBRED']['RAM'])
 
 	shell:
@@ -82,129 +74,103 @@ rule metaphlan2_single:
 
 rule kraken_single:
 	input:
-        	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
-                f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
-        output:
-		main = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['EXT']
-        threads: int( config['KRAKEN']['THREADS'])
-        params:
-            kraken = config['KRAKEN']['EXC'],
-  	    db = config['KRAKEN']['DB'],
-        resources:
-            time=int(config['KRAKEN']['TIME']),
-            n_gb_ram=int(config['KRAKEN']['RAM'])
-        shell:
-            '{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
-            '--paired --preload --db {params.db} {input.f1} {input.f2} > {output.main}'
-
-# GPS
-'''
-rule host_reads:
-	input:
 		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
 		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
-        output:
-		f1 = temp('{sample}_1.host_reads.fastq.gz')
-		f2 = temp('{sample}_2.host_reads.fastq.gz')
-	threads: config['HOST']['THREADS']
-    	params:
-		ref = config['HOST']['REF']
-        resources:
-            	time = int(config['HOST']['TIME']),
-        	time = int(config['HOST']['RAM']),
-        shell:
-            ''
-
-rule gps:
-	input:            
-		f1 = temp('{sample}_1.host_reads.fastq.gz')
-		f2 = temp('{sample}_1.host_reads.fastq.gz')
-    	threads:
 	output:
+		main = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['EXT']
+	threads: int( config['KRAKEN']['THREADS'])
 	params:
+		kraken = config['KRAKEN']['EXC'],
+		db = config['KRAKEN']['DB'],
 	resources:
+		time=int(config['KRAKEN']['TIME']),
+		n_gb_ram=int(config['KRAKEN']['RAM'])
 	shell:
+		'{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
+		'--paired --preload --db {params.db} {input.f1} {input.f2} > {output.main}'
+
 '''
 # PanPhlAn
 rule panphlan_map_single:
-    input:
-       	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT']
-        f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
-        db = config['PANPHLAN']['DB_DIR'] + '{species}'
-    output:
-        main = config['OUTPUT_DIR']+'{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
-    threads: int( config['PANPHLAN']['THREADS'])
-    params:
-        p_map = config['PANPHLAN']['EXC']
-    resources:
-        time=int(config['PANPHLAN']['TIME']),
-        n_gb_ram=int(config['PANPHLAN']['RAM'])
-    shell:
-        '{params.p_map} -p {threads} -m {resources.n_gb_ram} -c {input.db} '
-        '-i {input.f1},{input.f2} -o {output.main}'
-        
+	input:
+		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
+		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
+		db = config['PANPHLAN']['DB_DIR'] + '{species}'
+	output:
+		main = config['OUTPUT_DIR']+'{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
+	threads: int( config['PANPHLAN']['THREADS'])
+	params:
+		p_map = config['PANPHLAN']['EXC']
+	resources:
+		time=int(config['PANPHLAN']['TIME']),
+		n_gb_ram=int(config['PANPHLAN']['RAM'])
+	shell:
+		'{params.p_map} -p {threads} -m {resources.n_gb_ram} -c {input.db} '
+		'-i {input.f1},{input.f2} -o {output.main}'
+'''
+
 # MicrobeCensus
 rule microbe_census_single:
-    input:
-       	f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT']
-        f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
-    output:
-        main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
-    threads: int( config['MICROBE_CENSUS']['THREADS'])
-    params:
-        mic_census = config['MICROBE_CENSUS']['EXC']
-    resources:
-        time=int(config['MICROBE_CENSUS']['TIME']),
-        n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
-    shell:
-        '{params.mic_census} -t {threads} {input.f1} {input.f2} {output.main}'
-        
+	input:
+		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
+		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
+	output:
+		main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
+	threads: int( config['MICROBE_CENSUS']['THREADS'])
+	params:
+		mic_census = config['MICROBE_CENSUS']['EXC']
+	resources:
+		time=int(config['MICROBE_CENSUS']['TIME']),
+		n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
+	shell:
+		'{params.mic_census} -t {threads} {input.f1} {input.f2} {output.main}'
+	
 # MetaBGC
-        
+	
 # CLARK
 # http://clark.cs.ucr.edu/Overview/
 
 rule clark_make_sample_and_result_files:
-    input:
-        f1s = expand(config['SAMPLE_DIR'] + '{sample} '+ config['READ_1_EXT'], sample=config['SAMPLES'].keys()),
-        f2s = expand(config['SAMPLE_DIR'] + '{sample} '+ config['READ_2_EXT'], sample=config['SAMPLES'].keys())
-    output:
-        s1=temp('clark_samples_1.txt'),
-        s2=temp('clark_samples_2.txt'),
-        r=temp('clark_results.txt')
-    threads: int( config['CLARK']['THREADS'])
-    params:
-        samples = config['SAMPLES']
-    run:
-        with open(output.s1,'w') as s1, open(output.s2,'w') as s2, open(output.r, 'w') as r:
-                for sampleName, fileDict in params.sample.keys():
-                        s1.write(config['SAMPLE_DIR'] + fileDict['1'] + '\n')
-                        s2.write(config['SAMPLE_DIR'] + fileDict['2'] + '\n')
-                        r.write(sampleName + config['CLARK']['EXT'] + '\n')
-        
+	input:
+		f1s = expand(config['SAMPLE_DIR'] + '{sample}'+ config['READ_1_EXT'], sample=config['SAMPLES'].keys()),
+		f2s = expand(config['SAMPLE_DIR'] + '{sample}'+ config['READ_2_EXT'], sample=config['SAMPLES'].keys())
+	output:
+		s1=temp('clark_samples_1.txt'),
+		s2=temp('clark_samples_2.txt'),
+		r=temp('clark_results.txt')
+	threads: int( config['CLARK']['THREADS'])
+	params:
+		samples = config['SAMPLES']
+	run:
+		with open(output.s1,'w') as s1, open(output.s2,'w') as s2, open(output.r, 'w') as r:
+			for sampleName, fileDict in params.sample.keys():
+				s1.write(config['SAMPLE_DIR'] + fileDict['1'] + '\n')
+			 	s2.write(config['SAMPLE_DIR'] + fileDict['2'] + '\n')
+			 	r.write(sampleName + config['CLARK']['EXT'] + '\n')
+	
 rule clark_all:
-    input:
-       	s1='clark_samples_1.txt',
-        s2='clark_samples_2.txt',
-        r='clark_results.txt'
-    output:
-        expand(config['OUTPUT_DIR']+ '{sample}' + config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
-    threads: int( config['CLARK']['THREADS'])
-    params:
-        clark_classify = config['CLARk']['EXC']
-    resources:
-        time=int(config['CLARK']['TIME']),
-        n_gb_ram=int(config['CLARK']['RAM'])
-    shell:
-        '{params.clark_classify} -P {input.s1} {input.s2} -R {input.r}'
-        
+	input:
+		s1='clark_samples_1.txt',
+		s2='clark_samples_2.txt',
+		r='clark_results.txt'
+	output:
+		expand(config['OUTPUT_DIR']+ '{sample}' + config['CLARK']['EXT'], sample=config['SAMPLES'].keys())
+	threads: int( config['CLARK']['THREADS'])
+	params:
+		clark_classify = config['CLARK']['EXC']
+	resources:
+		time=int(config['CLARK']['TIME']),
+		n_gb_ram=int(config['CLARK']['RAM'])
+	shell:
+		'{params.clark_classify} -P {input.s1} {input.s2} -R {input.r}'
+	
 # HUMAnN2
 '''
 rule humann_blastx:
-    input:
-    output: '{sample}.humann.blasttab.gz'
-    params:
-        db=config['HUMANN']['DB']
-    shell:
-        'blastx | gzip > {output}'
+	input:
+	output: '{sample}.humann.blasttab.gz'
+	params:
+	db=config['HUMANN']['DB']
+	shell:
+	'blastx | gzip > {output}'
 '''

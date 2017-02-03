@@ -2,6 +2,7 @@
 
 import click
 import meta_ultra.refs as refs
+import meta_ultra.tools  as tools
 from meta_ultra.utils import *
 import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
@@ -24,6 +25,18 @@ def add_reference(tool,name,ref):
 def list_references():
     refs.list_references()
 
+@main.command()
+@click.option('-n','--name', prompt='NAME',default=None, help='Tool name')
+@click.option('-v','--version', prompt='VERSION', help='Version of tool')
+@click.option('-e','--exc', prompt='EXC PATH', help='Path to executable')
+def add_tool(name, version, exc):
+    tools.add_tool(name, version,exc)
+
+@main.command()
+def list_tools():
+    tools.list_tools()
+
+    
 @main.command()
 @click.option('--single/--pairs', default=False, help='Reads are not pairwise')
 @click.option('--defaults/--no-defaults',default=False,help='Use defaults')
