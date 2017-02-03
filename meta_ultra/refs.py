@@ -1,13 +1,21 @@
-
+from tinydb import TinyDB, Query
 import meta_ultra.config as config 
 
 def add_reference(tool,name,path):
-    with open(config.ref_file,'a') as rf:
-        rf.write('\n{}\t{}\t{}'.format(tool,name,path))
+    db = TinyDB( config.db_file)
+    refs = db.table(config.db_reference_table)
+    refs.insert({
+        'tool': config.canon_tool(tool),
+        'name': name,
+        'path' : path
+    })
 
 def list_references():
     print('Tool\tName\tPath')
-    print(open(config.ref_file).read())
+    db = TinyDB( config.db_file)
+    refs = db.table(config.db_reference_table)
+    for ref in refs.all():
+        print('{}\t{}\t{}'.format(ref['tool'], ref['name'], ref['path']))
 
 class Reference:
      def __init__(self, tool, name, path):
@@ -17,11 +25,9 @@ class Reference:
 
 def get_references(tool=None):
     refs = []
-    with open(config.ref_file) as rf:
-        for line in rf:
-            mytool, name, path = line.strip().split()
-            if tool and mytool.lower() != tool.lower():
-                continue
-            ref = Reference(mytool, name, path)
-            refs.append(ref)
+    refTbl = TinyDB(config.db_file).table(config.db_reference_table)
+    for ref in refTbl.all():
+        if config.canon_tool(tool) == ref['tool']: 
+            refs.append( Reference( ref['tool'], ref['name'], ref['path']))
+
     return(refs)

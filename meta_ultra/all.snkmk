@@ -5,7 +5,7 @@ def all_input(wildcards):
 	inp = []
         
 	if 'SHORTBRED' in config:
-		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT'], sample=config['SAMPLES'].keys(), db_name=config['SHORTBRED']['DBS'].keys())
                 
 	if 'METAPHLAN2' in config:
 		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
@@ -40,9 +40,9 @@ rule shortbred_single:
 	input:
             f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
             f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT']
-	output: config['OUTPUT_DIR']+'{sample}'+config['SHORTBRED']['EXT']
+	output: config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT']
 	params:
-		ref=config['SHORTBRED']['DB'],
+		ref=config['SHORTBRED']['DBS'][wildcards.db_name],
 		shortbred=config['SHORTBRED']['EXC'],
 		tmp=config['TMP_DIR'],
                 job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single',

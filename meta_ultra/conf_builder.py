@@ -44,6 +44,41 @@ class RefChoice( Resolvable):
 		
 		return self.options[choice].path
 
+class MultiRefChoice( Resolvable):
+	def __init__(self, name, options):
+		super(MultiRefChoice, self).__init__()
+		self.name = name
+		self.options = options
+
+	def _resolve(self, use_defaults):
+		if len(self.options) == 1:
+			return self.options[0].path
+		if len(self.options) == 0:
+			sys.stderr.write('No references for {} found. You can register references with the \'add_reference\' command\n'.format(self.name))
+			sys.exit(1)
+		if use_defaults:
+			return self.options[0].path
+
+		choices = []
+		select_more_refs = True
+		while select_more_refs:
+			sys.stderr.write('Please select an option for {}:\n'.format(self.name))
+			for i, el in enumerate(self.options):
+				sys.stderr.write('\t[{}] {}\n'.format(i, el.name))
+			choice = err_input('Please enter the index of your choice [0]: ')
+			try:
+				choice = int(choice)
+			except ValueError:
+				choice = 0
+			choices.append(choice)
+			
+			more = err_input('Select another reference? (y/[n]): ')
+			if 'y' not in more.lower():
+				select_more_refs = False
+				
+		return { self.options[choice].name : self.options[choice].path for choice in choices}
+
+	
 class UserInput( Resolvable):
 	def __init__(self, prompt, default, type=str):
 		super(UserInput, self).__init__()
@@ -128,7 +163,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	conf = ConfBuilder(use_defaults)
 
 	# global opts
-        conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', './'))
+	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', './'))
 	conf.add_global_field('PAIRED_END', str(pairs))
 	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', './'))
 	if not pairs:
@@ -162,12 +197,12 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	conf.add_global_field('EMAIL', UserInput('Email to send progress reports to', None))
 	conf.add_global_field('JOB_NAME_PREFIX', UserInput('Prefix for job names', 'meta_ultra_pipeline_'))
 	# end global opts
-        
+	
 	# shortbred
 	shortbred = conf.add_tool('SHORTBRED')
 	shortbred.add_field('EXT', '.shortbred.csv')
 	shortbred.add_field('EXC', 'shortbred_quantify.py')
-	shortbred.add_field('DB', RefChoice('ShortBred DB',get_references(tool='shortbred'))),
+	shortbred.add_field('DBS', MultiRefChoice('ShortBred DBs',get_references(tool='shortbred'))),
 	shortbred.add_field('THREADS', UserInput('How many threads would you like for shortbred', conf.get_global_field('THREADS'), type=int))
 	shortbred.add_field('TIME', UserInput('How many hours does shortbred need', 1, type=int))
 	shortbred.add_field('RAM', UserInput('How many GB of RAM does shortbred need', 5, type=int))
@@ -181,59 +216,40 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	metaphlan2.add_field('TIME', UserInput('How many hours does metaphlan2 need', 1, type=int))
 	metaphlan2.add_field('RAM', UserInput('How many GB of RAM does metaphlan2 need', 5, type=int))
 
-        # panphlan
-        panphlan = conf.add_tool('PANPHLAN')
-        panphlan.add_field('EXT', '.panphlan.csv')
-        panphlan.add_field('EXC', 'panphlan_map.py')
-        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
-        
-        # microbe census
-        micCensus = conf.add_tool('MICROBE_CENSUS')
-        micCensus.add_field('EXT', '.mic_census.txt')
-        micCensus.add_field('EXC', 'run_microbe_census.py')
-        micCensus.add_field('THREADS', UserInput('How many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
-        micCensus.add_field('TIME', UserInput('How many hours does MicrobeCensus need', 1, type=int))
-        micCensus.add_field('RAM', UserInput('How many GB of RAM does MicrobeCensus need', 10, type=int))
-        
-        # kraken
-        kraken = conf.add_tool('KRAKEN')
-        kraken.add_field('EXT', '.kraken.csv')
-        kraken.add_field('EXC', 'kraken')
+	# panphlan
+	panphlan = conf.add_tool('PANPHLAN')
+	panphlan.add_field('EXT', '.panphlan.csv')
+	panphlan.add_field('EXC', 'panphlan_map.py')
+	panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+	panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+	panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+	
+	# microbe census
+	micCensus = conf.add_tool('MICROBE_CENSUS')
+	micCensus.add_field('EXT', '.mic_census.txt')
+	micCensus.add_field('EXC', 'run_microbe_census.py')
+	micCensus.add_field('THREADS', UserInput('How many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
+	micCensus.add_field('TIME', UserInput('How many hours does MicrobeCensus need', 1, type=int))
+	micCensus.add_field('RAM', UserInput('How many GB of RAM does MicrobeCensus need', 10, type=int))
+	
+	# kraken
+	kraken = conf.add_tool('KRAKEN')
+	kraken.add_field('EXT', '.kraken.csv')
+	kraken.add_field('EXC', 'kraken')
 	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
-        kraken.add_field('THREADS', UserInput('How many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
-        kraken.add_field('TIME', UserInput('How many hours does kraken need', 1, type=int))
-        kraken.add_field('RAM', UserInput('How many GB of RAM does kraken need', 10, type=int))
+	kraken.add_field('THREADS', UserInput('How many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
+	kraken.add_field('TIME', UserInput('How many hours does kraken need', 1, type=int))
+	kraken.add_field('RAM', UserInput('How many GB of RAM does kraken need', 10, type=int))
 
-        # clark
-        clark = conf.add_tool('CLARK')
-        clark.add_field('EXT', '.panphlan.csv')
-        clark.add_field('EXC', 'panphlan_map.py')
-        clark.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-        clark.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-        clark.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
+	# clark
+	clark = conf.add_tool('CLARK')
+	clark.add_field('EXT', '.panphlan.csv')
+	clark.add_field('EXC', 'panphlan_map.py')
+	clark.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
+	clark.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
+	clark.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
 
-        '''
-        # humann2
-        humann2 = conf.add_tool('HUMANN2')
-        panphlan.add_field('EXT', '.panphlan.csv')
-        panphlan.add_field('EXC', 'panphlan_map.py')
-        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
-        '''
-
-        '''
-        # ancestry mapper
-        humann2 = conf.add_tool('HUMANN2')
-        panphlan.add_field('EXT', '.panphlan.csv')
-        panphlan.add_field('EXC', 'panphlan_map.py')
-        panphlan.add_field('THREADS', UserInput('How many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-        panphlan.add_field('TIME', UserInput('How many hours does panphlan need', 1, type=int))
-        panphlan.add_field('RAM', UserInput('How many GB of RAM does panphlan need', 10, type=int))
-        '''
-        
+	
 	return conf.to_dict(use_defaults=use_defaults)
 	
 '''
