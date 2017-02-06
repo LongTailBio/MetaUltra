@@ -107,25 +107,46 @@ rule kraken_single:
 		'{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
 		'--paired --preload --db {params.db} {input.f1} {input.f2} > {output.main}'
 
-'''
+
+
+                
 # PanPhlAn
-rule panphlan_map_single:
+
+rule panphlan_make_bam:
 	input:
 		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
 		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
-		db = config['PANPHLAN']['DB_DIR'] + '{species}'
+	        bt2_index = config['PANPHLAN']['DB_DIR'] + '{species}'
+	output:
+		main = temp(config['OUTPUT_DIR']+'{sample}.{species}.bt2.bam')
+	threads: int( config['PANPHLAN']['THREADS'])
+	params:
+                job_name=config['JOB_NAME_PREFIX'] + 'panphlan_make_bam',
+	        bt2 = config['BOWTIE2'],
+                samtools = config['SAMTOOLS']
+	resources:
+		time=int(config['PANPHLAN']['BT2_TIME']),
+		n_gb_ram=int(config['PANPHLAN']['BT2_RAM'])
+	shell:
+		'{params.bt2} --threads {threads} -x {input.bt2_index} -1 {input.f1} -2 {input.f2} | '
+                '{params.samtools} view -F 4 -b > {output.main} '
+
+
+rule panphlan_map_single:
+	input:
+                bam = config['OUTPUT_DIR']+'{sample}.{species}.bt2.bam'
 	output:
 		main = config['OUTPUT_DIR']+'{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
 	threads: int( config['PANPHLAN']['THREADS'])
 	params:
-		p_map = config['PANPHLAN']['EXC']
+		job_name=config['JOB_NAME_PREFIX'] + 'panphlan_map_single',
+		p_map = config['PANPHLAN']['EXC'],
+                clade = '{species}'
 	resources:
 		time=int(config['PANPHLAN']['TIME']),
 		n_gb_ram=int(config['PANPHLAN']['RAM'])
 	shell:
-		'{params.p_map} -p {threads} -m {resources.n_gb_ram} -c {input.db} '
-		'-i {input.f1},{input.f2} -o {output.main}'
-'''
+		'{params.p_map} -p {threads} -c {params.clade} -f bam -o {output.main}'
 
 # MicrobeCensus
 rule microbe_census_single:
@@ -189,12 +210,39 @@ rule clark_all:
 		'{params.clark_classify} -P {input.s1} {input.s2} -R {input.r}'
 	
 # HUMAnN2
-'''
-rule humann_blastx:
+
+rule panp_make_bam:
 	input:
-	output: '{sample}.humann.blasttab.gz'
+		f1 = config['SAMPLE_DIR'] + '{sample}' + config['READ_1_EXT'],
+		f2 = config['SAMPLE_DIR'] + '{sample}' + config['READ_2_EXT'],
+	        bt2_index = config['PANPHLAN']['DB_DIR'] + '{species}'
+	output:
+		main = temp(config['OUTPUT_DIR']+'{sample}.{species}.bt2.bam')
+	threads: int( config['PANPHLAN']['THREADS'])
 	params:
-	db=config['HUMANN']['DB']
+		bt2 = config['BOWTIE2'],
+                samtools = config['SAMTOOLS'],
+                job_name=config['JOB_NAME_PREFIX'] + 'humann2_make_blastm8'
+	resources:
+		time=int(config['PANPHLAN']['BT2_TIME']),
+		n_gb_ram=int(config['PANPHLAN']['BT2_RAM'])
 	shell:
-	'blastx | gzip > {output}'
-'''
+		'{params.bt2} --threads {threads} -x {input.bt2_index} -1 {input.f1} -2 {input.f2} | '
+                '{params.samtools} view -F 4 -b > {output.main} '
+
+
+rule panphlan_map_single:
+	input:
+                bam = config['OUTPUT_DIR']+'{sample}.{species}.bt2.bam'
+	output:
+		main = config['OUTPUT_DIR']+'{sample}.{species}' + config['PANPHLAN']['MAP_EXT']
+	threads: int( config['PANPHLAN']['THREADS'])
+	params:
+		p_map = config['PANPHLAN']['EXC'],
+                clade = '{species}',
+                job_name=config['JOB_NAME_PREFIX'] + 'humann2_single'
+	resources:
+		time=int(config['PANPHLAN']['TIME']),
+		n_gb_ram=int(config['PANPHLAN']['RAM'])
+	shell:
+		'{params.p_map} -p {threads} -c {params.clade} -f bam -o {output.main}'
