@@ -2,13 +2,29 @@
 import subprocess as sp
 import meta_ultra.config as config
 import sys
+import meta_ultra.conf_builder as ConfBuilder
+from json import dumps as jdumps
+from tempfile import NamedTemporaryFile
 
-def run(conf,njobs=1,dry_run=False,unlock=False,rerun=False):
-    
+def run(confName,
+        pairs=False,
+        minReadLen=0,
+        maxReadLen=250,
+        njobs=1,
+        dry_run=False,
+        unlock=False,
+        rerun=False):
+
+    conf = ConfBuilder.add_samples_to_conf(confName,
+                                           pairs=pairs,
+                                           minReadLen=minReadLen,
+                                           maxReadLen=maxReadLen)
+    confFile = NamedTemporaryFile()
+    confFile.write(jdumps(conf))
     cmd = 'snakemake --snakefile {snkf} --jobs {njobs} --configfile {conf} --cluster {cluster_wrapper} -k --printshellcmds'
     cmd = cmd.format(snkf=config.snake_file,
                      njobs=njobs,
-                     conf=conf,
+                     conf=confFile.name,
                      cluster_wrapper=config.cluster_wrapper
                      )
     if dry_run:

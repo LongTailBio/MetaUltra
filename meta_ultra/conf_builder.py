@@ -7,6 +7,15 @@ import json
 import os
 from tinydb import TinyDB, Query
 
+db = TinyDB(config.db_file)
+conf_tbl = db.table(config.db_conf_table)
+
+################################################################################
+#
+# User Input Classes
+#
+################################################################################
+
 class Resolvable:
 	def __init__(self):
 		self.resolved = False
@@ -135,9 +144,11 @@ class UserInput( Resolvable):
 		
 		return str(inp) # We want to treat defaults that aren't strings nicely
 
-
-
-	
+################################################################################
+#
+# Data Classes (Not as abstracted as it maybe should be)
+#
+################################################################################
 
 class ConfBuilder:
 	def __init__(self, use_defaults):
@@ -173,6 +184,10 @@ class ConfBuilder:
 	def get_global_field(self,key):
 		return self.global_fields[key]
 
+        def set_global_field(self,key,val):
+                # someday this might not do the same thing as add_global_field
+                self.global_fields[key] = val
+
 class ToolBuilder:
 	def __init__(self,tool_name, use_defaults):
 		self.name = tool_name
@@ -192,57 +207,81 @@ class ToolBuilder:
 	def to_dict(self, use_defaults=False):
 		return self.fields
 
-def build_conf_with_samples(,pairs=False,use_defaults=False):
-        new_conf = ConfBuilder(use_defaults) 
-        conf.add_global_field('PAIRED_END', str(pairs))
-        conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/results/'))
-	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', os.getcwd() + '/'))
-	if not pairs:
-		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '.fastq.gz'))
-		samples = [sample.split('/')[-1] for sample in samples]
-		samples = [sample.split(conf.get_global_field('READ_1_EXT'))[0] for sample in samples]
-		samples = {sample:{'1' : sample} for sample in samples}
-		conf.add_global_field('SAMPLES', samples)
-	
-	else:
-		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '_1.fastq.gz'))
-		conf.add_global_field('READ_2_EXT', UserInput('Please give the suffix for reverse read files', '_2.fastq.gz'))
-		samplePairs = {}
-		for sample in samples:
-			forward_file = True
-			sample = sample.split('/')[-1]
-			sampleid = sample.split(conf.get_global_field('READ_1_EXT'))[0]
-			if sampleid == sample: # dealing with a reverse read file
-				forward_file = False
-				sampleid = sample.split(conf.get_global_field('READ_2_EXT'))[0]
+################################################################################
+#
+# Factory Functions
+#
+################################################################################
+        
+def add_samples_to_conf(confName,
+                        pairs=False,
+                        minReadLen=0,
+                        maxReadLen=250,
+                        use_defaults=False):
+        finalConf = conf_tbl.get(where('name') == confName)
+        if not finalConf:
+                msg = 'No conf with name {} found. Exiting.\n'.format(confName)
+                sys.stdout.write(msg)
+                sys.exit(1)
+        finalConf = finalConf['conf']
+        
+        newConf = ConfBuilder(use_defaults) 
+        newConf.add_global_field('PAIRED_END', str(pairs))
+        newConf.add_global_field('OUTPUT_DIR',
+                              UserInput('Give the directory where output files '+
+                                        'should go. All file paths will be '+
+                                        'interpreted relative to the MUP_ROOT '+
+                                        'enviroment variable','results/'))
+        outDir = conf.get_global_field('OUTPUT_DIR'):
+        if not outDir.startswith(config.mup_root):
+                if outDir[0] != '/':
+                        outDir = '/' + outDir
+                outDir = config.mup_root + outDir
+                conf.set_global_field('OUTPUT_DIR',outDir)
+        seq_data_recs = SampleManager.get_seq_data(paired=pairs,
+                                                   lenMax=maxReadLen,
+                                                   lenMin=minReadLen)
+        samples = {}
+        for seq_data in seq_data_recs:
+                samples[seq_data.sampleName] = {}
+                samples[seq_data.sampleName]['1'] = seq_data.reads1
+                if pairs:
+                        samples[seq_data.sampleName]['2'] = seq_data.reads2
+        newConf.add_global_field('SAMPLES',samples)
 
-			if sampleid not in samplePairs:
-				samplePairs[sampleid] = {}
-			if forward_file:
-				samplePairs[sampleid]['1'] = sample
-			else:
-				samplePairs[sampleid]['2'] = sample
+        for k, v in newConf.to_dict():
+                assert k not in finalConf
+                finalConf[k] = v
+        return finalConf 
 
-        conf.add_global_field('SAMPLES', samplePairs)
-
-
+        
+################################################################################
                 
 def build_and_save_new_conf(name, use_defaults=False):
-        db = TinyDB(config.db_file)
-        conf_tbl = db.table(config.db_conf_table)
-        res = conf_tbl.search(where('name') == name)
-        if res:
-                sys.stderr.write('Conf with name {} already exists. Exiting.\n'.format(name))
+        rec = conf_tbl.get(where('name') == name)
+        if rec:
+                msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
+                sys.stderr.write(msg)
                 sys.exit(1)
                 
 	conf = ConfBuilder(use_defaults)
 
 	# global opts	
-	conf.add_global_field('TMP_DIR', UserInput('Please select a temporary directory', '/tmp'))
-	conf.add_global_field('THREADS', UserInput('How many threads would you like (you will still be able to run multiple jobs at once)', 1, type=int))
-	conf.add_global_field('EMAIL', UserInput('Email to send progress reports to', None))
-	conf.add_global_field('JOB_NAME_PREFIX', UserInput('Prefix for job names', 'meta_ultra_pipeline_'))
-	# end global opts
+	conf.add_global_field('TMP_DIR',
+                              UserInput('Please select a temporary directory',
+                                        '/tmp'))
+	conf.add_global_field('THREADS',
+                              UserInput('How many threads would you like (you '+
+                                        'will still be able to run multiple '+
+                                        'jobs at once)',
+                                        1,
+                                        type=int))
+	conf.add_global_field('EMAIL',
+                              UserInput('Email to send progress reports to',
+                                        None))
+	conf.add_global_field('JOB_NAME_PREFIX',
+                              UserInput('Prefix for job names',
+                                        'MUP_'))
 
         # Utility Tools
         conf.add_tool('BOWTIE2')
@@ -252,46 +291,107 @@ def build_and_save_new_conf(name, use_defaults=False):
 	# shortbred
 	shortbred = conf.add_tool('SHORTBRED')
 	shortbred.add_field('EXT', '.shortbred.csv')
-	shortbred.add_field('DBS', MultiRefChoice('ShortBred DBs',get_references(tool='shortbred'))),
-	shortbred.add_field('THREADS', UserInput('\tHow many threads would you like for shortbred', conf.get_global_field('THREADS'), type=int))
-	shortbred.add_field('TIME', UserInput('\tHow many hours does shortbred need', 1, type=int))
-	shortbred.add_field('RAM', UserInput('\tHow many GB of RAM does shortbred need per thread', 5, type=int))
+	shortbred.add_field('DBS',
+                            MultiRefChoice('ShortBred DBs',
+                                           get_references(tool='shortbred'))),
+	shortbred.add_field('THREADS',
+                            UserInput('\tHow many threads would you like for shortbred',
+                                      conf.get_global_field('THREADS'),
+                                      type=int))
+	shortbred.add_field('TIME',
+                            UserInput('\tHow many hours does shortbred need',
+                                      1,
+                                      type=int))
+	shortbred.add_field('RAM',
+                            UserInput('\tHow many GB of RAM does shortbred need per thread',
+                                      5,
+                                      type=int))
 
+
+        
 	# metaphlan2
 	metaphlan2 = conf.add_tool('METAPHLAN2')
 	metaphlan2.add_field('EXT', '.metaphlan2.txt')
-	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',get_references(tool='metaphlan2'))),
-	metaphlan2.add_field('THREADS', UserInput('\tHow many threads would you like for metaphlan2', conf.get_global_field('THREADS'), type=int))
-	metaphlan2.add_field('TIME', UserInput('\tHow many hours does metaphlan2 need', 1, type=int))
-	metaphlan2.add_field('RAM', UserInput('\tHow many GB of RAM does metaphlan2 need per thread', 5, type=int))
+	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',
+                                             get_references(tool='metaphlan2'))),
+	metaphlan2.add_field('THREADS',
+                             UserInput('\tHow many threads would you like for metaphlan2',
+                                       conf.get_global_field('THREADS'), type=int))
+	metaphlan2.add_field('TIME',
+                             UserInput('\tHow many hours does metaphlan2 need',
+                                       1,
+                                       type=int))
+	metaphlan2.add_field('RAM',
+                             UserInput('\tHow many GB of RAM does metaphlan2 need per thread',
+                                       5,
+                                       type=int))
 
 	# panphlan
 	panphlan = conf.add_tool('PANPHLAN')
 	panphlan.add_field('EXT', '.panphlan.csv')
-	panphlan.add_field('DB_DIR', UserInput('\tWhere are the panphaln dbs located', 'panphlan_db'))
-	panphlan.add_field('THREADS', UserInput('\tHow many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
-	panphlan.add_field('BT2_TIME', UserInput('\tHow many hours does bowtie2 (as part of panphlan) need', 1, type=int))
-	panphlan.add_field('TIME', UserInput('\tHow many hours does panphlan need', 1, type=int))
-	panphlan.add_field('BT2_RAM', UserInput('\tHow many GB of RAM does bowtie2 (as part of panphlan) need per thread', 10, type=int))
-	panphlan.add_field('RAM', UserInput('\tHow many GB of RAM does panphlan need per thread', 10, type=int))
-	
+	panphlan.add_field('DB_DIR',
+                           UserInput('\tWhere are the panphaln dbs located',
+                                     'panphlan_db'))
+	panphlan.add_field('THREADS',
+                           UserInput('\tHow many threads would you like for panphlan',
+                                     conf.get_global_field('THREADS'), type=int))
+	panphlan.add_field('BT2_TIME',
+                           UserInput('\tHow many hours does bowtie2 (as part of panphlan) need',
+                                     1,
+                                     type=int))
+	panphlan.add_field('TIME',
+                           UserInput('\tHow many hours does panphlan need',
+                                     1,
+                                     type=int))
+	panphlan.add_field('BT2_RAM',
+                           UserInput('\tHow many GB of RAM does bowtie2 (as part of panphlan) need per thread',
+                                     10,
+                                     type=int))
+	panphlan.add_field('RAM',
+                           UserInput('\tHow many GB of RAM does panphlan need per thread',
+                                     10,
+                                     type=int))
+
+
 	# microbe census
 	micCensus = conf.add_tool('MICROBE_CENSUS')
 	micCensus.add_field('EXT', '.mic_census.txt')
-	micCensus.add_field('THREADS', UserInput('\tHow many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
-	micCensus.add_field('TIME', UserInput('\tHow many hours does MicrobeCensus need', 1, type=int))
-	micCensus.add_field('RAM', UserInput('\tHow many GB of RAM does MicrobeCensus need per thread', 10, type=int))
+	micCensus.add_field('THREADS',
+                            UserInput('\tHow many threads would you like for MicrobeCensus',
+                                      conf.get_global_field('THREADS'),
+                                      type=int))
+	micCensus.add_field('TIME',
+                            UserInput('\tHow many hours does MicrobeCensus need',
+                                      1,
+                                      type=int))
+	micCensus.add_field('RAM',
+                            UserInput('\tHow many GB of RAM does MicrobeCensus need per thread',
+                                      10,
+                                      type=int))
 	
 	# kraken
 	kraken = conf.add_tool('KRAKEN')
 	kraken.add_field('RAW_EXT', '.raw_kraken.csv')
 	kraken.add_field('MPA_EXT', '.mpa_kraken.csv')
-	kraken.add_field('MPA_EXC', UserInput('\tExceutable for kraken-mpa-report', 'kraken-mpa-report'))
-	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
-	kraken.add_field('THREADS', UserInput('\tHow many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
-	kraken.add_field('TIME', UserInput('\tHow many hours does kraken need', 1, type=int))
+	kraken.add_field('MPA_EXC',
+                         UserInput('\tExceutable for kraken-mpa-report',
+                                   'kraken-mpa-report'))
+	kraken.add_field('DB',
+                         RefChoice('Kraken DB',
+                                   get_references(tool='kraken'))),
+	kraken.add_field('THREADS',
+                         UserInput('\tHow many threads would you like for kraken',
+                                   conf.get_global_field('THREADS'),
+                                   type=int))
+	kraken.add_field('TIME',
+                         UserInput('\tHow many hours does kraken need',
+                                   1,
+                                   type=int))
 	kraken.add_field('MPA_TIME', '1')
-	kraken.add_field('RAM', UserInput('\tHow many GB of RAM does kraken need per thread', 10, type=int))
+	kraken.add_field('RAM',
+                         UserInput('\tHow many GB of RAM does kraken need per thread',
+                                   10,
+                                   type=int))
 	kraken.add_field('MPA_RAM', '1')
 
 	'''
@@ -305,21 +405,52 @@ def build_and_save_new_conf(name, use_defaults=False):
 
 	# knead data
 	kneadData = conf.add_tool('KNEADDATA')
-	kneadData.add_field('DB', RefChoice('KneadData DB',get_references(tool='kneaddata'))),
-	kneadData.add_field('THREADS', UserInput('\tHow many threads would you like for KneadData', conf.get_global_field('THREADS'), type=int))
-	kneadData.add_field('TIME', UserInput('\tHow many hours does KneadData need', 1, type=int))
-	kneadData.add_field('RAM', UserInput('\tHow many GB of RAM does KneadData need per thread', 10, type=int))
+	kneadData.add_field('DB',
+                            RefChoice('KneadData DB',
+                                      get_references(tool='kneaddata'))),
+	kneadData.add_field('THREADS',
+                            UserInput('\tHow many threads would you like for KneadData',
+                                      conf.get_global_field('THREADS'),
+                                      type=int))
+	kneadData.add_field('TIME',
+                            UserInput('\tHow many hours does KneadData need',
+                                      1,
+                                      type=int))
+	kneadData.add_field('RAM',
+                            UserInput('\tHow many GB of RAM does KneadData need per thread',
+                                      10,
+                                      type=int))
 
 
 	# humann2
 	humann2 = conf.add_tool('HUMANN2')
-	humann2.add_field('DB', RefChoice('Humann2 DB',get_references(tool='humann2'))),
-	humann2.add_field('DMND_TIME', UserInput('\tHow many hours does diamond (as a part of Humann2) need', 5, type=int))
-	humann2.add_field('DMND_THREADS', UserInput('\tHow many threads would you like for diamond (as part of HumanN2)', 2*conf.get_global_field('THREADS'), type=int))
-	humann2.add_field('DMND_RAM', UserInput('\tHow many GB of RAM does diamond (as part of Humann2) need per thread', 10, type=int))
-	humann2.add_field('THREADS', UserInput('\tHow many threads would you like for HumanN2', conf.get_global_field('THREADS'), type=int))
-	humann2.add_field('TIME', UserInput('\tHow many hours does Humann2 need', 1, type=int))
-	humann2.add_field('RAM', UserInput('\tHow many GB of RAM does Humann2 need per thread', 10, type=int))
+	humann2.add_field('DB',
+                          RefChoice('Humann2 DB',
+                                    get_references(tool='humann2'))),
+	humann2.add_field('DMND_TIME',
+                          UserInput('\tHow many hours does diamond (as a part of Humann2) need',
+                                    5,
+                                    type=int))
+	humann2.add_field('DMND_THREADS',
+                          UserInput('\tHow many threads would you like for diamond (as part of HumanN2)',
+                                    2*conf.get_global_field('THREADS'),
+                                    type=int))
+	humann2.add_field('DMND_RAM',
+                          UserInput('\tHow many GB of RAM does diamond (as part of Humann2) need per thread',
+                                    10,
+                                    type=int))
+	humann2.add_field('THREADS',
+                          UserInput('\tHow many threads would you like for HumanN2',
+                                    conf.get_global_field('THREADS'),
+                                    type=int))
+        humann2.add_field('TIME',
+                          UserInput('\tHow many hours does Humann2 need',
+                                    1,
+                                    type=int))
+	humann2.add_field('RAM',
+                          UserInput('\tHow many GB of RAM does Humann2 need per thread',
+                                    10,
+                                    type=int))
 	
 	# count classified reads
 	countClass = conf.add_tool('COUNT_CLASSIFIED')
@@ -333,4 +464,4 @@ def build_and_save_new_conf(name, use_defaults=False):
                 'conf': conf_dict
                 })
 	
-
+################################################################################

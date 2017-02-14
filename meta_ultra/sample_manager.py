@@ -4,20 +4,26 @@ from meta_utlra.utils import *
 from os.path import basename
 
 db = TinyDB(config.db_file)
-sampleTbl = dbtable(config.db_sample_table)
-seqDataTbl = dbtable(config.db_seq_data_table)
-seqRunTbl = dbtable(config.db_seq_run_table)
+sampleTbl = db.table(config.db_sample_table)
+seqDataTbl = db.table(config.db_seq_data_table)
+seqRunTbl = db.table(config.db_seq_run_table)
 
 def getOrNone(key,dict):
     try:
         return dict[key]
     except KeyError:
         return None
-    
+
+################################################################################
+#
+# Classes
+#
+################################################################################
+
 class SeqData:
 
     def __init__(self,**kwargs):
-        self.name = kwargs['name']
+        self._name = kwargs['name']
         self.sampleId = kwargs['sample_id']
         self.projectName = kwargs['project_name']
         self.paired = kwargs['paired']
@@ -43,49 +49,78 @@ class SeqData:
             out['ave_gap_length'] = self.aveGapLen
         return out
 
-    def name(self):
-        return self.name
+    def exists(self):
+        return seqDataTbl.get(where('name') == self.name())
 
+    def eid(self):
+        if not self.exists():
+            return None
+        rec = self._dbget()
+        return rec.eid
+
+    def name(self):
+        return self._name
+
+    def _dbget(self):
+        rec = seqDataTbl.get(where('name') == self.name())
+        return rec
+    
     def save(self,modify=False):
-        rec = seqDataTbl.get(where('sample_id') == self.sampleId and where('name') == self.projectName)
+        rec = self._dbget()
         if rec and not modify:
             raise RecordExistsError()
         elif modify:
-            seqDataTbl.update(self.to_dict(), eids=[rec.eid])
+            return seqDataTbl.update(self.to_dict(), eids=[rec.eid])
         else:
-            seqDataTbl.insert(self.to_dict())
-    
+            return seqDataTbl.insert(self.to_dict())
+
+################################################################################
     
 class SequencingRun:
-    def __init__(self,type):
-        self.type = type
+    def __init__(self,**kwargs):
+        self._machineType = kwargs['machine_type']
 
-    def type(self):
-        return self.type
+    def machineType(self):
+        return self._machineType
 
     def to_dict(self):
         out = {
-            'machine_type':self.type()
+            'machine_type':self.machineType()
             }
         return out
 
+    def exists(self):
+        return seqRunTbl.contains(where('machine_type') == self.machineType())
+
+    def _dbget(self):
+        rec = seqRunTbl.get(where('machine_type') == self.machineType())
+        return rec
+    
+    def eid(self):
+        if not self.exists():
+            return None
+        rec = self._dbget()
+        return rec.eid
+    
     def save(self, modify=False):
-        rec = seqRunTbl.get(where('machine_type') == self.sampleId)
+        rec = self._dbget()
         if rec and not modify:
             raise RecordExistsError()
         elif modify:
-            seqRunTbl.update(self.to_dict(), eids=[rec.eid])
+            return seqRunTbl.update(self.to_dict(), eids=[rec.eid])
         else:
-            seqRunTbl.insert(self.to_dict())
+            return seqRunTbl.insert(self.to_dict())
 
+################################################################################
+        
 class Sample:
-    def __init__(self,sampleId, projectName, metadata=None):
-        self.sampleId = sampleId
-        self.projectName = projectName
-        self.metadata = metadata
+    def __init__(self,**kwargs):
+        self._sampleId = kwargs['sample_id']
+        self.projectName = kwargs['project_name']
+        self.metadata = getOrNone('metadata',kwargs)
 
     def sampleId(self):
-        return self.sampleId
+        return self._sampleId
 
     def to_dict(self):
         out = {
@@ -96,38 +131,42 @@ class Sample:
             out['metadata'] = self.metadata
         return out
 
+    def _dbget(self):
+        rec = sampleTbl.get((where('sample_id') == self.sampleId) &
+                            (where('project_name') == self.projectName))
+        return rec
+    
     def save(self,modify=False):
-        rec = sampleTbl.get(where('sample_id') == self.sampleId and where('project_name') == self.projectName)
-        if len(rec) > 0 and not modify:
+        rec = self._dbget()
+        if rec and not modify:
             raise RecordExistsError()
         elif modify:
-            sampleTbl.update(self.to_dict(), eids=[rec.eid])
+            return sampleTbl.update(self.to_dict(), eids=[rec.eid])
         else:
-            sampleTbl.insert(self.to_dict())
+            return sampleTbl.insert(self.to_dict())
         
     def exists(self):
-        return sampleTbl.contains(where('sample_id') == self.sampleId and where('project_name') == self.projectName)
+        return sampleTbl.contains((where('sample_id') == self.sampleId) &
+                                  (where('project_name') == self.projectName))
 
+    def eid(self):
+        if not self.exists():
+            return None
+        rec = self._dbget()
+        return rec.eid
 
-    def __init__(self,**kwargs):
-        self.name = kwargs['name']
-        self.sampleId = kwargs['sample_id']
-        self.projectName = kwargs['project_name']
-        self.paired = kwargs['paired']
-        self.reads_1 = kwargs['reads_1']
-        if self.paired:
-            self.reads_2 = kwargs['reads_2']
-            self.aveGapLen = int(getOrNone('ave_gap_length', kwargs))
-        self.sequencer = getOrNone('sequencer', kwargs)
-        self.aveReadLen = int(getOrNone('ave_read_length', kwargs))
-
+################################################################################
+#
+# Factory Functions
+#
+################################################################################
     
 def add_single_ended_seq_data(projectName,
                         filenames,
                         readSuffix,
                         sequencingRun,
                         aveReadLen,
-                        modify=True,
+                        modify=False,
                         readPrefix=None,
                         sampleNameFunc=lambda x: x,
                         metadataFunc=lambda x: None):
@@ -153,6 +192,7 @@ def add_single_ended_seq_data(projectName,
                            ave_read_len=aveReadLen)
         seqData.save(modify=modify)
 
+################################################################################
 
 def add_paired_ended_seq_data(projectName,
                         filenames,
@@ -161,7 +201,7 @@ def add_paired_ended_seq_data(projectName,
                         sequencingRun,
                         aveReadLen,
                         aveGapLen=None,
-                        modify=True,
+                        modify=False,
                         readPrefix=None,
                         sampleNameFunc=lambda x: x,
                         metadataFunc=lambda x: None):
@@ -202,3 +242,20 @@ def add_paired_ended_seq_data(projectName,
                            ave_read_len=aveReadLen,
                            ave_gap_len=aveGapLen)
         seqData.save(modify=modify)
+
+################################################################################
+#
+# Retrieval Functions
+#
+################################################################################
+
+
+def get_samples_with_seq_data()
+    sampleList = {}
+    for sampleJSON in sampleTbl.all():
+        sample = Sample(**sampleJSON)
+        seqDataRecs = seqDataTbl.search((where('sample_id') == sample.sampleId()) &
+                                        (where('project_name') == sample.projectName))
+
+        sampleList[sample] = seqDataRecs
+    return sampleList
