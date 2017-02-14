@@ -62,12 +62,13 @@ def new_conf(single, defaults, samples):
 @click.option('--unlock/--no-unlock',default=False,help='Unlock the working directory')
 @click.option('--jobs',default=1,help='Number of jobs to run')
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
-def run( dryrun, unlock, jobs, conf):
+@click.option('--rerun-incomplete/--no-rerun-incomplete',default=False,help='Unlock the working directory')
+def run( dryrun, unlock, jobs, conf, rerun_incomplete):
 	if not os.path.isfile(conf):
 		sys.stderr.write('No conf file found. Exiting.\n')
 		sys.exit(1)
         
-	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock)
+	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock,rerun=rerun_incomplete)
 
 @main.command()
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')

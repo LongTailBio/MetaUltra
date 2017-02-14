@@ -196,13 +196,16 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	conf = ConfBuilder(use_defaults)
 
 	# global opts
-	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/'))
+	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/results/'))
 	conf.add_global_field('PAIRED_END', str(pairs))
-        conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', os.getcwd() + '/results/'))
-        conf.add_global_field('BOWTIE2', UserInput('\tPath to bowtie2 executable', 'bowtie2'))
+	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', os.getcwd() + '/'))
+	conf.add_global_field('BOWTIE2', UserInput('\tPath to bowtie2 executable', 'bowtie2'))
 	conf.add_global_field('SAMTOOLS', UserInput('\tPath to samtools executable', 'samtools'))
+	conf.add_global_field('DIAMOND', UserInput('\tPath to diamond executable', 'diamond'))
 	if not pairs:
 		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '.fastq.gz'))
+		samples = [sample.split('/')[-1] for sample in samples]
+		samples = [sample.split(conf.get_global_field('READ_1_EXT'))[0] for sample in samples]
 		samples = {sample:{'1' : sample} for sample in samples}
 		conf.add_global_field('SAMPLES', samples)
 	
@@ -252,6 +255,7 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# panphlan
 	panphlan = conf.add_tool('PANPHLAN')
 	panphlan.add_field('EXT', '.panphlan.csv')
+	panphlan.add_field('DB_DIR', UserInput('\tWhere are the panphaln dbs located', 'panphlan_db'))
 	panphlan.add_field('THREADS', UserInput('\tHow many threads would you like for panphlan', conf.get_global_field('THREADS'), type=int))
 	panphlan.add_field('BT2_TIME', UserInput('\tHow many hours does bowtie2 (as part of panphlan) need', 1, type=int))
 	panphlan.add_field('TIME', UserInput('\tHow many hours does panphlan need', 1, type=int))
@@ -267,37 +271,48 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	
 	# kraken
 	kraken = conf.add_tool('KRAKEN')
-	kraken.add_field('EXT', '.kraken.csv')
+	kraken.add_field('RAW_EXT', '.raw_kraken.csv')
+	kraken.add_field('MPA_EXT', '.mpa_kraken.csv')
+	kraken.add_field('MPA_EXC', UserInput('\tExceutable for kraken-mpa-report', 'kraken-mpa-report'))
 	kraken.add_field('DB', RefChoice('Kraken DB',get_references(tool='kraken'))),
 	kraken.add_field('THREADS', UserInput('\tHow many threads would you like for kraken', conf.get_global_field('THREADS'), type=int))
 	kraken.add_field('TIME', UserInput('\tHow many hours does kraken need', 1, type=int))
+	kraken.add_field('MPA_TIME', '1')
 	kraken.add_field('RAM', UserInput('\tHow many GB of RAM does kraken need per thread', 10, type=int))
+	kraken.add_field('MPA_RAM', '1')
 
-        '''
+	'''
 	# clark
 	clark = conf.add_tool('CLARK')
 	clark.add_field('EXT', '.clark')
 	clark.add_field('THREADS', UserInput('\tHow many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
 	clark.add_field('TIME', UserInput('\tHow many hours does clark need', 1, type=int))
 	clark.add_field('RAM', UserInput('\tHow many GB of RAM does clark need per thread', 10, type=int))
-        '''
+	'''
 
-        # knead data
-	kneadData = conf.add_tool('KNEAD_DATA')
-	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',get_references(tool='metaphlan2'))),
-	micCensus.add_field('THREADS', UserInput('\tHow many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
-	micCensus.add_field('TIME', UserInput('\tHow many hours does MicrobeCensus need', 1, type=int))
-	micCensus.add_field('RAM', UserInput('\tHow many GB of RAM does MicrobeCensus need per thread', 10, type=int))
+	# knead data
+	kneadData = conf.add_tool('KNEADDATA')
+	kneadData.add_field('DB', RefChoice('KneadData DB',get_references(tool='kneaddata'))),
+	kneadData.add_field('THREADS', UserInput('\tHow many threads would you like for KneadData', conf.get_global_field('THREADS'), type=int))
+	kneadData.add_field('TIME', UserInput('\tHow many hours does KneadData need', 1, type=int))
+	kneadData.add_field('RAM', UserInput('\tHow many GB of RAM does KneadData need per thread', 10, type=int))
 
 
-        # humann2
+	# humann2
 	humann2 = conf.add_tool('HUMANN2')
-	micCensus.add_field('EXT', '.mic_census.txt')
-	micCensus.add_field('THREADS', UserInput('\tHow many threads would you like for MicrobeCensus', conf.get_global_field('THREADS'), type=int))
-	micCensus.add_field('TIME', UserInput('\tHow many hours does MicrobeCensus need', 1, type=int))
-	micCensus.add_field('RAM', UserInput('\tHow many GB of RAM does MicrobeCensus need per thread', 10, type=int))
+	humann2.add_field('DB', RefChoice('Humann2 DB',get_references(tool='humann2'))),
+	humann2.add_field('DMND_TIME', UserInput('\tHow many hours does diamond (as a part of Humann2) need', 5, type=int))
+	humann2.add_field('DMND_THREADS', UserInput('\tHow many threads would you like for diamond (as part of HumanN2)', 2*conf.get_global_field('THREADS'), type=int))
+	humann2.add_field('DMND_RAM', UserInput('\tHow many GB of RAM does diamond (as part of Humann2) need per thread', 10, type=int))
+	humann2.add_field('THREADS', UserInput('\tHow many threads would you like for HumanN2', conf.get_global_field('THREADS'), type=int))
+	humann2.add_field('TIME', UserInput('\tHow many hours does Humann2 need', 1, type=int))
+	humann2.add_field('RAM', UserInput('\tHow many GB of RAM does Humann2 need per thread', 10, type=int))
 	
-        
+	# count classified reads
+	countClass = conf.add_tool('COUNT_CLASSIFIED')
+
+	# mash
+	mash = conf.add_tool('MASH')
 	
 	return conf.to_dict(use_defaults=use_defaults)
 	
@@ -317,7 +332,4 @@ def resolve_dict(el, use_defaults=False):
 		return out
 	else:
 		return el.resolve(use_defaults=use_defaults)
-		
-	
-
 '''
