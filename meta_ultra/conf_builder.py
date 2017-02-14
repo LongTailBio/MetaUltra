@@ -5,6 +5,7 @@ from meta_ultra.utils import *
 import sys
 import json
 import os
+from tinydb import TinyDB, Query
 
 class Resolvable:
 	def __init__(self):
@@ -191,17 +192,11 @@ class ToolBuilder:
 	def to_dict(self, use_defaults=False):
 		return self.fields
 
-			
-def build_conf(samples, pairs=False, use_defaults=False):
-	conf = ConfBuilder(use_defaults)
-
-	# global opts
-	conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/results/'))
-	conf.add_global_field('PAIRED_END', str(pairs))
+def build_conf_with_samples(,pairs=False,use_defaults=False):
+        new_conf = ConfBuilder(use_defaults) 
+        conf.add_global_field('PAIRED_END', str(pairs))
+        conf.add_global_field('OUTPUT_DIR', UserInput('Give the directory where output files should go', os.getcwd() + '/results/'))
 	conf.add_global_field('SAMPLE_DIR', UserInput('Please give the directory which contains the read files', os.getcwd() + '/'))
-	conf.add_global_field('BOWTIE2', UserInput('\tPath to bowtie2 executable', 'bowtie2'))
-	conf.add_global_field('SAMTOOLS', UserInput('\tPath to samtools executable', 'samtools'))
-	conf.add_global_field('DIAMOND', UserInput('\tPath to diamond executable', 'diamond'))
 	if not pairs:
 		conf.add_global_field('READ_1_EXT', UserInput('Please give the suffix for forward read files', '.fastq.gz'))
 		samples = [sample.split('/')[-1] for sample in samples]
@@ -227,15 +222,33 @@ def build_conf(samples, pairs=False, use_defaults=False):
 				samplePairs[sampleid]['1'] = sample
 			else:
 				samplePairs[sampleid]['2'] = sample
-				
-		conf.add_global_field('SAMPLES', samplePairs)
 
+        conf.add_global_field('SAMPLES', samplePairs)
+
+
+                
+def build_and_save_new_conf(name, use_defaults=False):
+        db = TinyDB(config.db_file)
+        conf_tbl = db.table(config.db_conf_table)
+        res = conf_tbl.search(where('name') == name)
+        if res:
+                sys.stderr.write('Conf with name {} already exists. Exiting.\n'.format(name))
+                sys.exit(1)
+                
+	conf = ConfBuilder(use_defaults)
+
+	# global opts	
 	conf.add_global_field('TMP_DIR', UserInput('Please select a temporary directory', '/tmp'))
 	conf.add_global_field('THREADS', UserInput('How many threads would you like (you will still be able to run multiple jobs at once)', 1, type=int))
 	conf.add_global_field('EMAIL', UserInput('Email to send progress reports to', None))
 	conf.add_global_field('JOB_NAME_PREFIX', UserInput('Prefix for job names', 'meta_ultra_pipeline_'))
 	# end global opts
-	
+
+        # Utility Tools
+        conf.add_tool('BOWTIE2')
+	conf.add_tool('SAMTOOLS')
+	conf.add_tool('DIAMOND')
+        
 	# shortbred
 	shortbred = conf.add_tool('SHORTBRED')
 	shortbred.add_field('EXT', '.shortbred.csv')
@@ -314,22 +327,10 @@ def build_conf(samples, pairs=False, use_defaults=False):
 	# mash
 	mash = conf.add_tool('MASH')
 	
-	return conf.to_dict(use_defaults=use_defaults)
+	conf_dict = conf.to_dict(use_defaults=use_defaults)
+        conf_tbl.insert({
+                'name': name,
+                'conf': conf_dict
+                })
 	
-'''
-def resolve_dict(el, use_defaults=False):
-	if type(el) == str:
-		return el
-	elif type(el) == list:
-		out = []
-		for subel in el:
-			out.append( resolve_dict(subel, use_defaults=use_defaults))
-		return out
-	elif type(el) == dict:
-		out = {}
-		for k, v in el.items():
-			out[resolve_dict(k)] = resolve_dict(v, use_defaults=use_defaults)
-		return out
-	else:
-		return el.resolve(use_defaults=use_defaults)
-'''
+

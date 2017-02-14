@@ -49,12 +49,11 @@ def remove_tool(eid):
 
     
 @main.command()
-@click.option('--single/--pairs', default=False, help='Reads are not pairwise')
+@click.option('--name', help='Conf Name')
 @click.option('--defaults/--no-defaults',default=False,help='Use defaults')
-@click.argument('samples', nargs=-1)
-def new_conf(single, defaults, samples):
+def new_conf(name, defaults):
     pairs = not single
-    myconf = conf_builder.build_conf(samples, pairs=pairs, use_defaults=defaults)
+    myconf = conf_builder.build_and_save_new_conf(name, use_defaults=defaults)
     print( json.dumps(myconf, sort_keys=True, indent=4))
 
 @main.command()
