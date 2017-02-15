@@ -11,6 +11,7 @@ cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
 mup_root = os.environ['MUP_ROOT']
 
 db_file = os.environ['MUP_DB']
+
 db_reference_table = 'reference_table'
 db_tool_table = 'tool_table'
 db_sample_table = 'sample_table'

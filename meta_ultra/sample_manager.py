@@ -1,6 +1,6 @@
-from tinydb import TinyDB, Query
+from tinydb import TinyDB, Query, where
 import meta_ultra.config as config
-from meta_utlra.utils import *
+from meta_ultra.utils import *
 from os.path import basename
 
 db = TinyDB(config.db_file)
@@ -32,7 +32,7 @@ class SeqData:
             self.reads_2 = kwargs['reads_2']
             self.aveGapLen = int(getOrNone('ave_gap_length', kwargs))
         self.sequencingRun = getOrNone('sequencing_run', kwargs)
-        self.aveReadLen = int(getOrNone('ave_read_length', kwargs))
+        self.aveReadLen = int(kwargs['ave_read_length'])
 
     def to_dict(self):
         out = {
@@ -179,17 +179,17 @@ def add_single_ended_seq_data(projectName,
         samplesToFilenames[sample] = filename
 
     for sampleName, filename in samplesToFilenames.items():
-        sample = Sample(sampleName, projectName, metadataFunc(sampleName))
+        sample = Sample(sample_id=sampleName, project_name=projectName, metadata=metadataFunc(sampleName))
         if not sample.exists():
             sample.save()
-        seqDataName='{}|{}|{}'.format(projectName,sampleName,sequencingRun.type())
+        seqDataName='{}|{}|{}'.format(projectName,sampleName,sequencingRun.machineType())
         seqData = SeqData( name=seqDataName,
                            sample_id=sampleName,
                            project_name=projectName,
                            paired=False,
                            reads_1=filename,
-                           sequencer=sequencer,
-                           ave_read_len=aveReadLen)
+                           sequencing_run=sequencingRun,
+                           ave_read_length=aveReadLen)
         seqData.save(modify=modify)
 
 ################################################################################
@@ -228,10 +228,10 @@ def add_paired_ended_seq_data(projectName,
     for sampleName, filenames in samplesToFilenames.items():
         reads1 = filenames['1']
         reads2 = filenames['2']
-        sample = Sample(sampleName, projectName, metadataFunc(sampleName))
+        sample = Sample(sample_id=sampleName, project_name=projectName, metadata=metadataFunc(sampleName))
         if not sample.exists():
             sample.save()
-        seqDataName='{}|{}|{}'.format(projectName,sampleName,sequencingRun.type())
+        seqDataName='{}|{}|{}'.format(projectName,sampleName,sequencingRun.machineType())
         seqData = SeqData( name=seqDataName,
                            sample_id=sampleName,
                            project_name=projectName,
@@ -239,8 +239,8 @@ def add_paired_ended_seq_data(projectName,
                            reads_1=reads1,
                            reads_2=reads2,
                            sequencer=sequencer,
-                           ave_read_len=aveReadLen,
-                           ave_gap_len=aveGapLen)
+                           ave_read_length=aveReadLen,
+                           ave_gap_length=aveGapLen)
         seqData.save(modify=modify)
 
 ################################################################################
@@ -250,7 +250,7 @@ def add_paired_ended_seq_data(projectName,
 ################################################################################
 
 
-def get_samples_with_seq_data()
+def get_samples_with_seq_data():
     sampleList = {}
     for sampleJSON in sampleTbl.all():
         sample = Sample(**sampleJSON)
