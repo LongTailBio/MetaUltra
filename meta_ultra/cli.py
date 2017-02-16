@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import click
-import meta_ultra.refs as refs
-import meta_ultra.tools  as tools
+import meta_ultra.ref_manager as refs
+import meta_ultra.tool_manager  as tools
 from meta_ultra.utils import *
 import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner

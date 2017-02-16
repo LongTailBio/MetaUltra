@@ -1,7 +1,8 @@
 import meta_ultra.config as config
-from meta_ultra.refs import get_references
-from meta_ultra.tools import get_tools
+from meta_ultra.ref_manager import get_references
+from meta_ultra.tool_manager import get_tools
 from meta_ultra.utils import *
+from meta_ultra.tools import *
 import sys
 import json
 import os
