@@ -1,8 +1,8 @@
 import meta_ultra.config as config
-from meta_ultra.ref_manager import get_references
-from meta_ultra.tool_manager import get_tools
+#from meta_ultra.ref_manager import get_references
+#from meta_ultra.tool_manager import get_tools
 from meta_ultra.utils import *
-from meta_ultra.tools import *
+import meta_ultra.tools as tools
 
 import meta_ultra.database as mupdb
 import sys
@@ -159,9 +159,7 @@ class ConfBuilder:
 			inp = err_input('Include {} in this analysis? ([y]|n): '.format(tool_name))
 			if not inp:
 				inp = 'y'
-		if 'n' in inp:
-			self.tools[tool_name] = ToolBuilder(tool_name, use_defaults=True)
-		else:
+		if 'y' in inp:
 			self.tools[tool_name] = ToolBuilder(tool_name, use_defaults=self.use_defaults)
 			self.global_fields['TOOLS_TO_RUN'].append(tool_name)
 			
@@ -185,11 +183,6 @@ class ToolBuilder:
 		self.name = tool_name
 		self.fields = {}
 		self.use_defaults = use_defaults
-
-		toolChoice = ToolChoice(tool_name, get_tools(name=tool_name))
-		tool = toolChoice.resolve(use_defaults=self.use_defaults)
-		self.fields['EXC'] = tool.exc
-		self.fields['VERSION'] = tool.version
 	
 	def add_field(self,key,value):
 		if type(value) not in [str, dict, list]:
@@ -265,27 +258,44 @@ def build_and_save_new_conf(name, use_defaults=False, modify=False):
 		sys.stderr.write(msg)
 		sys.exit(1)
 
-	conf = ConfBuilder(use_defaults)
+	confBldr = ConfBuilder(use_defaults)
 
 	# global opts	
-	conf.add_global_field('NAME', name)
-	conf.add_global_field('TMP_DIR',
+	confBldr.add_global_field('NAME', name)
+	confBldr.add_global_field('TMP_DIR',
 			      UserInput('Please select a temporary directory',
 					'/tmp'))
-	conf.add_global_field('THREADS',
+	confBldr.add_global_field('THREADS',
 			      UserInput('How many threads would you like (you '+
 					'will still be able to run multiple '+
 					'jobs at once)',
 					1,
 					type=int))
-	conf.add_global_field('EMAIL',
+	confBldr.add_global_field('EMAIL',
 			      UserInput('Email to send progress reports to',
 					None))
-	conf.add_global_field('JOB_NAME_PREFIX',
+	confBlder.add_global_field('JOB_NAME_PREFIX',
 			      UserInput('Prefix for job names',
 					'MUP_'))
 
-	# Utility Tools
+        # ToolSets register themselves by adding their class type
+        # to the toolsets list. They then employ a visitor
+        # pattern (ish) to add their own parameters to the conf.
+        for toolsetType in tools.toolsets:
+                toolset = toolsetType.build()
+                toolset.buildConf(confBldr)
+
+	
+	conf_dict = conf.to_dict(use_defaults=use_defaults)
+
+	confRecord = mupdb.Conf({'name': name, 'conf':conf_dict})
+	confRecord.save(modify=modify)
+	
+################################################################################
+
+
+'''
+        # Utility Tools
 	conf.add_tool('BOWTIE2')
 	conf.add_tool('SAMTOOLS')
 	conf.add_tool('DIAMOND')
@@ -396,14 +406,13 @@ def build_and_save_new_conf(name, use_defaults=False, modify=False):
 				   type=int))
 	kraken.add_field('MPA_RAM', '1')
 
-	'''
 	# clark
 	clark = conf.add_tool('CLARK')
 	clark.add_field('EXT', '.clark')
 	clark.add_field('THREADS', UserInput('\tHow many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
 	clark.add_field('TIME', UserInput('\tHow many hours does clark need', 1, type=int))
 	clark.add_field('RAM', UserInput('\tHow many GB of RAM does clark need per thread', 10, type=int))
-	'''
+
 
 	# knead data
 	kneadData = conf.add_tool('KNEADDATA')
@@ -459,10 +468,7 @@ def build_and_save_new_conf(name, use_defaults=False, modify=False):
 
 	# mash
 	mash = conf.add_tool('MASH')
-	
-	conf_dict = conf.to_dict(use_defaults=use_defaults)
 
-	confRecord = mupdb.Conf({'name': name, 'conf':conf_dict})
-	confRecord.save(modify=modify)
-	
-################################################################################
+
+
+'''
