@@ -7,6 +7,7 @@ from meta_ultra.utils import *
 import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
 import meta_ultra.result_manager as result_manager
+import meta_ultra.sample_manager as sample_manager
 import os.path
 import json
 from time import clock
@@ -91,7 +92,7 @@ def samples(project,data):
     for sample in samples:
         print(sample)
         if data:
-            dataRecs = getData(sample)
+            dataRecs = sample_manager.getData(sample)
             for dataRec in dataRecs:
                 print('\t' + str(dataRec))
 

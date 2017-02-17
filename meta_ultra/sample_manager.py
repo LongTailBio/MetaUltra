@@ -108,12 +108,12 @@ def add_paired_ended_seq_data(projectName,
 
 def getSamples(projectName=None):
     if projectName:
-        return Sample.dbTbl().search(where('project_name') == projectName)
+        return Sample.search(where('project_name') == projectName)
     return Sample.all()
 
 def getData(sample):
-    dataRecs = Data.dataTbl().search((where('sample_name') == sample.name))
-    return dataRecs
+    datas = Data.search(where('sample_name') == sample.name)
+    return datas
 
 def get_samples_with_seq_data():
     sampleList = {}

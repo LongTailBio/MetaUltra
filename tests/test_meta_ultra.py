@@ -89,10 +89,18 @@ class Test_meta_ultra(unittest.TestCase):
         seqRun.save()
         SingleEndedSequencingRun( **seqRun.record())
         samples, seqDats = add_single_ended_seq_data('test-project-single',
-                                  filenames,
-                                  '.fastq.gz',
-                                            seqRun,
-                                    101,)
+                                                     filenames,
+                                                     '.fastq.gz',
+                                                     seqRun,
+                                                     101)
+
+        self.assertRaises(RecordExistsError, 
+                     add_single_ended_seq_data,
+                     'test-project-single',
+                     filenames,
+                     '.fastq.gz',
+                     seqRun,
+                     101)
 
         for seqData in seqDats:
             SingleEndedSeqData(**seqData.record())
@@ -102,15 +110,30 @@ class Test_meta_ultra(unittest.TestCase):
     def test_register_sample(self):
         result = registerResult('METAPHLAN2', 'test-project', 'test-sample', 'test-project|test-sample|dat-type', 'test-conf', ['test.mphlan2'])
         self.assertTrue(result.saved())
+        self.assertRaises(RecordExistsError, registerResult,'METAPHLAN2', 'test-project', 'test-sample', 'test-project|test-sample|dat-type', 'test-conf', ['test.mphlan2'])
+
         
-    def test_command_line_interface(self):
+    def test_command_line_interface_main(self):
         runner = CliRunner()
         result = runner.invoke(cli.main)
         assert result.exit_code == 0
         help_result = runner.invoke(cli.main, ['--help'])
         assert help_result.exit_code == 0
 
+    def test_command_line_interface_results(self):
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ['results'])
+        assert result.exit_code == 0
 
+    def test_command_line_interface_samples(self):
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ['samples'])
+        assert result.exit_code == 0
+        dat_result = runner.invoke(cli.main, ['samples','--data'])
+        self.assertEqual( dat_result.exit_code, 0)
+
+        
+'''
 def suite():
     suite = unittest.TestSuite()
     suite.addTest( Test_meta_ultra('test_add_single_ended_seq_data'))
@@ -118,7 +141,7 @@ def suite():
     suite.addTest( Test_meta_ultra('test_save_and_recreate'))
     suite.addTest( Test_meta_ultra('test_command_line_interface'))
     return suite
-
+'''
 
 if __name__ == '__main__':
     unittest.main()
