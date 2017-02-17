@@ -12,7 +12,7 @@ from tinydb import TinyDB, Query
 
 ################################################################################
 #
-# User Input Classes
+# User Input Classes. These classes are also used when building toolchains.
 #
 ################################################################################
 
@@ -21,101 +21,94 @@ class Resolvable:
 		self.resolved = False
 		self.resolved_val = None
 
-	def resolve(self, use_defaults=True):
+	def resolve(self, useDefaults=True, fineControl=False):
 		if self.resolved:
 			return self.resolved_val
-		res = self._resolve( use_defaults=use_defaults)
+		res = self._resolve(useDefaults, fineControl)
 		self.resolved_val = res
 		self.resolved = True
 		return res
 
-class ToolChoice( Resolvable):
-	def __init__(self, name, options):
-		super(ToolChoice, self).__init__()
-		self.name = name
-		self.options = options
+class UserChoice(Resolvable):
+        '''
+        Let a user pick a choice from a set of options.
 
-	def _resolve(self, use_defaults):
-		if len(self.options) == 1:
-			return self.options[0] # return the tool itself
-		if len(self.options) == 0:
-			sys.stderr.write('No entries for tool: {} found. You can register tools with the \'add_tool\' command\n'.format(self.name))
+        On resolution this will return a single element.
+        '''
+        def __init__(self, name, options, new=None, fineControlOnly=False):
+                super(UserChoice, self).__init__()
+                self.name = name
+                self.opts = options
+                self.fineOnly=fineControlOnly
+                self.new = new
+                
+        def _resolve(self, useDefaults, fineControl):
+                if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
+			return self.opts[0]
+		elif len(self.opts) == 0 and not self.new:
+			sys.stderr.write('No options for {} found.\n'.format(self.name))
 			sys.exit(1)
-		if use_defaults:
-			return self.options[0].path
-		
+		        
 		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
-		for i, el in enumerate(self.options):
-			sys.stderr.write('\t\t[{}] {} {}\n'.format(i, el.name, el.version))
+		for i, opt in enumerate(self.opts):
+			sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
+                if self.new:
+                        sys.stderr.write('\t\t[{}] Pick new\n'.format(len(self.opts)))
 		choice = err_input('\tPlease enter the index of your choice [0]: ')
 		try:
 			choice = int(choice)
 		except ValueError:
 			choice = 0
-		
-		return self.options[choice] # return the tool itself. 
 
-	
-class RefChoice( Resolvable):
-	def __init__(self, name, options):
-		super(RefChoice, self).__init__()
+                if choice == len(self.opts):
+                        return self.new()
+
+                sys.stderr.write('Chose: {}\n'.format(self.opts[choice]))
+		return self.opts[choice] 
+
+class UserMultiChoice( Resolvable):
+        '''
+        lets a user select may options from a list
+
+        On resolution this will return a list of options
+        '''
+	def __init__(self, name, options, new=None, fineControlOnly=False):
+		super(UserMultiChoice, self).__init__()
 		self.name = name
-		self.options = options
+		self.opts = options
+                self.fineOnly=fineControlOnly
+                self.new = new
 
-	def _resolve(self, use_defaults):
-		if len(self.options) == 1:
-			return self.options[0].path
-		if len(self.options) == 0:
-			sys.stderr.write('No references for {} found. You can register references with the \'add_reference\' command\n'.format(self.name))
+	def _resolve(self, useDefaults, fineControl):
+                if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
+			return [self.opts[0]]
+		elif len(self.opts) == 0 and not self.new:
+			sys.stderr.write('No options for {} found.\n'.format(self.name))
 			sys.exit(1)
-		if use_defaults:
-			return self.options[0].path
-		
-		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
-		for i, el in enumerate(self.options):
-			sys.stderr.write('\t\t[{}] {}\n'.format(i, el.name))
-		choice = err_input('\tPlease enter the index of your choice [0]: ')
-		try:
-			choice = int(choice)
-		except ValueError:
-			choice = 0
-		
-		return self.options[choice].path
-
-class MultiRefChoice( Resolvable):
-	def __init__(self, name, options):
-		super(MultiRefChoice, self).__init__()
-		self.name = name
-		self.options = options
-
-	def _resolve(self, use_defaults):
-		if len(self.options) == 1:
-			return self.options[0].path
-		if len(self.options) == 0:
-			sys.stderr.write('No references for {} found. You can register references with the \'add_reference\' command\n'.format(self.name))
-			sys.exit(1)
-		if use_defaults:
-			return self.options[0].path
 
 		choices = []
 		select_more_refs = True
 		while select_more_refs:
-			sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
-			for i, el in enumerate(self.options):
-				sys.stderr.write('\t\t[{}] {}\n'.format(i, el.name))
-			choice = err_input('\tPlease enter the index of your choice [0]: ')
-			try:
-				choice = int(choice)
-			except ValueError:
-				choice = 0
-			choices.append(choice)
-			
+		        sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
+		        for i, opt in enumerate(self.opts):
+			        sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
+                        if self.new:
+                                sys.stderr.write('\t\t[{}] Pick new\n'.format( len(self.opts)))
+                        choice = err_input('\tPlease enter the index of your choice [0]: ')
+		        try:
+			        choice = int(choice)
+		        except ValueError:
+			        choice = 0
+                        if choice == len(self.opts):
+                                choices.append( self.new())
+                        else:
+                                choices.append(self.opts[choice])
 			more = err_input('Select another reference? (y/[n]): ')
 			if 'y' not in more.lower():
 				select_more_refs = False
-				
-		return { self.options[choice].name : self.options[choice].path for choice in choices}
 
+		sys.stderr.write('Chose: {}\n'.format(' '.join([str(choice) for choice in choices])))
+		return choices
 	
 class UserInput( Resolvable):
 	def __init__(self, prompt, default, type=str):
@@ -140,13 +133,12 @@ class UserInput( Resolvable):
 				sys.stderr.write("Input must be of type '{}'".format(self.type))
 				inp = None
 				try_again = True
-			
 		
 		return str(inp) # We want to treat defaults that aren't strings nicely
 
 ################################################################################
 #
-# Data Classes (Not as abstracted as it maybe should be)
+# Data Classes 
 #
 ################################################################################
 
@@ -204,6 +196,12 @@ class ToolBuilder:
 			value = value.resolve(use_defaults = self.use_defaults)
 		self.fields[key] = value
 
+        def set_field(self,key,value):
+                self.fields[key] = value
+
+        def get_field(self,key):
+                return self.fields[key]
+        
 	def to_dict(self, use_defaults=False):
 		return self.fields
 

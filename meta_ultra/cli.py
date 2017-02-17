@@ -55,18 +55,17 @@ def remove_tool(eid):
 ####################################################################################################
     
 @main.command()
-@click.option('--name', help='Conf Name')
+@click.option('--name', prompt='NAME', help='Conf Name')
 @click.option('--defaults/--no-defaults',default=False,help='Use defaults')
 def new_conf(name, defaults):
-    pairs = not single
     myconf = conf_builder.build_and_save_new_conf(name, use_defaults=defaults)
-    print( json.dumps(myconf, sort_keys=True, indent=4))
+    print(myconf)
 
 @main.command()
 @click.option('--dryrun/--normal',default=False,help='Print schedule but dont run anything')
 @click.option('--unlock/--no-unlock',default=False,help='Unlock the working directory')
 @click.option('--jobs',default=1,help='Number of jobs to run')
-@click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
+@click.option('--conf',prompt='CONF NAME', help='Conf file, can be generated using \'pmp conf\'')
 @click.option('--rerun-incomplete/--no-rerun-incomplete',default=False,help='Unlock the working directory')
 def run( dryrun, unlock, jobs, conf, rerun_incomplete):
 	if not os.path.isfile(conf):
