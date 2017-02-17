@@ -16,14 +16,15 @@ from tinydb import TinyDB, Query
 ################################################################################
 
 class ConfBuilder:
-	def __init__(self, useDefaults):
+	def __init__(self, useDefaults, fineControl):
 		self.global_fields = {'TOOLS_TO_RUN':[]}
 		self.tools = {}
 		self.useDefaults = useDefaults
+		self.fineControl = fineControl
 
 	def add_global_field(self, key, value):
 		if type(value) not in [str, dict, list]:
-			value = value.resolve(useDefaults=self.useDefaults)
+			value = value.resolve(useDefaults=self.useDefaults, fineControl=self.fineControl)
 		self.global_fields[key] = value
 	
 	def add_tool(self, tool_name):
@@ -33,7 +34,7 @@ class ConfBuilder:
 			if not inp:
 				inp = 'y'
 		if 'y' in inp:
-			self.tools[tool_name] = ToolBuilder(tool_name, useDefaults=self.useDefaults)
+			self.tools[tool_name] = ToolBuilder(tool_name, self.useDefaults, self.fineControl)
 			self.global_fields['TOOLS_TO_RUN'].append(tool_name)
 			
 		return self.tools[tool_name]
@@ -52,14 +53,15 @@ class ConfBuilder:
 		self.global_fields[key] = val
 
 class ToolBuilder:
-	def __init__(self,tool_name, useDefaults):
+	def __init__(self,tool_name, useDefaults, fineControl):
 		self.name = tool_name
 		self.fields = {}
 		self.useDefaults = useDefaults
+		self.fineControl = fineControl
 	
 	def add_field(self,key,value):
 		if type(value) not in [str, dict, list]:
-			value = value.resolve(useDefaults = self.useDefaults)
+			value = value.resolve(useDefaults=self.useDefaults, fineControl=self.fineControl)
 		self.fields[key] = value
 
 	def set_field(self,key,value):
@@ -125,13 +127,13 @@ def add_samples_to_conf(confName,
 	
 ################################################################################
 		
-def build_and_save_new_conf(name, use_defaults=False, modify=False):
+def build_and_save_new_conf(name, useDefaults=False, fineControl=False, modify=False):
 	if mupdb.Conf.exists(name) and not modify:
 		msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
 		sys.stderr.write(msg)
 		sys.exit(1)
 
-	confBldr = ConfBuilder(use_defaults)
+	confBldr = ConfBuilder(useDefaults, fineControl)
 
 	# global opts	
 	confBldr.add_global_field('NAME', name)

@@ -2,6 +2,7 @@ from tinydb import TinyDB, Query, where
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from os.path import basename
+import json
 
 db = TinyDB(config.db_file)
 sampleTbl = db.table(config.db_sample_table)
@@ -308,6 +309,9 @@ class Conf(Record):
             'conf': self.conf
             }
         return out
+
+    def __str__(self):
+        return json.dumps(self.to_dict(), indent=4, sort_keys=True)
     
     @staticmethod
     def dbTbl():

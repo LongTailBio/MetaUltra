@@ -57,8 +57,10 @@ def remove_tool(eid):
 @main.command()
 @click.option('--name', prompt='NAME', help='Conf Name')
 @click.option('--defaults/--no-defaults',default=False,help='Use defaults')
-def new_conf(name, defaults):
-    myconf = conf_builder.build_and_save_new_conf(name, use_defaults=defaults)
+@click.option('--fine-control/--no-fine-control',default=False,help='Enter values for every parameter')
+@click.option('--modify/--no-modify',default=False,help='Modify an existing conf')
+def new_conf(name, defaults, fine_control, modify):
+    myconf = conf_builder.build_and_save_new_conf(name, useDefaults=defaults, fineControl=fine_control, modify=modify)
     print(myconf)
 
 @main.command()
