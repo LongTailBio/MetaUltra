@@ -1,7 +1,6 @@
 import meta_ultra.config as config
-#from meta_ultra.ref_manager import get_references
-#from meta_ultra.tool_manager import get_tools
 from meta_ultra.utils import *
+from meta_ultra.user_input import *
 import meta_ultra.tools as tools
 
 import meta_ultra.database as mupdb
@@ -12,160 +11,34 @@ from tinydb import TinyDB, Query
 
 ################################################################################
 #
-# User Input Classes. These classes are also used when building toolchains.
-#
-################################################################################
-
-class Resolvable:
-	def __init__(self):
-		self.resolved = False
-		self.resolved_val = None
-
-	def resolve(self, useDefaults=True, fineControl=False):
-		if self.resolved:
-			return self.resolved_val
-		res = self._resolve(useDefaults, fineControl)
-		self.resolved_val = res
-		self.resolved = True
-		return res
-
-class UserChoice(Resolvable):
-        '''
-        Let a user pick a choice from a set of options.
-
-        On resolution this will return a single element.
-        '''
-        def __init__(self, name, options, new=None, fineControlOnly=False):
-                super(UserChoice, self).__init__()
-                self.name = name
-                self.opts = options
-                self.fineOnly=fineControlOnly
-                self.new = new
-                
-        def _resolve(self, useDefaults, fineControl):
-                if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
-			return self.opts[0]
-		elif len(self.opts) == 0 and not self.new:
-			sys.stderr.write('No options for {} found.\n'.format(self.name))
-			sys.exit(1)
-		        
-		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
-		for i, opt in enumerate(self.opts):
-			sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
-                if self.new:
-                        sys.stderr.write('\t\t[{}] Pick new\n'.format(len(self.opts)))
-		choice = err_input('\tPlease enter the index of your choice [0]: ')
-		try:
-			choice = int(choice)
-		except ValueError:
-			choice = 0
-
-                if choice == len(self.opts):
-                        return self.new()
-
-                sys.stderr.write('Chose: {}\n'.format(self.opts[choice]))
-		return self.opts[choice] 
-
-class UserMultiChoice( Resolvable):
-        '''
-        lets a user select may options from a list
-
-        On resolution this will return a list of options
-        '''
-	def __init__(self, name, options, new=None, fineControlOnly=False):
-		super(UserMultiChoice, self).__init__()
-		self.name = name
-		self.opts = options
-                self.fineOnly=fineControlOnly
-                self.new = new
-
-	def _resolve(self, useDefaults, fineControl):
-                if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
-			return [self.opts[0]]
-		elif len(self.opts) == 0 and not self.new:
-			sys.stderr.write('No options for {} found.\n'.format(self.name))
-			sys.exit(1)
-
-		choices = []
-		select_more_refs = True
-		while select_more_refs:
-		        sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
-		        for i, opt in enumerate(self.opts):
-			        sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
-                        if self.new:
-                                sys.stderr.write('\t\t[{}] Pick new\n'.format( len(self.opts)))
-                        choice = err_input('\tPlease enter the index of your choice [0]: ')
-		        try:
-			        choice = int(choice)
-		        except ValueError:
-			        choice = 0
-                        if choice == len(self.opts):
-                                choices.append( self.new())
-                        else:
-                                choices.append(self.opts[choice])
-			more = err_input('Select another reference? (y/[n]): ')
-			if 'y' not in more.lower():
-				select_more_refs = False
-
-		sys.stderr.write('Chose: {}\n'.format(' '.join([str(choice) for choice in choices])))
-		return choices
-	
-class UserInput( Resolvable):
-	def __init__(self, prompt, default, type=str):
-		super(UserInput, self).__init__()
-		self.prompt = prompt
-		self.default = default
-		self.type = type
-
-	def _resolve(self, use_defaults=False):
-		if use_defaults:
-			return str(self.default)
-		try_again = True
-		while try_again:
-			inp = err_input(self.prompt + ' [{}]: '.format(self.default))
-			try_again = False
-			if not inp: # use the default
-				inp = self.default
-				break
-			try:
-				self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
-			except ValueError:
-				sys.stderr.write("Input must be of type '{}'".format(self.type))
-				inp = None
-				try_again = True
-		
-		return str(inp) # We want to treat defaults that aren't strings nicely
-
-################################################################################
-#
 # Data Classes 
 #
 ################################################################################
 
 class ConfBuilder:
-	def __init__(self, use_defaults):
+	def __init__(self, useDefaults):
 		self.global_fields = {'TOOLS_TO_RUN':[]}
 		self.tools = {}
-		self.use_defaults = use_defaults
+		self.useDefaults = useDefaults
 
 	def add_global_field(self, key, value):
 		if type(value) not in [str, dict, list]:
-			value = value.resolve(use_defaults=self.use_defaults)
+			value = value.resolve(useDefaults=self.useDefaults)
 		self.global_fields[key] = value
 	
 	def add_tool(self, tool_name):
 		inp = ''
-		while not self.use_defaults and 'y' not in inp and 'n' not in inp:
+		while not self.useDefaults and 'y' not in inp and 'n' not in inp:
 			inp = err_input('Include {} in this analysis? ([y]|n): '.format(tool_name))
 			if not inp:
 				inp = 'y'
 		if 'y' in inp:
-			self.tools[tool_name] = ToolBuilder(tool_name, use_defaults=self.use_defaults)
+			self.tools[tool_name] = ToolBuilder(tool_name, useDefaults=self.useDefaults)
 			self.global_fields['TOOLS_TO_RUN'].append(tool_name)
 			
 		return self.tools[tool_name]
 
-	def to_dict(self, use_defaults=False):
+	def to_dict(self):
 		out = self.global_fields
 		for tool_name, builder in self.tools.items():
 			out[tool_name] = builder.to_dict()
@@ -179,23 +52,23 @@ class ConfBuilder:
 		self.global_fields[key] = val
 
 class ToolBuilder:
-	def __init__(self,tool_name, use_defaults):
+	def __init__(self,tool_name, useDefaults):
 		self.name = tool_name
 		self.fields = {}
-		self.use_defaults = use_defaults
+		self.useDefaults = useDefaults
 	
 	def add_field(self,key,value):
 		if type(value) not in [str, dict, list]:
-			value = value.resolve(use_defaults = self.use_defaults)
+			value = value.resolve(useDefaults = self.useDefaults)
 		self.fields[key] = value
 
-        def set_field(self,key,value):
-                self.fields[key] = value
+	def set_field(self,key,value):
+		self.fields[key] = value
 
-        def get_field(self,key):
-                return self.fields[key]
-        
-	def to_dict(self, use_defaults=False):
+	def get_field(self,key):
+		return self.fields[key]
+	
+	def to_dict(self):
 		return self.fields
 
 ################################################################################
@@ -274,28 +147,28 @@ def build_and_save_new_conf(name, use_defaults=False, modify=False):
 	confBldr.add_global_field('EMAIL',
 			      UserInput('Email to send progress reports to',
 					None))
-	confBlder.add_global_field('JOB_NAME_PREFIX',
+	confBldr.add_global_field('JOB_NAME_PREFIX',
 			      UserInput('Prefix for job names',
 					'MUP_'))
 
-        # ToolSets register themselves by adding their class type
-        # to the toolsets list. They then employ a visitor
-        # pattern (ish) to add their own parameters to the conf.
-        for toolsetType in tools.toolsets:
-                toolset = toolsetType.build()
-                toolset.buildConf(confBldr)
+	# ToolSets register themselves by adding their class type
+	# to the toolsets list. They then employ a visitor
+	# pattern (ish) to add their own parameters to the conf.
+	for toolsetType in tools.toolsets:
+		toolset = toolsetType.build()
+		toolset.buildConf(confBldr)
 
 	
-	conf_dict = conf.to_dict(use_defaults=use_defaults)
+	conf_dict = confBldr.to_dict()
 
-	confRecord = mupdb.Conf({'name': name, 'conf':conf_dict})
-	confRecord.save(modify=modify)
+	confRecord = mupdb.Conf(**{'name': name, 'conf':conf_dict})
+	return confRecord.save(modify=modify)
 	
 ################################################################################
 
 
 '''
-        # Utility Tools
+	# Utility Tools
 	conf.add_tool('BOWTIE2')
 	conf.add_tool('SAMTOOLS')
 	conf.add_tool('DIAMOND')
