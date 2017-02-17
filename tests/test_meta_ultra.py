@@ -132,6 +132,15 @@ class Test_meta_ultra(unittest.TestCase):
         dat_result = runner.invoke(cli.main, ['samples','--data'])
         self.assertEqual( dat_result.exit_code, 0)
 
+    def test_command_line_interface_create_modify_samples(self):
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ['save_sample', '--name', 'tsamp', '--project', 'tproj', 'foo=bar'])
+        assert result.exit_code == 0
+        result = runner.invoke(cli.main, ['save_sample', '--name', 'tsamp', '--project', 'tproj', '--modify', 'bar=foo'])
+        self.assertEqual( result.exit_code, 0)
+        self.assertIn('foo=bar', result.output)
+        self.assertIn('bar=foo', result.output)
+
         
 '''
 def suite():

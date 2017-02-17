@@ -8,6 +8,7 @@ import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
 import meta_ultra.result_manager as result_manager
 import meta_ultra.sample_manager as sample_manager
+import meta_ultra.database as mupdb
 import os.path
 import json
 from time import clock
@@ -96,7 +97,21 @@ def samples(project,data):
             for dataRec in dataRecs:
                 print('\t' + str(dataRec))
 
-
+@main.command()
+@click.option('--name',prompt='NAME',help='unique name for the sample')
+@click.option('--project',prompt='PROJECT',help='unique name of the project')
+@click.option('--modify/--no-modify', default=False, help='overwrite fields in an existing record')
+@click.argument('metadata', nargs=-1)
+def save_sample(name, project,modify, metadata):
+    metadataDict = {}
+    for kvstr in metadata:
+        k, v = kvstr.split('=')
+        metadataDict[k] = v
+    sample = mupdb.Sample(name=name,
+                    project_name=project,
+                    metadata=metadataDict)
+    sample = sample.save(modify=modify)
+    print(sample)
 
 @main.command()
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')

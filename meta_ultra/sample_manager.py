@@ -82,7 +82,7 @@ def add_paired_ended_seq_data(projectName,
     for sampleName, filenames in samplesToFilenames.items():
         reads1 = filenames['1']
         reads2 = filenames['2']
-        sample = Sample(name=sampleName, project_name=projectName, metadata=metadataFunc(sampleName))
+        sample = Sample(name=sampleName, project_name=projectName, metadata=metadataFunc(sampleName)) 
         if not sample.saved() or modify:
             sample.save(modify=modify)
         samples.append(sample)

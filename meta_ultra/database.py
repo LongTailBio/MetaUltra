@@ -56,9 +56,19 @@ class Record:
             raise RecordExistsError()
         elif modify:
             rec = self.record()
-            return type(self).dbTbl().update(self.to_dict(), eids=[rec.eid])
+            mydict = self.to_dict()
+            for k,v in mydict.items():
+                if k in rec and type(v) == dict and type(rec[k]) == dict:
+                    for subk, subv in v.items():
+                        rec[k][subk] = subv
+                else:
+                    rec[k] = v
+            type(self).dbTbl().update(rec, eids=[rec.eid])
+            return type(self).get(self.name)
         else:
-            return type(self).dbTbl().insert(self.to_dict())
+            type(self).dbTbl().insert(self.to_dict())
+            return type(self).get(self.name)
+        
 
     @classmethod
     def build(ctype, *args, **kwargs):
@@ -67,7 +77,8 @@ class Record:
         
     @classmethod
     def get(ctype, name):
-        return ctype.build(ctype.dbTbl().get(where('name') == name))
+        rec = ctype.dbTbl().get(where('name') == name)
+        return ctype.build(**rec)
 
     @classmethod
     def exists(ctype, name):
@@ -231,7 +242,10 @@ class Sample(Record):
     def __str__(self):
         out = '{}\t{}'.format(self.name, self.projectName)
         for k, v in self.metadata.items():
-            out += '\t{}="{}"'.format(k,v)
+            if ' ' in str(v):
+                out += '\t{}="{}"'.format(k,v)
+            else:
+                out += '\t{}={}'.format(k,v)
         return out
 
     @staticmethod
