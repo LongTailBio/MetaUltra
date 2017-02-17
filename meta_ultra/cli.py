@@ -6,6 +6,7 @@ import meta_ultra.tool_manager  as tools
 from meta_ultra.utils import *
 import meta_ultra.conf_builder as conf_builder
 import meta_ultra.pipeline_runner as pipeline_runner
+import meta_ultra.result_manager as result_manager
 import os.path
 import json
 from time import clock
@@ -13,6 +14,8 @@ from time import clock
 @click.group()
 def main():
     pass
+
+####################################################################################################
 
 @main.command()
 @click.option('--tool', prompt='TOOL', help='The tool that the reference is intended to be used with')
@@ -47,6 +50,7 @@ def list_tools():
 def remove_tool(eid):
     tools.remove_tool(eid)
 
+####################################################################################################
     
 @main.command()
 @click.option('--name', help='Conf Name')
@@ -68,6 +72,30 @@ def run( dryrun, unlock, jobs, conf, rerun_incomplete):
 		sys.exit(1)
         
 	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock,rerun=rerun_incomplete)
+
+####################################################################################################
+
+@main.command()
+@click.option('--project',default=None, help='Show only results from the given project')
+@click.option('--sample',default=None, help='Show only results from the given sample')
+def results(project,sample):
+    results = result_manager.getResults(projectName=project,sampleName=sample)
+    for result in results:
+        print(result)
+
+@main.command()
+@click.option('--project',default=None, help='Show only samples from the given project')
+@click.option('--data/--no-data',default=False, help='Show associated data for the samples')
+def samples(project,data):
+    samples = sample_manager.getSamples(projectName=project)
+    for sample in samples:
+        print(sample)
+        if data:
+            dataRecs = getData(sample)
+            for dataRec in dataRecs:
+                print('\t' + str(dataRec))
+
+
 
 @main.command()
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')

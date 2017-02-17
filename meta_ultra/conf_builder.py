@@ -3,13 +3,12 @@ from meta_ultra.ref_manager import get_references
 from meta_ultra.tool_manager import get_tools
 from meta_ultra.utils import *
 from meta_ultra.tools import *
+
+import meta_ultra.database as mupdb
 import sys
 import json
 import os
 from tinydb import TinyDB, Query
-
-db = TinyDB(config.db_file)
-conf_tbl = db.table(config.db_conf_table)
 
 ################################################################################
 #
@@ -216,16 +215,17 @@ class ToolBuilder:
 	
 def add_samples_to_conf(confName,
 			pairs=False,
+			projectName=None,
 			minReadLen=0,
 			maxReadLen=250,
 			use_defaults=False):
-	finalConf = conf_tbl.get(where('name') == confName)
+	
+	finalConf = mupdb.Conf.get(confName)['conf']
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
 		sys.stdout.write(msg)
 		sys.exit(1)
-	finalConf = finalConf['conf']
-	
+
 	newConf = ConfBuilder(use_defaults) 
 	newConf.add_global_field('PAIRED_END', str(pairs))
 	newConf.add_global_field('OUTPUT_DIR',
@@ -239,18 +239,21 @@ def add_samples_to_conf(confName,
 			outDir = '/' + outDir
 		outDir = config.mup_root + outDir
 		conf.set_global_field('OUTPUT_DIR',outDir)
-	seq_data_recs = SampleManager.get_seq_data(paired=pairs,
-						   lenMax=maxReadLen,
-						   lenMin=minReadLen)
+	seq_data_recs = mupdb.get_seq_data(projectName=projectName,
+					   paired=pairs,
+					   lenMax=maxReadLen,
+					   lenMin=minReadLen)
 	samples = {}
 	for seq_data in seq_data_recs:
 		samples[seq_data.sampleName] = {}
+		samples[seq_data.sampleName]['PROJECT'] = seq_data.projectName
+		samples[seq_data.sampleName]['DATA_NAME'] = seq_data.name
 		samples[seq_data.sampleName]['1'] = seq_data.reads1
 		if pairs:
 			samples[seq_data.sampleName]['2'] = seq_data.reads2
 	newConf.add_global_field('SAMPLES',samples)
 
-	for k, v in newConf.to_dict():
+	for k, v in newConf.to_dict().items():
 		assert k not in finalConf
 		finalConf[k] = v
 	return finalConf 
@@ -258,16 +261,16 @@ def add_samples_to_conf(confName,
 	
 ################################################################################
 		
-def build_and_save_new_conf(name, use_defaults=False):
-	rec = conf_tbl.get(where('name') == name)
-	if rec:
+def build_and_save_new_conf(name, use_defaults=False, modify=False):
+	if mupdb.Conf.exists(name) and not modify:
 		msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
 		sys.stderr.write(msg)
 		sys.exit(1)
-		
+
 	conf = ConfBuilder(use_defaults)
 
 	# global opts	
+	conf.add_global_field('NAME', name)
 	conf.add_global_field('TMP_DIR',
 			      UserInput('Please select a temporary directory',
 					'/tmp'))
@@ -460,9 +463,8 @@ def build_and_save_new_conf(name, use_defaults=False):
 	mash = conf.add_tool('MASH')
 	
 	conf_dict = conf.to_dict(use_defaults=use_defaults)
-	conf_tbl.insert({
-		'name': name,
-		'conf': conf_dict
-		})
+
+	confRecord = mupdb.Conf({'name': name, 'conf':conf_dict})
+	confRecord.save(modify=modify)
 	
 ################################################################################

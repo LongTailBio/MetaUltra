@@ -15,6 +15,7 @@ import unittest
 from contextlib import contextmanager
 from click.testing import CliRunner
 
+from meta_ultra.result_manager import *
 from meta_ultra import meta_ultra
 from meta_ultra import cli
 from meta_ultra.sample_manager import *
@@ -40,7 +41,7 @@ class Test_meta_ultra(unittest.TestCase):
         metadataFunc = lambda sname: metadata[sname]
         seqRun = SingleEndedSequencingRun(name='test_experiment',machine_type='fooseq')
         seqRun.save()
-        self.assertTrue(seqRun.exists())
+        self.assertTrue(seqRun.saved())
         samples, seqDats = add_single_ended_seq_data('test-project-single',
                                   filenames,
                                   '.fastq.gz',
@@ -50,9 +51,9 @@ class Test_meta_ultra(unittest.TestCase):
                                   metadataFunc=metadataFunc)
 
         for seqData in seqDats:
-            self.assertTrue(seqData.exists())
+            self.assertTrue(seqData.saved())
         for sample in samples:
-            self.assertTrue(sample.exists())
+            self.assertTrue(sample.saved())
 
     def test_add_paired_ended_seq_data(self):
         filenames = ['test1_1.fastq.gz', 'test2_1.fastq.gz', 'test3_1.fastq.gz','test1_2.fastq.gz', 'test2_2.fastq.gz', 'test3_2.fastq.gz']
@@ -65,7 +66,7 @@ class Test_meta_ultra(unittest.TestCase):
         metadataFunc = lambda sname: metadata[sname]
         seqRun = PairedEndedSequencingRun(name='test_experiment_2',machine_type='fooseq2')
         seqRun.save()
-        self.assertTrue(seqRun.exists())
+        self.assertTrue(seqRun.saved())
         samples, seqDats = add_paired_ended_seq_data('test-project-paired',
                                   filenames,
                                   '_1.fastq.gz',
@@ -78,9 +79,9 @@ class Test_meta_ultra(unittest.TestCase):
 
 
         for seqData in seqDats:
-            self.assertTrue(seqData.exists())
+            self.assertTrue(seqData.saved())
         for sample in samples:
-            self.assertTrue(sample.exists())
+            self.assertTrue(sample.saved())
 
     def test_save_and_recreate(self):
         filenames = ['recreate_test1.fastq.gz']
@@ -98,6 +99,10 @@ class Test_meta_ultra(unittest.TestCase):
         for sample in samples:
             Sample(**sample.record())
 
+    def test_register_sample(self):
+        result = registerResult('METAPHLAN2', 'test-project', 'test-sample', 'test-project|test-sample|dat-type', 'test-conf', ['test.mphlan2'])
+        self.assertTrue(result.saved())
+        
     def test_command_line_interface(self):
         runner = CliRunner()
         result = runner.invoke(cli.main)

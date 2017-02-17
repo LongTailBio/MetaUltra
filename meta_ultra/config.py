@@ -18,6 +18,7 @@ db_sample_table = 'sample_table'
 db_data_table = 'data_table'
 db_experiment_table = 'experiment_table'
 db_conf_table = 'conf_table'
+db_result_table = 'result_table'
 
 
 def canon_tool(toolName):
