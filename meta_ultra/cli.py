@@ -9,6 +9,7 @@ import meta_ultra.pipeline_runner as pipeline_runner
 import meta_ultra.result_manager as result_manager
 import meta_ultra.sample_manager as sample_manager
 import meta_ultra.database as mupdb
+import meta_ultra.tools as tools
 import os.path
 import json
 from time import clock
@@ -20,38 +21,57 @@ def main():
 ####################################################################################################
 
 @main.command()
-@click.option('--tool', prompt='TOOL', help='The tool that the reference is intended to be used with')
-@click.option('--name', prompt='NAME',default=None, help='Reference Name')
-@click.option('--ref', prompt='FILE PATH', help='Location of reference')
-def add_reference(tool,name,ref):
-    refs.add_reference(tool,name,ref)
+def list_toolsets():
+    for toolset in tools.allToolSets():
+        print(toolset)
 
 @main.command()
-def list_references():
-    refs.list_references()
+@click.option('-i','--index', prompt='INDEX', type=int, help='Index of exec in toolset')
+@click.option('-n','--name', prompt='NAME', help='Name of toolset')
+@click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
+def remove_exec_from_toolset(index,name,confirm):
+    toolset = tools.getToolSet(name)
+    toolset.removeExc(index,confirm=confirm)
 
 @main.command()
-@click.option('-e','--eid', prompt='EID', type=int, default=None, help='Eid of reference record')
-def remove_reference(eid):
-    tools.remove_reference(eid)
+@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
+@click.option('--exec-name', prompt='EXEC NAME', help='Name of exec file')
+def add_exec_to_toolset(set_name, exec_name):
+    toolset = tools.getToolSet(set_name)
+    print(toolset.askUserForExc(exec_name))
+
+@main.command()
+@click.option('-i','--index', prompt='INDEX', type=int, help='Index of reference in toolset')
+@click.option('-n','--name', prompt='NAME', help='Name of toolset')
+@click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
+def remove_ref_from_toolset(index,name,confirm):
+    toolset = tools.getToolSet(name)
+    toolset.removeRef(index,confirm=confirm)
+
+@main.command()
+@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
+@click.option('--ref-name', prompt='REF NAME', help='Name of reference')
+def add_ref_to_toolset(set_name, ref_name):
+    toolset = tools.getToolSet(set_name)
+    print(toolset.askUserForRef(ref_name))
+
+@main.command()
+@click.option('-n','--name', prompt='NAME', help='Name of toolset')
+@click.option('--param-name', prompt='PARAM NAME', help='Name of parameter')
+@click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
+def remove_param_from_toolset(name,param,confirm):
+    toolset = tools.getToolSet(name)
+    toolset.removeRef(index,confirm=confirm)
+
+@main.command()
+@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
+@click.option('--param-name', prompt='PARAM NAME', help='Name of parameter')
+@click.option('--param-val', prompt='PARAM VAL', help='Value of parameter')
+def add_param_to_toolset(set_name, param_name, param_val):
+    toolset = tools.getToolSet(set_name)
+    print(toolset.removeParam(param_name))
 
     
-@main.command()
-@click.option('-n','--name', prompt='NAME',default=None, help='Tool name')
-@click.option('-v','--version', prompt='VERSION', help='Version of tool')
-@click.option('-e','--exc', prompt='EXC PATH', help='Path to executable')
-def add_tool(name, version, exc):
-    tools.add_tool(name, version,exc)
-
-@main.command()
-def list_tools():
-    tools.list_tools()
-
-@main.command()
-@click.option('-e','--eid', prompt='EID',default=None, type=int, help='Eid of tool record')
-def remove_tool(eid):
-    tools.remove_tool(eid)
-
 ####################################################################################################
     
 @main.command()
