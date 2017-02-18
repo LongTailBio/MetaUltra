@@ -1,7 +1,7 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
-import meta_ultra.tools as tools
+import meta_ultra.modules as modules
 
 import meta_ultra.database as mupdb
 import sys
@@ -27,7 +27,7 @@ class ConfBuilder:
 			value = value.resolve(useDefaults=self.useDefaults, fineControl=self.fineControl)
 		self.global_fields[key] = value
 	
-	def add_tool(self, tool_name):
+	def addModule(self, tool_name):
 		inp = ''
 		while not self.useDefaults and 'y' not in inp and 'n' not in inp:
 			inp = err_input('Include {} in this analysis? ([y]|n): '.format(tool_name))
@@ -156,9 +156,9 @@ def build_and_save_new_conf(name, useDefaults=False, fineControl=False, modify=F
 	# ToolSets register themselves by adding their class type
 	# to the toolsets list. They then employ a visitor
 	# pattern (ish) to add their own parameters to the conf.
-	for toolsetType in tools.toolsets:
-		toolset = toolsetType.build()
-		toolset.buildConf(confBldr)
+	for moduleType in modules.modules:
+		module = modules.build()
+		module.buildConf(confBldr)
 
 	
 	conf_dict = confBldr.to_dict()

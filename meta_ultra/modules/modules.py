@@ -7,21 +7,23 @@ import os
 from tinydb import TinyDB, Query, where
 
 db = TinyDB(config.db_file)
-toolTbl = db.table(config.db_tool_set_table)
+moduleTbl = db.table(config.db_module_table)
 
-def allToolSets():
+def allModules(default=False):
 	out = []
-	for toolset in toolsets:
-		out.append(toolset.build())
+	for module in modules:
+		out.append(module.build(useDefaults=default))
 	return out
 
-def getToolSet(name):
-	rec = toolTbl.get(where('name') == name)
-	for toolset in toolsets:
-		if rec['name'] == toolset.toolSetName().lower():
-			return toolset.build()
-
-class ToolSetExistsError(Exception):
+def getModule(name, default=False):
+	rec = moduleTbl.get(where('name') == name)
+	for module in modules:
+		if rec and ('name' in rec) and (rec['name'] == module.moduleName().lower()):
+			return module.build(useDefaults=default)
+		elif default and module.moduleName().lower() == name:
+			return module.build(useDefaults=default)
+		
+class ModuleExistsError(Exception):
 	pass
 
 class Reference:
@@ -41,7 +43,7 @@ class Reference:
 	def __str__(self):
 		return self.name
 
-class ExecutableFile:
+class Tool:
 	def __init__(self, **kwargs):
 		self.name = kwargs['name']
 		self.version = kwargs['version']
@@ -58,15 +60,15 @@ class ExecutableFile:
 	def __str__(self):
 		return '{}\t{}'.format(self.name, self.version)
 	
-class ToolSet:
+class Module:
 
 	def __init__(self, **kwargs):
 		self.name = kwargs['name']
-		self.excFiles = []
-		if 'executable_files' in kwargs:
-			for rec in kwargs['executable_files']:
-				excFile = ExecutableFile(**rec)
-				self.excFiles.append(excFile)
+		self.tools = []
+		if 'tools' in kwargs:
+			for rec in kwargs['tools']:
+				tool = Tool(**rec)
+				self.tools.append(tool)
 
 		try:
 			self.refs = [Reference(**rec) for rec in kwargs['references']]
@@ -81,7 +83,7 @@ class ToolSet:
 	def to_dict(self):
 		out = {
 			'name': self.name.lower(),
-			'executable_files': [excFile.to_dict() for excFile in self.excFiles],
+			'tools': [tool.to_dict() for tool in self.tools],
 			'references': [ref.to_dict() for ref in self.refs],
 			'params': self.params
 			}
@@ -90,7 +92,7 @@ class ToolSet:
 
 	def save(self,modify=False,requireKeyOverlap=False):
 		if type(self).exists() and not modify:
-			raise ToolSetExistsError()
+			raise ModuleExistsError()
 		elif type(self).exists() and modify:
 			rec = self.record()
 			mydict = self.to_dict()
@@ -102,42 +104,49 @@ class ToolSet:
 						rec[k][subk] = subv
 				else:
 					rec[k] = v
-				toolTbl.update(rec, eids=[rec.eid])
+				moduleTbl.update(rec, eids=[rec.eid])
 			return type(self).build()
 		else:
-			print(self.to_dict())
-			toolTbl.insert(self.to_dict())
+			moduleTbl.insert(self.to_dict())
 			return type(self).build()
 
-	def askUserForExc(self,excName, asDict=False):
-		filepath = UserInput('Give the filepath for tool {} in toolset {}'.format(excName, self.name),
+	def askUserForTool(self,toolName, asDict=False):
+		filepath = UserInput('Give the filepath for tool {} in module {}'.format(toolName, self.name),
 				None).resolve()
 		version = UserInput('Give the tool\'s version',default='unknown').resolve()
-		excFile = ExecutableFile(name=excName, version=version,filepath=filepath)
-		self.addExc(excFile)
+		tool = Tool(name=toolName, version=version,filepath=filepath)
+		self.addTool(tool)
 		if asDict:
-			return excFile.to_dict()
-		return excFile
-		
-	def addExc(self, excFile):
-		self.excFiles.append(excFile)
+			return tool.to_dict()
+		return tool
+
+	def buildAddTool(self, toolName, version, filepath, asDict=False):
+		tool = Tool(name=toolName, version=version,filepath=filepath)
+		self.addTool(tool)
+		if asDict:
+			return tool.to_dict()
+		return tool
+
+	
+	def addTool(self, tool):
+		self.tools.append(tool)
 		return self.save(modify=True)
 
-	def removeExc(self,i,confirm=True):
-		excF = self.excFiles[i]
+	def removeTool(self,i,confirm=True):
+		tool = self.tools[i]
 		remove = True
 		if confirm:
-			remove = BoolUserInput('Remove exec file {} from {}?'.format(excF,self.name), default=True).resolve()
+			remove = BoolUserInput('Remove tool {} from {}?'.format(tool,self.name), default=True).resolve()
 		if remove:
-			sys.stderr.write('Removing exec file {} from {}.\n'.format(excF, self.name))
-			del self.excFiles[i]
+			sys.stderr.write('Removing tool {} from {}.\n'.format(tool, self.name))
+			del self.tools[i]
 			self.save(modify=True)
 		else:
-			sys.stderr.write('Not removing exec file {} from {}.\n'.format(excF, self.name))
+			sys.stderr.write('Not removing tool {} from {}.\n'.format(tool, self.name))
 
 
 	def askUserForRef(self, toolName, asDict=False):
-		filepath = UserInput('Give a filepath for a reference-db for tool {} in toolset'.format(toolName, self.name),
+		filepath = UserInput('Give a filepath for a reference-db for tool {} in module'.format(toolName, self.name),
 				     None).resolve()
 		refName = UserInput('Give the name for the reference',default=os.path.basename(filepath)).resolve()
 		ref = Reference(name=refName, tool_name=toolName, filepath=filepath)
@@ -146,6 +155,13 @@ class ToolSet:
 			return ref.to_dict()
 		return ref
 
+	def buildAddRef(self, refName, toolName, filepath, asDict=False):
+		ref = Reference(name=refName, tool_name=toolName, filepath=filepath)
+		self.addRef(ref)
+		if asDict:
+			return ref.to_dict()
+		return ref
+	
 	def addRef(self, ref):
 		self.refs.append(ref)
 		return self.save(modify=True) 
@@ -166,13 +182,20 @@ class ToolSet:
 		try:
 			return self.params[key]
 		except KeyError:
-			msg = ('No value found for parameter {} in toolset {}.\n'.format(key, self.name)+
+			msg = ('No value found for parameter {} in module {}.\n'.format(key, self.name)+
 			       'Please supply an appropriate parameter')
 			inp = UserInput(msg, default, type=type)
 			val = inp.resolve()
 			self.addParam(key,val)
 			return inp.resolve()
 
+	def getParamOrDefault(self,key,default):
+		try:
+			return self.params[key]
+		except KeyError:
+			return default
+
+		
 	
 	def addParam(self, key, value):
 		self.params[key] = value
@@ -192,9 +215,9 @@ class ToolSet:
 
 	def __str__(self):
 		out = '{}\n'.format(self.name)
-		out += '\tExecutable Files\n'
-		for i, excF in enumerate(self.excFiles):
-			out += '\t{}\t{}\n'.format(i,excF)
+		out += '\tTools\n'
+		for i, tool in enumerate(self.tools):
+			out += '\t{}\t{}\n'.format(i,tool)
 		out += 'References\n'
 		for i, ref in enumerate(self.refs):
 			out += '\t{}\t{}\n'.format(i,ref)
@@ -205,25 +228,25 @@ class ToolSet:
 	
 	@classmethod
 	def exists(ctype):
-		setName = ctype.toolSetName().lower()
-		return None != toolTbl.get(where('name') == setName) 
+		modName = ctype.moduleName().lower()
+		return None != moduleTbl.get(where('name') == modName) 
 		
 	@classmethod
 	def record(ctype):
-		setName = ctype.toolSetName().lower()
-		return toolTbl.get(where('name') == setName)
+		modName = ctype.moduleName().lower()
+		return moduleTbl.get(where('name') == modName)
 
 	@classmethod
-	def build(ctype):
-		setName = ctype.toolSetName().lower()
-		rec = toolTbl.get(where('name') == setName)
+	def build(ctype,useDefaults=False):
+		modName = ctype.moduleName().lower()
+		rec = moduleTbl.get(where('name') == modName)
 		if not rec:
-			rec = {'name':setName}
-		return ctype(**rec)
+			rec = {'name':modName}
+		return ctype(**rec, use_defaults=useDefaults)
 
 '''
-A list of all the registerd toolsets
+A list of all the registerd modules
 
 toolsets add themselves to the list on import
 '''
-toolsets = []
+modules = []

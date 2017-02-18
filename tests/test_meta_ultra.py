@@ -141,6 +141,17 @@ class Test_meta_ultra(unittest.TestCase):
         self.assertIn('foo=bar', result.output)
         self.assertIn('bar=foo', result.output)
 
+
+    def test_command_line_interface_view_modify_modules(self):
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ['list_modules', '--default'])
+        self.assertEqual(0,result.exit_code)
+        moduleName = 'shortbred'
+        addToolResult = runner.invoke(cli.main, ['add_tool_to_module', '--module-name', moduleName, '--tool-name', 'foo', '--version', 'bar', '--filepath', '/foo/bar', '--default'])
+        self.assertEqual(0, addToolResult.exit_code)
+        addRefResult = runner.invoke(cli.main, ['add_ref_to_module', '--module-name', moduleName, '--ref-name', 'foo', '--tool-name', 'bar', '--filepath', '/foo/bar', '--default'])
+        self.assertEqual(0, addRefResult.exit_code)
+
         
 '''
 def suite():

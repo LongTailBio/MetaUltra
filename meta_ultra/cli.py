@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 import click
@@ -9,7 +10,7 @@ import meta_ultra.pipeline_runner as pipeline_runner
 import meta_ultra.result_manager as result_manager
 import meta_ultra.sample_manager as sample_manager
 import meta_ultra.database as mupdb
-import meta_ultra.tools as tools
+import meta_ultra.modules as modules
 import os.path
 import json
 from time import clock
@@ -21,55 +22,62 @@ def main():
 ####################################################################################################
 
 @main.command()
-def list_toolsets():
-    for toolset in tools.allToolSets():
-        print(toolset)
+@click.option('--default/--no-default', default=False, help='Use default toolsets.')
+def list_modules(default):
+    for module in modules.allModules(default=default):
+        print(module)
 
 @main.command()
 @click.option('-i','--index', prompt='INDEX', type=int, help='Index of exec in toolset')
 @click.option('-n','--name', prompt='NAME', help='Name of toolset')
 @click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
-def remove_exec_from_toolset(index,name,confirm):
-    toolset = tools.getToolSet(name)
-    toolset.removeExc(index,confirm=confirm)
+def remove_tool_from_module(index,name,confirm):
+    module = modules.getModule(name)
+    module.removeTool(index,confirm=confirm)
 
 @main.command()
-@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
-@click.option('--exec-name', prompt='EXEC NAME', help='Name of exec file')
-def add_exec_to_toolset(set_name, exec_name):
-    toolset = tools.getToolSet(set_name)
-    print(toolset.askUserForExc(exec_name))
+@click.option('--module-name', prompt='MODULE NAME', help='Name of module')
+@click.option('--tool-name', prompt='TOOL NAME', help='Name of tool')
+@click.option('--version', prompt='VERSION', help='Version of tool')
+@click.option('--filepath', prompt='FILEPATH', help='Path to tool')
+@click.option('--default/--no-default', default=False, help='Use default toolsets.')
+def add_tool_to_module(module_name, tool_name, version, filepath, default):
+    module = modules.getModule(module_name, default=default)
+    print(module.buildAddTool(tool_name, version, filepath))
 
 @main.command()
 @click.option('-i','--index', prompt='INDEX', type=int, help='Index of reference in toolset')
-@click.option('-n','--name', prompt='NAME', help='Name of toolset')
+@click.option('-n','--name', prompt='NAME', help='Name of module')
 @click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
-def remove_ref_from_toolset(index,name,confirm):
-    toolset = tools.getToolSet(name)
-    toolset.removeRef(index,confirm=confirm)
+def remove_ref_from_module(index,name,confirm):
+    module = modules.getModule(name)
+    module.removeRef(index,confirm=confirm)
 
 @main.command()
-@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
+@click.option('--module-name', prompt='MODULE NAME', help='Name of module')
 @click.option('--ref-name', prompt='REF NAME', help='Name of reference')
-def add_ref_to_toolset(set_name, ref_name):
-    toolset = tools.getToolSet(set_name)
-    print(toolset.askUserForRef(ref_name))
+@click.option('--tool-name', prompt='TOOl NAME', help='Name of tool')
+@click.option('--filepath', prompt='FILEPATH', help='Path to reference')
+@click.option('--default/--no-default', default=False, help='Use default toolsets.')
+def add_ref_to_module(module_name, ref_name, tool_name, filepath, default):
+    module = modules.getModule(module_name, default=default)
+    print(module.buildAddRef(ref_name, tool_name, filepath))
 
 @main.command()
 @click.option('-n','--name', prompt='NAME', help='Name of toolset')
 @click.option('--param-name', prompt='PARAM NAME', help='Name of parameter')
 @click.option('--confirm/--no-confirm', default=True, help='Do or do not confirm removal')
-def remove_param_from_toolset(name,param,confirm):
-    toolset = tools.getToolSet(name)
-    toolset.removeRef(index,confirm=confirm)
+def remove_param_from_module(name,param,confirm):
+    module = modules.getModule(name)
+    module.removeRef(index,confirm=confirm)
 
 @main.command()
-@click.option('--set-name', prompt='TOOLSET NAME', help='Name of toolset')
+@click.option('--module-name', prompt='MODULE NAME', help='Name of module')
 @click.option('--param-name', prompt='PARAM NAME', help='Name of parameter')
 @click.option('--param-val', prompt='PARAM VAL', help='Value of parameter')
-def add_param_to_toolset(set_name, param_name, param_val):
-    toolset = tools.getToolSet(set_name)
-    print(toolset.removeParam(param_name))
+def add_param_to_module(module_name, param_name, param_val):
+    module = modules.getModule(module_name)
+    print(module.removeParam(param_name))
 
     
 ####################################################################################################

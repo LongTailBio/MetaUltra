@@ -12,7 +12,7 @@ mup_root = os.environ['MUP_ROOT']
 
 db_file = os.environ['MUP_DB']
 
-db_tool_set_table = 'tool_set_table'
+db_module_table = 'module_table'
 db_sample_table = 'sample_table'
 db_data_table = 'data_table'
 db_experiment_table = 'experiment_table'

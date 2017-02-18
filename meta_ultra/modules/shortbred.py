@@ -1,28 +1,28 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
-from meta_ultra.tools import *
+from meta_ultra.modules import *
 from meta_ultra.conf_builder import *
 
 
-class ShortBredSet( ToolSet):
+class ShortBredModule( Module):
 	def __init__(self, **kwargs):
-		super(ShortBredSet, self).__init__(**kwargs)
-		self.ext = self.getParamOrAskUser('ext', default='.shortbred.tsv')
-		self.time = self.getParamOrAskUser('time', default=1, type=int)
-		self.ram = self.getParamOrAskUser('ram', default=4, type=int)
+		super(ShortBredModule, self).__init__(**kwargs)		
+		self.ext = self.getParamOrDefault('ext', '.shortbred.tsv')
+		self.time = self.getParamOrDefault('time', 1)
+		self.ram = self.getParamOrDefault('ram', 4)
 
 	def buildConf(self, confBuilder):
-		shortbred = confBuilder.add_tool(self.toolSetName().upper())
+		shortbred = confBuilder.addModule(self.moduleName().upper())
 
 		shortbred.add_field('EXT', self.ext)
 		shortbred.add_field('EXC',
 				    UserChoice('ShortBred Quantify',
-					       self.excFiles,
-					       new=lambda :self.askUserForExc('shortbred_quantify')
+					       self.tools,
+					       new=lambda :self.askUserForTool('shortbred_quantify')
 				    )),
-		excFile = shortbred.get_field('EXC')
-		shortbred.set_field('EXC', excFile.filepath)
-		shortbred.set_field('VERSION', excFile.version)
+		tool = shortbred.get_field('EXC')
+		shortbred.set_field('EXC', tool.filepath)
+		shortbred.set_field('VERSION', tool.version)
 		
 		shortbred.add_field('DBS',
 				    UserMultiChoice('ShortBred References',
@@ -52,7 +52,8 @@ class ShortBredSet( ToolSet):
 					      fineControlOnly=True))
 		
 	@staticmethod
-	def toolSetName():
+	def moduleName():
 		return 'shortbred'
+
 		
-toolsets.append(ShortBredSet)
+modules.append(ShortBredModule)
