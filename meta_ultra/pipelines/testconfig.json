@@ -1,0 +1,21 @@
+{
+    "TMP_DIR": "/tmp",
+    "THREADS": "1",
+    "JOB_NAME_PREFIX":"SOU",
+    "OUTPUT_DIR": "foo/",
+    "SHORTBRED":"shortbred_quantify.py",
+    "SAMPLES": { "sample" : { "1" : "foo.fastq.gz"}},
+    "SAMPLE_DIR": "bar/",
+    "PAIRED_END": "False",
+    "SHORTBRED":{
+	"DBS": {"A":"A.db"},
+	"EXT":".foo",
+	"EXC":"foo.py",
+	"THREADS": "1",
+	"VERSION": "v1",
+	"TIME":"1",
+	"RAM":"1"
+    },
+    "TOOLS_TO_RUN": ["SHORTBRED"],
+    "READ_1_EXT":".fastq.gz"
+}

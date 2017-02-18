@@ -1,0 +1,66 @@
+import sys
+import os.path
+import os
+from glob import glob
+
+################################################################################
+#
+# Setup
+#
+################################################################################
+
+paired = config['PAIRED_END'].lower() in ['y', 'true', 'yes', 't']
+if not paired:
+	sys.stderr.write('Running in Single Ended Mode\n')
+else:
+	sys.stderr.write('Running in Paired Ended Mode\n')
+
+if not os.path.isdir(config['OUTPUT_DIR']):
+	os.mkdir(config['OUTPUT_DIR'])
+
+output_builders = []
+
+################################################################################
+#
+# I/O Utilities
+#
+################################################################################
+
+def getReads(wildcards):
+	reads = []
+	reads.append(config['SAMPLE_DIR'] + wildcards.sample + config['READ_1_EXT'])
+	if paired:
+		reads.append(config['SAMPLE_DIR'] + wildcards.sample + config['READ_2_EXT'])
+	return reads
+
+def getCleanReads(wildcards):
+	reads = []
+	reads.append(config['OUTPUT_DIR']+ wildcards.sample+'_nothost.fastq.gz')
+	return reads
+
+
+def all_input(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	for output_builder in output_builders:
+	    	inp += output_builder(tools, wildcards)
+	
+	return inp
+
+################################################################################
+#
+# I/O Utilities
+#
+################################################################################
+
+snakefiles = glob('*.snkmk')
+snakefiles.remove('all.snkmk')
+
+for snakefile in snakefiles:
+    include: snakefile
+
+
+rule all:
+	input:
+		all_input
+

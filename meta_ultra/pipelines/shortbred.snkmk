@@ -1,0 +1,35 @@
+
+
+def shortbred_out(tools, wildcards):
+	inp = []
+	if 'SHORTBRED' in tools:
+		inp += expand(config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT'],
+				sample=config['SAMPLES'].keys(),
+				db_name=config['SHORTBRED']['DBS'].keys()																								)
+	return inp
+
+output_builders.append(shortbred_out)
+
+rule shortbred_single_sample:
+	input:
+		reads = getReads
+	output: config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT']
+	params:
+		ref=lambda wildcards: config['SHORTBRED']['DBS'][wildcards.db_name],
+		shortbred=config['SHORTBRED']['EXC'],
+		tmp=config['TMP_DIR'],
+		job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single_sample',
+	threads: int(config['SHORTBRED']['THREADS'])
+	version: config['SHORTBRED']['VERSION']
+	resources:
+		time=int(config['SHORTBRED']['TIME']),
+		n_gb_ram=int(config['SHORTBRED']['RAM'])
+	run:
+		if paired:
+			cmd = '{params.shortbred} --markers {params.ref} --wgs {input.reads[0]} {input.reads[1]} '
+			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
+		else:
+			cmd = '{params.shortbred} --markers {params.ref} --wgs {input.reads[0]} '
+			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
+		shell(cmd)
+
