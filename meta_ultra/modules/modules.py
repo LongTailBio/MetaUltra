@@ -144,6 +144,8 @@ class Module:
 		else:
 			sys.stderr.write('Not removing tool {} from {}.\n'.format(tool, self.name))
 
+        def getToolsOfType(self, type):
+                return [tool for tool in self.tools if tool.name.lower() == type.lower()]
 
 	def askUserForRef(self, toolName, asDict=False):
 		filepath = UserInput('Give a filepath for a reference-db for tool {} in module'.format(toolName, self.name),

@@ -3,7 +3,10 @@ def mash_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
 	if 'MASH' in tools:
-		inp += expand( config['OUTPUT_DIR']+'{sample}.hmp_sites.json', sample=config['SAMPLES'].keys())
+		inp += expand( config['OUTPUT_DIR']+'{sample}.{db_name}.json',
+		       	       sample=config['SAMPLES'].keys(),
+			       db_name=config['MASH']['DBS'].keys()
+		)
 	return inp
 
 output_builders.append( mash_output)
@@ -31,9 +34,9 @@ rule minhash_sketch_single:
 rule mash_dists_single:
 	input:
 		msh= config['OUTPUT_DIR']+'{sample}.msh',
-		ref= config['MASH']['REF']
+		ref= config['MASH']['DBS'][wildcards.db_name]
 	output:
-		main=config['OUTPUT_DIR'] + '{sample}.hmp_sites.json'
+		main=config['OUTPUT_DIR'] + '{sample}.{db_name}.json'
 	resources:
 		time=1,
 		n_gb_ram=2

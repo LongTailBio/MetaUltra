@@ -19,7 +19,7 @@ class ShortBredModule( Module):
 				    UserChoice('ShortBred Quantify',
 					       self.tools,
 					       new=lambda :self.askUserForTool('shortbred_quantify')
-				    )),
+				    ))
 		tool = shortbred.get_field('EXC')
 		shortbred.set_field('EXC', tool.filepath)
 		shortbred.set_field('VERSION', tool.version)
@@ -28,7 +28,7 @@ class ShortBredModule( Module):
 				    UserMultiChoice('ShortBred References',
 						    self.refs,
 						    new=lambda : self.askUserForRef('shortbred_quantify')
-				    )),
+				    ))
 		dbs = shortbred.get_field('DBS')
 		dbPaths = []
 		for db in dbs:
