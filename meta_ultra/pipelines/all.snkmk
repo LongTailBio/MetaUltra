@@ -43,7 +43,7 @@ def all_input(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
 	for output_builder in output_builders:
-	    	inp += output_builder(tools, wildcards)
+	    	inp += output_builder( wildcards)
 	
 	return inp
 

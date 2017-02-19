@@ -1,0 +1,48 @@
+
+def mash_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	if 'MASH' in tools:
+		inp += expand( config['OUTPUT_DIR']+'{sample}.hmp_sites.json', sample=config['SAMPLES'].keys())
+	return inp
+
+output_builders.append( mash_output)
+
+rule minhash_sketch_single:
+	input:
+		clean = getCleanReads,
+	output:
+		msh = config['OUTPUT_DIR'] + '{sample}.msh',
+	threads: 1
+	params:
+		exc=config['MASH']['EXC'],
+		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_sketch_single',
+	resources:
+		time=1,
+		n_gb_ram=2
+	run:
+		if paired:
+			pass
+		else:
+			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
+		shell(cmd)
+
+
+rule mash_dists_single:
+	input:
+		msh= config['OUTPUT_DIR']+'{sample}.msh',
+		ref= config['MASH']['REF']
+	output:
+		main=config['OUTPUT_DIR'] + '{sample}.hmp_sites.json'
+	resources:
+		time=1,
+		n_gb_ram=2
+	threads: 1
+	params:
+		script=config['MASH']['DIST_SCRIPT'],
+		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_dists_single'
+	shell:
+		'{params.script} {input.ref} {input.msh} > {output.main}'
+
+
+

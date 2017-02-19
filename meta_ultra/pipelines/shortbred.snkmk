@@ -1,7 +1,8 @@
 
 
-def shortbred_out(tools, wildcards):
-	inp = []
+def shortbred_out(wildcards):
+    	tools = config['TOOLS_TO_RUN']
+    	inp = []
 	if 'SHORTBRED' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{db_name}'+config['SHORTBRED']['EXT'],
 				sample=config['SAMPLES'].keys(),

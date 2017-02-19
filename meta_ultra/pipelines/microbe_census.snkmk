@@ -1,0 +1,35 @@
+
+
+def microbe_census_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	if 'MICROBE_CENSUS' in tools:
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
+	return inp
+
+output_builders.append( microbe_census_output)
+
+# MicrobeCensus
+rule microbe_census_single:
+	input:
+		reads = getReads
+	output:
+		main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
+	threads: int( config['MICROBE_CENSUS']['THREADS'])
+	version: config['MICROBE_CENSUS']['VERSION']
+	params:
+		mic_census = config['MICROBE_CENSUS']['EXC'],
+		job_name=config['JOB_NAME_PREFIX'] + 'mic_census_single'
+	resources:
+		time=int(config['MICROBE_CENSUS']['TIME']),
+		n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
+	run:
+		if paired:
+			cmd='{params.mic_census} -t {threads} {input.reads[0]},{input.reads[1]} {output.main}'
+		else:
+			cmd='{params.mic_census} -t {threads} {input.reads[0]} {output.main}'
+		shell(cmd)
+
+
+
+

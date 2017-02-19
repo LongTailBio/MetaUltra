@@ -1,0 +1,34 @@
+
+
+def metaphlan2_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	if 'METAPHLAN2' in tools:
+		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
+	return inp
+
+output_builders.append( metaphlan2_output)
+
+rule metaphlan2_single_sample:
+	input:
+		reads = getReads
+	output:
+		main=config['OUTPUT_DIR']+'{sample}' + config['METAPHLAN2']['EXT'],
+		bt2=temp('{sample}' + config['METAPHLAN2']['EXT'] + '.bt2')
+	threads: int(config['METAPHLAN2']['THREADS'])
+	version: config['METAPHLAN2']['VERSION']
+	params:
+		metaphlan2=config['METAPHLAN2']['EXC'],
+		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample',
+	resources:
+		time=int(config['METAPHLAN2']['TIME']),
+		n_gb_ram=int(config['METAPHLAN2']['RAM'])
+
+	run:
+		if paired:
+			cmd = '{params.metaphlan2} --input_type fastq {input.reads[0]},{input.reads[1]} --nproc {threads} --bowtie2out {output.bt2} > {output.main}'
+		else:
+			cmd = '{params.metaphlan2} --input_type fastq {input.reads[0]} --nproc {threads} --bowtie2out {output.bt2} > {output.main}'
+		shell(cmd)
+
+
