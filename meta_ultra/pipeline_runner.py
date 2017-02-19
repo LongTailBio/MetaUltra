@@ -5,6 +5,7 @@ import sys
 import meta_ultra.conf_builder as ConfBuilder
 from json import dumps as jdumps
 from tempfile import NamedTemporaryFile
+from snakemake import snakemake
 
 def run(confName,
         pairs=False,
@@ -19,27 +20,19 @@ def run(confName,
                                            pairs=pairs,
                                            minReadLen=minReadLen,
                                            maxReadLen=maxReadLen)
-    confFile = NamedTemporaryFile()
-    confFile.write(jdumps(conf))
-    cmd = 'snakemake --snakefile {snkf} --jobs {njobs} --configfile {conf} --cluster {cluster_wrapper} -k --printshellcmds'
-    cmd = cmd.format(snkf=config.snake_file,
-                     njobs=njobs,
-                     conf=confFile.name,
-                     cluster_wrapper=config.cluster_wrapper
-                     )
-    if dry_run:
-        cmd += ' --dryrun'
 
-    if unlock:
-        cmd += ' --unlock'
-
-    if rerun:
-        cmd += ' --rerun-incomplete'
-    
-    sys.stderr.write('Running: {}\n'.format(cmd))        
-    sp.call(cmd,shell=True)
+    snakemake(config.snake_file,
+              config=conf,
+              cluster=config.cluster_wrapper,
+              keepgoing=True,
+              printshellcmds=True,
+              dryrun=dry_run,
+              unlock=unlock,
+              force_incomplete=rerun,
+              cores=njobs)
 
 
+'''              
 def result_info(conf, unlock=False):
     
     cmd = 'snakemake --snakefile {snkf} --configfile {conf} --detailed-summary'
@@ -52,4 +45,4 @@ def result_info(conf, unlock=False):
 
     sys.stderr.write('Running: {}\n'.format(cmd))        
     sp.call(cmd,shell=True)
-
+'''

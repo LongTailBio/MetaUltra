@@ -2,6 +2,7 @@ import sys
 import os.path
 import os
 from glob import glob
+import meta_ultra.config as mup_config
 
 ################################################################################
 #
@@ -53,7 +54,7 @@ def all_input(wildcards):
 #
 ################################################################################
 
-snakefiles = glob('*.snkmk')
+snakefiles = glob(mup_config.pipeline_dir + '*.snkmk')
 snakefiles.remove('all.snkmk')
 
 for snakefile in snakefiles:

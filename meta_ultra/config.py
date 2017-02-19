@@ -5,7 +5,8 @@ import os
 lib_root = os.path.dirname(__file__)
 
 ref_file = os.path.join( lib_root, 'references')
-snake_file = os.path.join( lib_root, 'all.snkmk')
+pipeline_dir = os.path.join( lib_root, 'pipelines/')
+snake_file = os.path.join( pipeline_dir, 'all.snkmk')
 cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
 
 mup_root = os.environ['MUP_ROOT']

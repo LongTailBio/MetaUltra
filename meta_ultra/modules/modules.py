@@ -111,13 +111,17 @@ class Module:
 			return type(self).build()
 
 	def askUserForTool(self,toolName, asDict=False):
+		print(asDict)
 		filepath = UserInput('Give the filepath for tool {} in module {}'.format(toolName, self.name),
 				None).resolve()
 		version = UserInput('Give the tool\'s version',default='unknown').resolve()
 		tool = Tool(name=toolName, version=version,filepath=filepath)
 		self.addTool(tool)
 		if asDict:
-			return tool.to_dict()
+			print('FOOBAR')
+			tool =	tool.to_dict()
+			print(tool)
+			return tool
 		return tool
 
 	def buildAddTool(self, toolName, version, filepath, asDict=False):
@@ -144,8 +148,8 @@ class Module:
 		else:
 			sys.stderr.write('Not removing tool {} from {}.\n'.format(tool, self.name))
 
-        def getToolsOfType(self, type):
-                return [tool for tool in self.tools if tool.name.lower() == type.lower()]
+	def getToolsOfType(self, type):
+		return [tool for tool in self.tools if tool.name.lower() == type.lower()]
 
 	def askUserForRef(self, toolName, asDict=False):
 		filepath = UserInput('Give a filepath for a reference-db for tool {} in module'.format(toolName, self.name),

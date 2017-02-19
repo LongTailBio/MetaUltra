@@ -2,7 +2,7 @@ import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
 import meta_ultra.modules as modules
-
+import meta_ultra.sample_manager as SampleManager
 import meta_ultra.database as mupdb
 import sys
 import json
@@ -15,6 +15,37 @@ from tinydb import TinyDB, Query
 #
 ################################################################################
 
+def resolveVal(value, useDefaults, fineControl):
+
+	if type(value) in [str, int, float, bool]:
+		value = str(value)
+		return value
+
+	elif hasattr(value, 'to_dict'):
+		value = resolveVal(value.to_dict(),
+				   useDefaults,
+				   fineControl
+				   )
+
+	elif type(value) not in [str, dict, list]:
+		value = resolveVal(value.resolve(useDefaults=useDefaults, fineControl=fineControl),
+				   useDefaults,
+				   fineControl
+				   )
+	elif type(value) == dict:
+		newVal = {}
+		for k, v in value.items():
+			newVal[k] = resolveVal(v, useDefaults, fineControl)
+		value = newVal
+	elif type(value) == list:
+		newVal = []
+		for el in value:
+			newVal.append(resolveVal(el, useDefaults, fineControl))
+		value = newVal	
+	return value
+
+
+
 class ConfBuilder:
 	def __init__(self, useDefaults, fineControl):
 		self.global_fields = {'TOOLS_TO_RUN':[]}
@@ -23,9 +54,7 @@ class ConfBuilder:
 		self.fineControl = fineControl
 
 	def add_global_field(self, key, value):
-		if type(value) not in [str, dict, list]:
-			value = value.resolve(useDefaults=self.useDefaults, fineControl=self.fineControl)
-		self.global_fields[key] = value
+		self.global_fields[key] = resolveVal(value, self.useDefaults, self.fineControl)
 	
 	def addModule(self, tool_name):
 		inp = ''
@@ -60,9 +89,7 @@ class ToolBuilder:
 		self.fineControl = fineControl
 	
 	def add_field(self,key,value):
-		if type(value) not in [str, dict, list]:
-			value = value.resolve(useDefaults=self.useDefaults, fineControl=self.fineControl)
-		self.fields[key] = value
+		self.fields[key] = resolveVal(value, self.useDefaults, self.fineControl)
 
 	def set_field(self,key,value):
 		self.fields[key] = value
@@ -71,6 +98,7 @@ class ToolBuilder:
 		return self.fields[key]
 	
 	def to_dict(self):
+		
 		return self.fields
 
 ################################################################################
@@ -84,31 +112,39 @@ def add_samples_to_conf(confName,
 			projectName=None,
 			minReadLen=0,
 			maxReadLen=250,
-			use_defaults=False):
+			useDefaults=False,
+                        fineControlOnly=False):
 	
-	finalConf = mupdb.Conf.get(confName)['conf']
+	finalConf = mupdb.Conf.get(confName).conf
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
 		sys.stdout.write(msg)
 		sys.exit(1)
 
-	newConf = ConfBuilder(use_defaults) 
+	newConf = ConfBuilder(useDefaults, fineControlOnly) 
 	newConf.add_global_field('PAIRED_END', str(pairs))
 	newConf.add_global_field('OUTPUT_DIR',
 			      UserInput('Give the directory where output files '+
 					'should go. All file paths will be '+
 					'interpreted relative to the MUP_ROOT '+
-					'enviroment variable','results/'))
-	outDir = conf.get_global_field('OUTPUT_DIR')
+					'enviroment variable',
+                                        'results/'
+                              ))
+	outDir = newConf.get_global_field('OUTPUT_DIR')
 	if not outDir.startswith(config.mup_root):
 		if outDir[0] != '/':
 			outDir = '/' + outDir
 		outDir = config.mup_root + outDir
-		conf.set_global_field('OUTPUT_DIR',outDir)
-	seq_data_recs = mupdb.get_seq_data(projectName=projectName,
-					   paired=pairs,
-					   lenMax=maxReadLen,
-					   lenMin=minReadLen)
+		newConf.set_global_field('OUTPUT_DIR',outDir)
+                
+	seq_data_recs = SampleManager.getSeqData(projectName=projectName,
+						 paired=pairs,
+						 lenMax=maxReadLen,
+						 lenMin=minReadLen)
+	if len(seq_data_recs) == 0:
+		sys.stderr.write('No samples found. Exiting.\n')
+		sys.exit(1)
+		
 	samples = {}
 	for seq_data in seq_data_recs:
 		samples[seq_data.sampleName] = {}
@@ -120,7 +156,6 @@ def add_samples_to_conf(confName,
 	newConf.add_global_field('SAMPLES',samples)
 
 	for k, v in newConf.to_dict().items():
-		assert k not in finalConf
 		finalConf[k] = v
 	return finalConf 
 
@@ -157,7 +192,7 @@ def build_and_save_new_conf(name, useDefaults=False, fineControl=False, modify=F
 	# to the toolsets list. They then employ a visitor
 	# pattern (ish) to add their own parameters to the conf.
 	for moduleType in modules.modules:
-		module = modules.build()
+		module = moduleType.build()
 		module.buildConf(confBldr)
 
 	

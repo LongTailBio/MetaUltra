@@ -198,7 +198,6 @@ class Experiment(Record):
     @staticmethod
     def dbTbl():
         return experimentTbl
-
     
 class SingleEndedSequencingRun( Experiment):
     def __init__(self,**kwargs):

@@ -19,6 +19,7 @@ class Resolvable:
 	def resolve(self, useDefaults=False, fineControl=False):
 		if self.resolved:
 			return self.resolved_val
+
 		res = self._resolve(useDefaults, fineControl)
 		self.resolved_val = res
 		self.resolved = True

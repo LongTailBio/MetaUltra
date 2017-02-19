@@ -98,10 +98,6 @@ def new_conf(name, defaults, fine_control, modify):
 @click.option('--conf',prompt='CONF NAME', help='Conf file, can be generated using \'pmp conf\'')
 @click.option('--rerun-incomplete/--no-rerun-incomplete',default=False,help='Unlock the working directory')
 def run( dryrun, unlock, jobs, conf, rerun_incomplete):
-	if not os.path.isfile(conf):
-		sys.stderr.write('No conf file found. Exiting.\n')
-		sys.exit(1)
-        
 	pipeline_runner.run(conf,dry_run=dryrun,njobs=jobs,unlock=unlock,rerun=rerun_incomplete)
 
 ####################################################################################################

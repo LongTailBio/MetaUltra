@@ -21,8 +21,8 @@ class ShortBredModule( Module):
 					       new=lambda :self.askUserForTool('shortbred_quantify')
 				    ))
 		tool = shortbred.get_field('EXC')
-		shortbred.set_field('EXC', tool.filepath)
-		shortbred.set_field('VERSION', tool.version)
+		shortbred.set_field('EXC', tool['filepath'])
+		shortbred.set_field('VERSION', tool['version'])
 		
 		shortbred.add_field('DBS',
 				    UserMultiChoice('ShortBred References',
@@ -32,7 +32,7 @@ class ShortBredModule( Module):
 		dbs = shortbred.get_field('DBS')
 		dbPaths = []
 		for db in dbs:
-			dbPaths.append(db.filepath)
+			dbPaths.append(db['filepath'])
 		shortbred.set_field('DBS', dbPaths)
 		
 		shortbred.add_field('THREADS',
