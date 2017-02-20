@@ -110,6 +110,8 @@ def results(project,sample):
     for result in results:
         print(result)
 
+####################################################################################################
+        
 @main.command()
 @click.option('--project',default=None, help='Show only samples from the given project')
 @click.option('--data/--no-data',default=False, help='Show associated data for the samples')
@@ -138,6 +140,25 @@ def save_sample(name, project,modify, metadata):
     sample = sample.save(modify=modify)
     print(sample)
 
+@main.command()
+@click.option('--sample-name',prompt='NAME',help='unique name for the sample')
+@click.option('--project',prompt='PROJECT',help='unique name of the project')
+@click.option('--modify/--no-modify', default=False, help='overwrite fields in an existing record')
+@click.argument('metadata', nargs=-1)
+def save_single_ended_seq_sample(sample_name, project,modify, metadata):
+    metadataDict = {}
+    for kvstr in metadata:
+        k, v = kvstr.split('=')
+        metadataDict[k] = v
+    sample = mupdb.Sample(name=name,
+                    project_name=project,
+                    metadata=metadataDict)
+    sample = sample.save(modify=modify)
+    print(sample)
+
+    
+####################################################################################################
+    
 @main.command()
 @click.option('--conf',prompt='CONF FILE', help='Conf file, can be generated using \'pmp conf\'')
 @click.option('--unlock/--no-unlock',default=False,help='Unlock the working directory')

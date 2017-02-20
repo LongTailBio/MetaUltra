@@ -1,7 +1,0 @@
-=====
-Usage
-=====
-
-To use Precision Metagenomics Pipeline in a project::
-
-    import meta_ultra

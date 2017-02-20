@@ -5,6 +5,7 @@ from os.path import basename
 import json
 
 db = TinyDB(config.db_file)
+sampleTbl = db.table(config.db_project_table)
 sampleTbl = db.table(config.db_sample_table)
 dataTbl = db.table(config.db_data_table)
 experimentTbl = db.table(config.db_experiment_table)
@@ -252,6 +253,37 @@ class Sample(Record):
     def dbTbl():
         return sampleTbl
 
+################################################################################
+        
+class Project(Record):
+    def __init__(self,**kwargs):
+        super(Project, self).__init__(kwargs['name'])
+        if 'metadata' in kwargs:
+            self.metadata = kwargs['metadata']
+        else:
+            self.metadata = {}
+
+    def to_dict(self):
+        out = {
+            'name' : self.name,
+            'metadata':self.metadata
+            }
+        return out
+
+    def __str__(self):
+        out = '{}'.format(self.name)
+        for k, v in self.metadata.items():
+            if ' ' in str(v):
+                out += '\t{}="{}"'.format(k,v)
+            else:
+                out += '\t{}={}'.format(k,v)
+        return out
+
+    @staticmethod
+    def dbTbl():
+        return projectTbl
+
+    
     
 ################################################################################
 
