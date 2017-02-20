@@ -101,6 +101,8 @@ class Record:
     
 ################################################################################
 
+
+
 class Data( Record):
     def __init__(self, name, dataType, sampleName, projectName, experimentName):
         super(Data, self).__init__(name)
@@ -136,7 +138,7 @@ class Data( Record):
 class SingleEndedSeqData(Data):
     def __init__(self,**kwargs):
         super(SingleEndedSeqData, self).__init__(kwargs['name'],
-                                                 'seq_single_ended',
+                                                 type(self).dataType(),
                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
                                                  kwargs['experiment_name'])
@@ -153,12 +155,14 @@ class SingleEndedSeqData(Data):
         out = '{}\t{}\t{}\t{}'.format(self.name, self.dataType,self.experimentName,self.reads1)
         return out
 
-    
+    @staticmethod
+    def dataType():
+        return 'seq_single_ended'
 
 class PairedEndedSeqData(Data):
     def __init__(self,**kwargs):
         super(PairedEndedSeqData, self).__init__(kwargs['name'],
-                                                 'seq_paired_ended',
+                                                 type(self).dataType(),
                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
                                                  kwargs['experiment_name'])
@@ -179,6 +183,10 @@ class PairedEndedSeqData(Data):
     def __str__(self):
         out = '{}\t{}\t{}\t{}\t{}'.format(self.name, self.dataType,self.experimentName,self.reads1,self.reads2)
         return out
+
+    @staticmethod
+    def dataType():
+        return 'seq_paired_ended'
 
 
 ################################################################################
