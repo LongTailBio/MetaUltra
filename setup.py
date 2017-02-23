@@ -33,7 +33,7 @@ setup(
                  'meta_ultra'},
     entry_points={
         'console_scripts': [
-            'meta_ultra=meta_ultra.cli:main'
+            'mu=meta_ultra.cli:main'
         ]
     },
     include_package_data=True,

@@ -1,5 +1,0 @@
-shortbred	ARG_75bp	/home/dcd3001/shortbred/sample_markers/ShortBRED_ABR_75bp_markers.faa
-shortbred	ARG_90bp	/home/dcd3001/shortbred/sample_markers/ShortBRED_ABR_90bp_markers.faa
-shortbred	ARG_101bp	/home/dcd3001/shortbred/sample_markers/ShortBRED_ABR_101bp_markers.faa
-shortbred	ARG_150bp	/home/dcd3001/shortbred/sample_markers/ShortBRED_ABR_150bp_markers.faa
-metaphlan2	db_v20          /home/dcd3001/.miniconda2/pkgs/metaphlan2-2.5.0-py27_1/bin/db_v20/mpa_v20_m200

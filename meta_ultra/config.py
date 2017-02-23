@@ -9,6 +9,8 @@ pipeline_dir = os.path.join( lib_root, 'pipelines/')
 snake_file = os.path.join( pipeline_dir, 'all.snkmk')
 cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
 
+mu_dir = '.mu'
+
 mup_root = os.environ['MUP_ROOT']
 
 db_file = os.environ['MUP_DB']
@@ -23,3 +25,8 @@ db_result_table = 'result_table'
 
 def canon_tool(toolName):
     return toolName.lower()
+
+
+class DataType(Enum):
+    DNA_SEQ_SINGLE_END='DNA_SEQ_SINGLE_END'
+    DNA_SEQ_PAIRED_END='DNA_SEQ_PAIRED_END'

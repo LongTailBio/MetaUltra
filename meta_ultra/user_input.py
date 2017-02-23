@@ -133,6 +133,33 @@ class UserInput( Resolvable):
 		
 		return str(inp) # We want to treat defaults that aren't strings nicely
 
+class UserInputNoDefault( Resolvable):
+	def __init__(self, prompt, type=str, fineControlOnly=False):
+		super(UserInput, self).__init__()
+		self.prompt = prompt
+		self.type = type
+		self.fineOnly = fineControlOnly
+
+	def _resolve(self, useDefaults, fineControl):
+		if useDefaults or (self.fineOnly and not fineControl):
+			return str(self.default)
+		try_again = True
+		while try_again:
+			inp = err_input(self.prompt + ' [{}]: '.format(self.default))
+			try_again = False
+			if not inp: # use the default
+				try_again=True
+                        else:
+			        try:
+				        self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
+			        except ValueError:
+				        sys.stderr.write("Input must be of type '{}'".format(self.type))
+				        inp = None
+				        try_again = True
+		
+		return str(inp) # We want to treat defaults that aren't strings nicely
+
+        
 
 class BoolUserInput( Resolvable):
 	def __init__(self, prompt, default, type=str, fineControlOnly=False):
@@ -146,6 +173,7 @@ class BoolUserInput( Resolvable):
 		if useDefaults or (self.fineOnly and not fineControl):
 			return str(self.default)
 		try_again = True
+
 		while try_again:
 			if self.default:
 				prompt = self.prompt + ' ([y]/n): '

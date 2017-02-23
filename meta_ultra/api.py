@@ -1,5 +1,7 @@
-
+import meta_ultra.config as config
 from meta_ultra.database import *
+import os.path
+import os
 
 def toNameList(l):
     if not l:
@@ -14,34 +16,144 @@ def toNameList(l):
 
 ################################################################################
 #
+# Start a working area
+#
+################################################################################
+
+def init(dir='.'):
+    muDir = os.path.join(dir, config.mu_dir)
+    os.mkdirs(muDir)
+
+################################################################################
+#
+# Run modules
+#
+################################################################################
+
+def runModules(conf,dataRecs):
+    raise NotImplementedError()
+    
+################################################################################
+#
+# Add data to the working area
+#
+################################################################################
+
+def saveSingleEndDNASeqData(name,
+                           readFilename,
+                           aveReadLen,
+                           sample,
+                           experiment,
+                           project):
+    if type(sample) != str:
+        sample = sample.name
+    if type(experiment) != str:
+        experiment = experiment.name
+    if type(project) != str:
+        project = project.name
+    dataRec = SingleEndDNASeqData(name=name,
+                                 reads_1=readFilename,
+                                 ave_read_len=aveReadLen,
+                                 sample_name=sample,
+                                 project_name=project,
+                                 experiment_name=experiment)
+    return dataRec.save()
+        
+def savePairedEndDNASeqData(name,
+                           read1Filename,
+                           read2Filename,
+                           aveReadLen,
+                           sample,
+                           experiment,
+                           project,
+                           aveGapLen=None):
+    if type(sample) != str:
+        sample = sample.name
+    if type(experiment) != str:
+        experiment = experiment.name
+    if type(project) != str:
+        project = project.name
+    dataRec = PairedEndDNASeqData(name=name,
+                                 reads_1=read1Filename,
+                                 reads_2=read2Filename,
+                                 ave_read_len=aveReadLen,
+                                 sample_name=sample,
+                                 project_name=project,
+                                 experiment_name=experiment,
+                                 ave_gap_len=aveGapLen)
+    return dataRec.save()
+
+
+
+
+
+    
+
+################################################################################
+#
 # Info Retrieval
 #
 ################################################################################
 
+def getProject(name):
+    return Project.get(name)
+
 def getProjects():
-    pass
+    return Project.all()
 
 ############################################################
 
-def getExperiments():
-    pass
+def getExperiment(name):
+    return experiment.get(name)
+
+def getExperiments(dataType=None):
+    return Experiment.all()
 
 ############################################################
+
+def getConf(name):
+    return Conf.get(name)
 
 def getConfs():
-    pass
+    Conf.all()
 
 ###########################################################
+
+def getSample(name):
+    raise NotImplementedError
+
+
+def getSampleTypes():
+    raise NotImplementedError
 
 def getSamples(projects=None):
     projNames = toNameList(projects)
+    samples = Sample.all()
+    out = []
+    for sample in samples:
+        if len(projNames) == 0 or sample.projectName in projNames:
+            out.append(sample)
+    return out
 
 ###########################################################
-    
+
+def getDataTypes():
+    raise NotImplementedError
+
+
 def getData(dataType=None, samples=None, experiments=None, projects=None):
     sampleNames = toNameList(samples)
     expNames = toNameList(experiments)
     projNames = toNameList(projects)
+    dataRecs = Data.all()
+    out = []
+    for dataRec in dataRecs:
+        if ( (not dataType or dataRec.dataType == dataType)
+             and (len(expNames) == 0 or dataRec.experimentName in expNames)
+             and (len(projNames) == 0 or dataRec.projectName in projNames)
+             and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)):
+            out.append(dataRec)
+    return out
 
 def getSingleEndedSeqData(samples=None, experiments=None, projects=None):
     return getData(SingleEndedSeqData.dataType(),
@@ -65,12 +177,18 @@ def getPairedEndedSeqData(samples=None, experiments=None, projects=None):
 ################################################################################
 
 def saveProject(name, metadata):
-    pass
+    proj = Project({'name': name, 'metadata': metadata})
+    return proj.save()
 
 ###########################################################
 
 def saveSample(name, project, metadata):
-    pass
+    if type(project) != str:
+        project = project.name
+    sample = Sample(name=name,
+                    project_name=project,
+                    metadata=metadata)
+    return sample.save()
 
 ###########################################################
 
@@ -85,32 +203,30 @@ def savePairedEndedSeqRun(name, metadata):
 
 ###########################################################
 
-def saveSingleEndedSeqData(name,
-                           readFilename,
-                           aveReadLen,
-                           sample,
-                           experiment,
-                           project):
-    pass
-
-def savePairedEndedSeqData(name,
-                           read1Filename,
-                           read2Filename,
-                           aveReadLen,
-                           sample,
-                           experiment,
-                           project,
-                           aveGapLen=None):
-    pass
 
 ###########################################################
 
 def saveResult(name, resultFilenames, data, conf, sample, project):
-    pass
+    if type(sample) != str:
+        sample = sample.name
+    if type(conf) != str:
+        conf = conf.name
+    if type(project) != str:
+        project = project.name
+    if type(data) != str:
+        data = data.name
+    result = Result(name=name,
+                    data_name=data,
+                    conf_name=conf,
+                    sample_name=sample,
+                    project_name=project,
+                    result_files=resultFilenames)
+    return result.save()
+                    
 
 ###########################################################
 	
-def bulkSaveSamplesAndSingleEndedSeqData(projectName,
+def bulkSaveSamplesAndSingleEndDNASeqData(project,
 			                 filenames,
 			                 readSuffix,
 			                 singleEndedSeqRun,

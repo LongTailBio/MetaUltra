@@ -112,7 +112,7 @@ def add_samples_to_conf(confName,
 			projectName=None,
 			minReadLen=0,
 			maxReadLen=250,
-			useDefaults=False,
+                        useDefaults=False,
                         fineControlOnly=False):
 	
 	finalConf = mupdb.Conf.get(confName).conf
@@ -162,7 +162,7 @@ def add_samples_to_conf(confName,
 	
 ################################################################################
 		
-def build_and_save_new_conf(name, useDefaults=False, fineControl=False, modify=False):
+def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 	if mupdb.Conf.exists(name) and not modify:
 		msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
 		sys.stderr.write(msg)
