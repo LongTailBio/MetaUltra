@@ -5,4 +5,4 @@ __email__ = 'dcd3001@med.cornell.edu'
 __version__ = '0.1.0'
 
 
-from .ref_manager import *
+import meta_ultra.api as api

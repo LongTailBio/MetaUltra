@@ -149,17 +149,17 @@ class UserInputNoDefault( Resolvable):
 			try_again = False
 			if not inp: # use the default
 				try_again=True
-                        else:
-			        try:
-				        self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
-			        except ValueError:
-				        sys.stderr.write("Input must be of type '{}'".format(self.type))
-				        inp = None
-				        try_again = True
+			else:
+				try:
+					self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
+				except ValueError:
+					sys.stderr.write("Input must be of type '{}'".format(self.type))
+					inp = None
+					try_again = True
 		
 		return str(inp) # We want to treat defaults that aren't strings nicely
 
-        
+	
 
 class BoolUserInput( Resolvable):
 	def __init__(self, prompt, default, type=str, fineControlOnly=False):

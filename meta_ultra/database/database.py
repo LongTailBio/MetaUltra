@@ -4,7 +4,7 @@ from meta_ultra.utils import *
 from os.path import basename
 import json
 
-sampleTbl = config.db_project_table
+projectTbl = config.db_project_table
 sampleTbl = config.db_sample_table
 dataTbl = config.db_data_table
 experimentTbl = config.db_experiment_table
@@ -20,15 +20,11 @@ confTbl = config.db_conf_table
 class RecordExistsError(Exception):
     pass
 
-class DataTypeNotFoundError(Exception):
-    pass
-
-def checkDataType(dataType):
-    types = ['seq_single_ended',
-             'seq_paired_ended']
-    if dataType in types:
-        return dataType
-    raise DataTypeNotFoundError() 
+def asDataType(dataType):
+    try:
+        return DataType[dataType]
+    except:
+        raise DataTypeNotFoundError() 
 
 class Record:
     dbTbl = None
@@ -69,7 +65,11 @@ class Record:
         else:
             type(self).dbTbl().insert(self.to_dict())
             return type(self).get(self.name)
-        
+
+    
+    def remove(self):
+        record = self.record()
+        type(self).dbTbl().remove(eids=[record.eid])
 
     @classmethod
     def build(ctype, *args, **kwargs):
@@ -97,6 +97,7 @@ class Record:
         recs = [ctype.build(**rec) for rec in recs]
         return recs
 
+
     
 ################################################################################
 
@@ -105,7 +106,7 @@ class Record:
 class Data( Record):
     def __init__(self, name, dataType, sampleName, projectName, experimentName):
         super(Data, self).__init__(name)
-        self.dataType = checkDataType(dataType)
+        self.dataType = asDataType(dataType)
         self.sampleName = sampleName
         self.projectName = projectName
         self.experimentName = experimentName
@@ -123,13 +124,14 @@ class Data( Record):
 
     @staticmethod
     def dbTbl():
-        return dataTbl
+        return dataTbl()
 
     @classmethod
     def build(ctype, *args, **kwargs):
-        if kwargs['data_type'] == 'seq_single_ended':
+        dataType = asDataType( kwargs['data_type'])
+        if dataType == DataType.DNA_SEQ_SINGLE_END:
             return SingleEndedSeqData(**kwargs)
-        elif kwargs['data_type'] == 'seq_paired_ended':
+        elif dataType == DataType.DNA_SEQ_PAIRED_END:
             return PairedEndedSeqData(**kwargs)
         else:
             raise DataTypeNotFoundError()
@@ -193,7 +195,7 @@ class PairedEndedSeqData(Data):
 class Experiment(Record):
     def __init__(self, name, dataType):
         super(Experiment, self).__init__(name)
-        self.dataType = checkDataType(dataType)
+        self.dataType = asDataType(dataType)
 
     def to_dict(self):
         out = {
@@ -205,7 +207,7 @@ class Experiment(Record):
 
     @staticmethod
     def dbTbl():
-        return experimentTbl
+        return experimentTbl()
     
 class SingleEndedSequencingRun( Experiment):
     def __init__(self,**kwargs):
@@ -258,7 +260,7 @@ class Sample(Record):
 
     @staticmethod
     def dbTbl():
-        return sampleTbl
+        return sampleTbl()
 
 ################################################################################
         
@@ -288,7 +290,7 @@ class Project(Record):
 
     @staticmethod
     def dbTbl():
-        return projectTbl
+        return projectTbl()
 
     
     
@@ -331,7 +333,7 @@ class Result(Record):
 
     @staticmethod
     def dbTbl():
-        return resultTbl
+        return resultTbl()
 
     
 ################################################################################
@@ -353,4 +355,4 @@ class Conf(Record):
     
     @staticmethod
     def dbTbl():
-        return confTbl
+        return confTbl()

@@ -1,15 +1,22 @@
 from meta_ultra.user_input import *
 import meta_ultra.api as api
+from .cli import main
+import click
+
+@main.group()
+def add():
+    pass
 
 
-
-
+@add.command(name='data')
+@click.argument('filenames',nargs=-1)
 def addData(filenames):
     project = UserChoice('project', api.getProjects(), new=addProject()).resolve()
     sampleType = UserChoice('sample_type', api.getSampleTypes()).resolve()
     dataType = UserChoice('data_type', api.getDataTypes()).resolve()
     if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
-        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType), new=addExperiment(dataType=dataType)).resolve()
+        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType),
+                            new=addExperiment(dataType=dataType)).resolve()
         extension = UserInput('Please enter the file extension for the read files', '.fastq.gz').resolve()
         prefix = UserInput('Optionally, indicate a prefix for the read files', '').resolve()
         aveReadLen = UserInput('What is the average read length', type=int).resolve()
@@ -20,7 +27,8 @@ def addData(filenames):
                                                   aveReadLen, 
                                                   readPrefix=prefix)
     elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
-        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType), new=addExperiment(dataType=dataType)).resolve()
+        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType),
+                            new=addExperiment(dataType=dataType)).resolve()
         extension1 = UserInput('Please enter the file extension for the forward read files', '_1.fastq.gz').resolve()
         extension2 = UserInput('Please enter the file extension for the reverse read files', '_2.fastq.gz').resolve()
         prefix = UserInput('Optionally, indicate a prefix for the read files',default='').resolve()
@@ -29,12 +37,13 @@ def addData(filenames):
         api.bulkSaveSamplesAndPairedEndDNASeqData(project,
                                                   filenames,
                                                   extension1,
-                                                  extension2
+                                                  extension2,
                                                   seqRun,
                                                   aveReadLen,
                                                   aveGapLen=aveGapLen,
                                                   readPrefix=prefix)
-        
+@add.command(name='project')
+@click.option('-n', '--name', default=None, help='The project name')
 def addProject(name=None):
     tryAgain = True
     while tryAgain:
@@ -47,7 +56,8 @@ def addProject(name=None):
             name=None
     api.saveProject(name,None)
 
-    
+@add.command(name='experiment')
+@click.option('-n', '--name', default=None, help='The experiment name')
 def addExperiment(name=None, dataType=None):
     if not dataType:
             dataType = UserChoice('data_type', api.getDataTypes()).resolve()
@@ -62,18 +72,20 @@ def addExperiment(name=None, dataType=None):
             name=None
     api.saveExperiment(name, dataType, None)
 
-    
-def addSample(name=None, projectName=None):
-    if not projectName:
+@add.command(name='sample')
+@click.option('-n', '--name', default=None, help='The sample name')
+@click.option('-p', '--project', default=None, help='The project name')
+def addSample(name=None, project=None):
+    if not project:
         project = UserChoice('project', api.getProjects(), new=addProject()).resolve()
-    elif not api.getProject(name):
-        add = BoolUserInput('Project {} not. found Would you like to add it?'.format(name),False)
+    elif not api.getProject(project):
+        add = BoolUserInput('Project {} not. found Would you like to add it?'.format(project),False)
         if not add:
-            sys.stderr.write('No project {}. Exiting.\n'.format(name))
+            sys.stderr.write('No project {}. Exiting.\n'.format(project))
             sys.exit(1)
         else:
-            addProject(name=name)
-        project = api.getProject(name)
+            addProject(name=project)
+        project = api.getProject(project)
 
     tryAgain = True
     while tryAgain:

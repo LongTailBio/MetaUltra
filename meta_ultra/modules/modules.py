@@ -15,98 +15,7 @@ def allModules(default=False):
 	return out
 
 def getModule(name, default=False):
-	rec = moduleTbl.get(where('name') == name)
-	for module in modules:
-		if rec and ('name' in rec) and (rec['name'] == module.moduleName().lower()):
-			return module.build(useDefaults=default)
-		elif default and module.moduleName().lower() == name:
-			return module.build(useDefaults=default)
-		
-class ModuleExistsError(Exception):
-	pass
-
-class Reference:
-	def __init__(self, **kwargs):
-		self.name = kwargs['name']
-		self.toolName = kwargs['tool_name']
-		self.filepath = kwargs['filepath']
-
-	def to_dict(self):
-		out = {
-			'name': self.name,
-			'tool_name':self.toolName,
-			'filepath': self.filepath
-			}
-		return out
-
-	def __str__(self):
-		return self.name
-
-class Tool:
-	def __init__(self, **kwargs):
-		self.name = kwargs['name']
-		self.version = kwargs['version']
-		self.filepath = kwargs['filepath']
-
-	def to_dict(self):
-		out = {
-			'name' : self.name,
-			'version' : self.version,
-			'filepath': self.filepath
-			}
-		return out
-
-	def __str__(self):
-		return '{}\t{}'.format(self.name, self.version)
-	
-class Module:
-
-	def __init__(self, **kwargs):
-		self.name = kwargs['name']
-		self.tools = []
-		if 'tools' in kwargs:
-			for rec in kwargs['tools']:
-				tool = Tool(**rec)
-				self.tools.append(tool)
-
-		try:
-			self.refs = [Reference(**rec) for rec in kwargs['references']]
-		except KeyError:
-			self.refs = []
-
-		try:
-			self.params = kwargs['params']
-		except KeyError:
-			self.params = {}
-
-	def to_dict(self):
-		out = {
-			'name': self.name.lower(),
-			'tools': [tool.to_dict() for tool in self.tools],
-			'references': [ref.to_dict() for ref in self.refs],
-			'params': self.params
-			}
-		return out
-
-
-	def save(self,modify=False,requireKeyOverlap=False):
-		if type(self).exists() and not modify:
-			raise ModuleExistsError()
-		elif type(self).exists() and modify:
-			rec = self.record()
-			mydict = self.to_dict()
-			for k,v in mydict.items():
-				if k in rec and type(v) == dict and type(rec[k]) == dict:
-					if requireKeyOverlap:
-						rec[k] = {}
-					for subk, subv in v.items():
-						rec[k][subk] = subv
-				else:
-					rec[k] = v
-				moduleTbl.update(rec, eids=[rec.eid])
-			return type(self).build()
-		else:
-			moduleTbl.insert(self.to_dict())
+	rec = moduleTbl().insert(self.to_dict())
 			return type(self).build()
 
 	def askUserForTool(self,toolName, asDict=False):
@@ -139,7 +48,8 @@ class Module:
 		tool = self.tools[i]
 		remove = True
 		if confirm:
-			remove = BoolUserInput('Remove tool {} from {}?'.format(tool,self.name), default=True).resolve()
+			remove = BoolUserInput('Remove tool {} from {}?'.format(tool,self.name),
+                                               default=True).resolve()
 		if remove:
 			sys.stderr.write('Removing tool {} from {}.\n'.format(tool, self.name))
 			del self.tools[i]
@@ -234,17 +144,17 @@ class Module:
 	@classmethod
 	def exists(ctype):
 		modName = ctype.moduleName().lower()
-		return None != moduleTbl.get(where('name') == modName) 
+		return None != moduleTbl().get(where('name') == modName) 
 		
 	@classmethod
 	def record(ctype):
 		modName = ctype.moduleName().lower()
-		return moduleTbl.get(where('name') == modName)
+		return moduleTbl().get(where('name') == modName)
 
 	@classmethod
 	def build(ctype,useDefaults=False):
 		modName = ctype.moduleName().lower()
-		rec = moduleTbl.get(where('name') == modName)
+		rec = moduleTbl().get(where('name') == modName)
 		if not rec:
 			rec = {'name':modName}
 		return ctype(**rec, use_defaults=useDefaults)
