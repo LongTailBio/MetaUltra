@@ -4,10 +4,9 @@ from meta_ultra.user_input import *
 import sys
 import json
 import os
-from tinydb import TinyDB, Query, where
+from tinydb import Query, where
 
-db = TinyDB(config.db_file)
-moduleTbl = db.table(config.db_module_table)
+moduleTbl = config.db_module_table
 
 def allModules(default=False):
 	out = []

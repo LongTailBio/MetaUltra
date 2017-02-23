@@ -4,13 +4,12 @@ from meta_ultra.utils import *
 from os.path import basename
 import json
 
-db = TinyDB(config.db_file)
-sampleTbl = db.table(config.db_project_table)
-sampleTbl = db.table(config.db_sample_table)
-dataTbl = db.table(config.db_data_table)
-experimentTbl = db.table(config.db_experiment_table)
-resultTbl = db.table(config.db_result_table)
-confTbl = db.table(config.db_conf_table)
+sampleTbl = config.db_project_table
+sampleTbl = config.db_sample_table
+dataTbl = config.db_data_table
+experimentTbl = config.db_experiment_table
+resultTbl = config.db_result_table
+confTbl = config.db_conf_table
 
 ################################################################################
 #
