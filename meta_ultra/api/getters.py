@@ -12,7 +12,10 @@ import os
 ################################################################################
 
 def getProject(name):
-    return Project.get(name)
+    try:
+        return Project.get(name)
+    except TypeError:
+        return None
 
 def getProjects(names=None):
     if not names or len(names) == 0:

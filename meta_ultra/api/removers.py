@@ -4,19 +4,36 @@ from meta_ultra.database import *
 import os.path
 import os
     
-def removeData(name):
-    Data.get(name).remove()
+def removeData(name, atomic=False):
+    if atomic:
+        Data.get(name).remove()
+    else:
+        raise NotImplementedError()
 
-def removeProject(name):
-    Project.get(name).remove()
+def removeProject(name, atomic=False):
+    if atomic:
+        Project.get(name).remove()
+    else:
+        raise NotImplementedError()
 
-def removeExperiment(name):
-    Experiment.get(name).remove()
+def removeExperiment(name, atomic=False):
+    if atomic:
+        Experiment.get(name).remove()
+    else:
+        raise NotImplementedError()
 
-def removeSample(name):
-    Sample.get(name).remove()
+def removeSample(name, atomic=False):
+    if atomic:
+        Sample.get(name).remove()
+    else:
+        raise NotImplementedError()
+    
 
-def removeResult(name):
-    Result.get(name).remove()
+def removeResult(name, atomic=False):
+    if atomic:
+        Result.get(name).remove()
+    else:
+        raise NotImplementedError()
+        
 
 

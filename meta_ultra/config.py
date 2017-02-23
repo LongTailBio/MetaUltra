@@ -13,11 +13,8 @@ cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
 
 mu_dir = '.mu'
 mu_db_path = os.path.join(mu_dir,'mudb')
-mu_db = None # cache mu db for a session
 
 def get_db(dir='.'):
-    if mu_db:
-        return mu_db
     dir = os.path.abspath(dir)
     if mu_dir in os.listdir(dir):
         mu_db = TinyDB( os.path.join(dir,mu_db_path))

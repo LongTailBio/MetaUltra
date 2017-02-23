@@ -13,7 +13,7 @@ from .api_utils import *
 
 def init(dir='.'):
     muDir = os.path.join(dir, config.mu_dir)
-    os.mkdirs(muDir)
+    os.makedirs(muDir)
 
 ################################################################################
 #

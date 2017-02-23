@@ -63,7 +63,7 @@ def savePairedEndDNASeqData(name,
 ################################################################################
 
 def saveProject(name, metadata):
-    proj = Project({'name': name, 'metadata': metadata})
+    proj = Project(**{'name': name, 'metadata': metadata})
     return proj.save()
 
 ###########################################################
