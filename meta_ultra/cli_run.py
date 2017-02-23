@@ -5,7 +5,7 @@ import meta_ultra.api as api
 
 ################################################################################
 
-def run():
+def run(dryrun=False, unlock=False, rerunIncomplete=False):
     conf = UserChoice('conf', api.getConfs(), new=add.addConf()).resolve()
     dataType = UserChoice('Select data type to analyze',
                           api.getDataTypes()).resolve()
@@ -20,5 +20,5 @@ def run():
         samples = UserMultiChoice('What samples should data be taken from?',
                                   api.getSamples(projects=projects)).resolve()
     dataRecs = getData(dataType=dataType, projects=projects,samples=samples)
-    api.runModules(conf,dataRecs)
+    api.runModules(conf,dataRecs,dryrun=dryrun, unlock=unlock, rerun=rerunIncomplete)
 

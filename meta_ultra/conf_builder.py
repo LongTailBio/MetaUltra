@@ -1,13 +1,11 @@
-import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
 import meta_ultra.modules as modules
-import meta_ultra.sample_manager as SampleManager
-import meta_ultra.database as mupdb
+import meta_ultra.api as api
 import sys
 import json
 import os
-from tinydb import TinyDB, Query
+import os.path
 
 ################################################################################
 #
@@ -107,54 +105,45 @@ class ToolBuilder:
 #
 ################################################################################
 	
-def add_samples_to_conf(confName,
-			pairs=False,
-			projectName=None,
-			minReadLen=0,
-			maxReadLen=250,
-                        useDefaults=False,
-                        fineControlOnly=False):
-	
-	finalConf = mupdb.Conf.get(confName).conf
+def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
+	finalConf = api.getConf(confName)
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
-		sys.stdout.write(msg)
+		sys.stderr.write(msg)
 		sys.exit(1)
-
+                
+        dataType=dataRecs[0].dataType()
+        for dataRec in dataRecs:
+                assert dataRec.dataType() == dataType
+        
 	newConf = ConfBuilder(useDefaults, fineControlOnly) 
-	newConf.add_global_field('PAIRED_END', str(pairs))
+	newConf.add_global_field('DATA_TYPE', str(dataType))
 	newConf.add_global_field('OUTPUT_DIR',
 			      UserInput('Give the directory where output files '+
-					'should go. All file paths will be '+
-					'interpreted relative to the MUP_ROOT '+
-					'enviroment variable',
+					'should go.',
                                         'results/'
                               ))
 	outDir = newConf.get_global_field('OUTPUT_DIR')
-	if not outDir.startswith(config.mup_root):
-		if outDir[0] != '/':
-			outDir = '/' + outDir
-		outDir = config.mup_root + outDir
-		newConf.set_global_field('OUTPUT_DIR',outDir)
+	if not os.path.isdir(outDir):
+                os.mkdir(dir)
                 
-	seq_data_recs = SampleManager.getSeqData(projectName=projectName,
-						 paired=pairs,
-						 lenMax=maxReadLen,
-						 lenMin=minReadLen)
-	if len(seq_data_recs) == 0:
-		sys.stderr.write('No samples found. Exiting.\n')
-		sys.exit(1)
-		
 	samples = {}
-	for seq_data in seq_data_recs:
-		samples[seq_data.sampleName] = {}
-		samples[seq_data.sampleName]['PROJECT'] = seq_data.projectName
-		samples[seq_data.sampleName]['DATA_NAME'] = seq_data.name
-		samples[seq_data.sampleName]['1'] = seq_data.reads1
-		if pairs:
-			samples[seq_data.sampleName]['2'] = seq_data.reads2
-	newConf.add_global_field('SAMPLES',samples)
+	for dataRec in dataRecs:
+                if dataType == api.getDataTypes().DNA_SEQ_SINGLE_ENDED:
+                        samples[dataRec.sampleName] = {}
+		        samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
+		        samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
+		        samples[dataRec.sampleName]['1'] = dataRec.reads1
+                elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_ENDED:
+                        samples[dataRec.sampleName] = {}
+		        samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
+		        samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
+		        samples[dataRec.sampleName]['1'] = dataRec.reads1
+                        samples[dataRec.sampleName]['2'] = dataRec.reads2
 
+
+                        
+	newConf.add_global_field('SAMPLES',samples)
 	for k, v in newConf.to_dict().items():
 		finalConf[k] = v
 	return finalConf 
@@ -198,187 +187,6 @@ def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 	
 	conf_dict = confBldr.to_dict()
 
-	confRecord = mupdb.Conf(**{'name': name, 'conf':conf_dict})
-	return confRecord.save(modify=modify)
-	
+        return api.saveConf(name, conf_dict)
+
 ################################################################################
-
-
-'''
-	# Utility Tools
-	conf.add_tool('BOWTIE2')
-	conf.add_tool('SAMTOOLS')
-	conf.add_tool('DIAMOND')
-	
-	# shortbred
-	shortbred = conf.add_tool('SHORTBRED')
-	shortbred.add_field('EXT', '.shortbred.csv')
-	shortbred.add_field('DBS',
-			    MultiRefChoice('ShortBred DBs',
-					   get_references(tool='shortbred'))),
-	shortbred.add_field('THREADS',
-			    UserInput('\tHow many threads would you like for shortbred',
-				      conf.get_global_field('THREADS'),
-				      type=int))
-	shortbred.add_field('TIME',
-			    UserInput('\tHow many hours does shortbred need',
-				      1,
-				      type=int))
-	shortbred.add_field('RAM',
-			    UserInput('\tHow many GB of RAM does shortbred need per thread',
-				      5,
-				      type=int))
-
-
-	
-	# metaphlan2
-	metaphlan2 = conf.add_tool('METAPHLAN2')
-	metaphlan2.add_field('EXT', '.metaphlan2.txt')
-	metaphlan2.add_field('DB', RefChoice('MetaPhlAn2 DB',
-					     get_references(tool='metaphlan2'))),
-	metaphlan2.add_field('THREADS',
-			     UserInput('\tHow many threads would you like for metaphlan2',
-				       conf.get_global_field('THREADS'), type=int))
-	metaphlan2.add_field('TIME',
-			     UserInput('\tHow many hours does metaphlan2 need',
-				       1,
-				       type=int))
-	metaphlan2.add_field('RAM',
-			     UserInput('\tHow many GB of RAM does metaphlan2 need per thread',
-				       5,
-				       type=int))
-
-	# panphlan
-	panphlan = conf.add_tool('PANPHLAN')
-	panphlan.add_field('EXT', '.panphlan.csv')
-	panphlan.add_field('DB_DIR',
-			   UserInput('\tWhere are the panphaln dbs located',
-				     'panphlan_db'))
-	panphlan.add_field('THREADS',
-			   UserInput('\tHow many threads would you like for panphlan',
-				     conf.get_global_field('THREADS'), type=int))
-	panphlan.add_field('BT2_TIME',
-			   UserInput('\tHow many hours does bowtie2 (as part of panphlan) need',
-				     1,
-				     type=int))
-	panphlan.add_field('TIME',
-			   UserInput('\tHow many hours does panphlan need',
-				     1,
-				     type=int))
-	panphlan.add_field('BT2_RAM',
-			   UserInput('\tHow many GB of RAM does bowtie2 (as part of panphlan) need per thread',
-				     10,
-				     type=int))
-	panphlan.add_field('RAM',
-			   UserInput('\tHow many GB of RAM does panphlan need per thread',
-				     10,
-				     type=int))
-
-
-	# microbe census
-	micCensus = conf.add_tool('MICROBE_CENSUS')
-	micCensus.add_field('EXT', '.mic_census.txt')
-	micCensus.add_field('THREADS',
-			    UserInput('\tHow many threads would you like for MicrobeCensus',
-				      conf.get_global_field('THREADS'),
-				      type=int))
-	micCensus.add_field('TIME',
-			    UserInput('\tHow many hours does MicrobeCensus need',
-				      1,
-				      type=int))
-	micCensus.add_field('RAM',
-			    UserInput('\tHow many GB of RAM does MicrobeCensus need per thread',
-				      10,
-				      type=int))
-	
-	# kraken
-	kraken = conf.add_tool('KRAKEN')
-	kraken.add_field('RAW_EXT', '.raw_kraken.csv')
-	kraken.add_field('MPA_EXT', '.mpa_kraken.csv')
-	kraken.add_field('MPA_EXC',
-			 UserInput('\tExceutable for kraken-mpa-report',
-				   'kraken-mpa-report'))
-	kraken.add_field('DB',
-			 RefChoice('Kraken DB',
-				   get_references(tool='kraken'))),
-	kraken.add_field('THREADS',
-			 UserInput('\tHow many threads would you like for kraken',
-				   conf.get_global_field('THREADS'),
-				   type=int))
-	kraken.add_field('TIME',
-			 UserInput('\tHow many hours does kraken need',
-				   1,
-				   type=int))
-	kraken.add_field('MPA_TIME', '1')
-	kraken.add_field('RAM',
-			 UserInput('\tHow many GB of RAM does kraken need per thread',
-				   10,
-				   type=int))
-	kraken.add_field('MPA_RAM', '1')
-
-	# clark
-	clark = conf.add_tool('CLARK')
-	clark.add_field('EXT', '.clark')
-	clark.add_field('THREADS', UserInput('\tHow many threads would you like for clark', conf.get_global_field('THREADS'), type=int))
-	clark.add_field('TIME', UserInput('\tHow many hours does clark need', 1, type=int))
-	clark.add_field('RAM', UserInput('\tHow many GB of RAM does clark need per thread', 10, type=int))
-
-
-	# knead data
-	kneadData = conf.add_tool('KNEADDATA')
-	kneadData.add_field('DB',
-			    RefChoice('KneadData DB',
-				      get_references(tool='kneaddata'))),
-	kneadData.add_field('THREADS',
-			    UserInput('\tHow many threads would you like for KneadData',
-				      conf.get_global_field('THREADS'),
-				      type=int))
-	kneadData.add_field('TIME',
-			    UserInput('\tHow many hours does KneadData need',
-				      1,
-				      type=int))
-	kneadData.add_field('RAM',
-			    UserInput('\tHow many GB of RAM does KneadData need per thread',
-				      10,
-				      type=int))
-
-
-	# humann2
-	humann2 = conf.add_tool('HUMANN2')
-	humann2.add_field('DB',
-			  RefChoice('Humann2 DB',
-				    get_references(tool='humann2'))),
-	humann2.add_field('DMND_TIME',
-			  UserInput('\tHow many hours does diamond (as a part of Humann2) need',
-				    5,
-				    type=int))
-	humann2.add_field('DMND_THREADS',
-			  UserInput('\tHow many threads would you like for diamond (as part of HumanN2)',
-				    2*conf.get_global_field('THREADS'),
-				    type=int))
-	humann2.add_field('DMND_RAM',
-			  UserInput('\tHow many GB of RAM does diamond (as part of Humann2) need per thread',
-				    10,
-				    type=int))
-	humann2.add_field('THREADS',
-			  UserInput('\tHow many threads would you like for HumanN2',
-				    conf.get_global_field('THREADS'),
-				    type=int))
-	humann2.add_field('TIME',
-			  UserInput('\tHow many hours does Humann2 need',
-				    1,
-				    type=int))
-	humann2.add_field('RAM',
-			  UserInput('\tHow many GB of RAM does Humann2 need per thread',
-				    10,
-				    type=int))
-	
-	# count classified reads
-	countClass = conf.add_tool('COUNT_CLASSIFIED')
-
-	# mash
-	mash = conf.add_tool('MASH')
-
-
-
-'''

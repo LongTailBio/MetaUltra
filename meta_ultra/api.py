@@ -2,6 +2,7 @@ import meta_ultra.config as config
 from meta_ultra.database import *
 import os.path
 import os
+from snakemake import snakemake
 
 def toNameList(l):
     if not l:
@@ -13,6 +14,11 @@ def toNameList(l):
         else:
             names.append(el.name)
     return names
+
+def toName(record):
+    if type(record) == str:
+        return record
+    return record.name()
 
 ################################################################################
 #
@@ -30,8 +36,18 @@ def init(dir='.'):
 #
 ################################################################################
 
-def runModules(conf,dataRecs):
-    raise NotImplementedError()
+def runModules(conf,dataRecs,dryrun=False,unlock=False,rerun=False):
+    confName = toName(conf)
+    confWithData = ConfBuilder.addSamplesToConf(confName, dataRecs)
+    return snakemake(config.snake_file,
+                     config=confWithData,
+                     cluster=config.cluster_wrapper,
+                     keepgoing=True,
+                     printshellcmds=True,
+                     dryrun=dryrun,
+                     unlock=unlock,
+                     force_incomplete=rerun,
+                     cores=njobs)
     
 ################################################################################
 #
@@ -203,6 +219,8 @@ def savePairedEndedSeqRun(name, metadata):
 
 ###########################################################
 
+def saveConf(name, confDict):
+    raise NotImplementedError()
 
 ###########################################################
 
