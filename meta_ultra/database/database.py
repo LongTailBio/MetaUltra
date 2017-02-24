@@ -61,7 +61,7 @@ class Record:
         return type(self).exists(self.name)
     
     def save(self,modify=False):
-        if not self.validStatus:
+        if not self.validStatus():
             raise InvalidRecordStateError()
         
         if self.saved() and not modify:
