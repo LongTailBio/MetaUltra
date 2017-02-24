@@ -40,22 +40,3 @@ db_result_table = lambda : get_db().table('result_table')
 
 def canon_tool(toolName):
     return toolName.lower()
-
-
-class DataTypeNotFoundError(Exception):                                                                                    pass
-
-class DataType(Enum):
-    DNA_SEQ_SINGLE_END='DNA_SEQ_SINGLE_END'
-    DNA_SEQ_PAIRED_END='DNA_SEQ_PAIRED_END'
-
-    @classmethod
-    def toString(ctype, val):
-        for k,v in ctype.__members__.items():
-            if val == v:
-                return k
-    
-    @classmethod
-    def fromString(ctype, string):
-        for k,v in ctype.__members__.items():
-            if string == k:
-                return v

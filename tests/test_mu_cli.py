@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from meta_ultra import api
 import meta_ultra.cli as cli
 from meta_ultra import config
-from meta_ultra.config import DataType
+from meta_ultra.data_type import DataType
 from meta_ultra.database import RecordExistsError, InvalidRecordStateError
 from shutil import rmtree
 

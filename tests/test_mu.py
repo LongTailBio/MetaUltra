@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from click.testing import CliRunner
 from meta_ultra import api
 from meta_ultra import config
-from meta_ultra.config import DataType
+from meta_ultra.data_type import DataType
 from meta_ultra.database import RecordExistsError, InvalidRecordStateError
 from shutil import rmtree
 

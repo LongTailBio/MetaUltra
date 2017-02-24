@@ -1,6 +1,7 @@
 from .api_utils import *
 import meta_ultra.config as config
-from meta_ultra.config import DataType
+from meta_ultra.data_type import DataType
+from meta_ultra.sample_type import SampleType
 from meta_ultra.database import *
 import os.path
 import os

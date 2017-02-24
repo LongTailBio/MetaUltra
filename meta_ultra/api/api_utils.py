@@ -1,5 +1,5 @@
 import meta_ultra.config as config
-
+from meta_ultra.data_type import *
 
 def toNameList(l):
     if not l:
@@ -29,9 +29,9 @@ def convertDataTypes(dataTypes):
     return out
 
 def convertDataType(dataType):
-    if type(dataType) == config.DataType:
+    if type(dataType) == DataType:
         return dataType
     try:
-        return config.DataType.fromString(dataType)
+        return DataType.fromString(dataType)
     except:
-        raise config.DataTypeNotFoundError()
+        raise DataTypeNotFoundError()

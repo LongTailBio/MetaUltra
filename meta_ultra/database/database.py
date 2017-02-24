@@ -1,6 +1,7 @@
 from tinydb import TinyDB, Query, where
 import meta_ultra.config as config
-from meta_ultra.config import DataType, DataTypeNotFoundError
+from meta_ultra.data_type import DataType, DataTypeNotFoundError
+from meta_ultra.sample_type import SampleType, SampleTypeNotFoundError
 from meta_ultra.utils import *
 from os.path import basename
 import json
