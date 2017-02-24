@@ -19,7 +19,7 @@ def changeToTempDir():
     os.chdir(tdir)
     return tdir
 
-class Test_api(unittest.TestCase):
+class Test_cli(unittest.TestCase):
     def setUp(self):
         self.tdir = changeToTempDir()
         
@@ -95,7 +95,6 @@ class Test_api(unittest.TestCase):
         result3 = CliRunner().invoke(cli.main, ['view', 'samples', 'test_sample'])
         self.assertEquals(0, result3.exit_code, msg=result3.output)
         result4 = CliRunner().invoke(cli.main, ['remove', 'samples','test_sample', '--no-check'])
-        print(result4.output)
         self.assertEquals(0, result4.exit_code, msg=result4.output)
         self.assertNotIn('test_sample', result4.output, msg=result4.output)
 
@@ -112,9 +111,9 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
+        
         result = CliRunner().invoke(cli.main, ['view', 'data', 'test_SEDSD'])
         self.assertEquals(0, result.exit_code, msg=result.output)
-        print(result.output)
         self.assertIn('test_SEDSD', result.output)
 
     def test_cli_remove_data_rec(self):
@@ -128,6 +127,7 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
+        self.assertEquals('test_SEDSD', api.getDataRec('test_SEDSD').name)
         result = CliRunner().invoke(cli.main, ['view', 'data', 'test_SEDSD'])
         self.assertEquals(0, result.exit_code, msg=result.output)
         result = CliRunner().invoke(cli.main, ['remove', 'data',  'test_SEDSD', '--no-check'])

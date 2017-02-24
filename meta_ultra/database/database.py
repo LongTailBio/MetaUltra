@@ -189,10 +189,6 @@ class SingleEndDNASeqData(Data):
         out['ave_read_length'] = self.aveReadLen
         return out
 
-    def __str__(self):
-        out = '{}\t{}\t{}\t{}'.format(self.name, self.dataType,self.experimentName,self.reads1)
-        return out
-
     @staticmethod
     def dataType():
         return DataType.DNA_SEQ_SINGLE_END
@@ -223,9 +219,6 @@ class PairedEndDNASeqData(Data):
         out['ave_gap_length'] = self.aveGapLen
         return out
 
-    def __str__(self):
-        out = '{}\t{}\t{}\t{}\t{}'.format(self.name, self.dataType,self.experimentName,self.reads1,self.reads2)
-        return out
 
     @staticmethod
     def dataType():

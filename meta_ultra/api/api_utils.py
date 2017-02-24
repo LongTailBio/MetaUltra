@@ -24,7 +24,8 @@ def convertDataTypes(dataTypes):
         return []
     out = []
     for dataType in dataTypes:
-        out.append( convertDataType(dataType))
+        if dataType:
+            out.append( convertDataType(dataType))
     return out
 
 def convertDataType(dataType):

@@ -135,7 +135,7 @@ class UserInput( Resolvable):
 
 class UserInputNoDefault( Resolvable):
 	def __init__(self, prompt, type=str, fineControlOnly=False):
-		super(UserInput, self).__init__()
+		super(UserInputNoDefault, self).__init__()
 		self.prompt = prompt
 		self.type = type
 		self.fineOnly = fineControlOnly
@@ -145,7 +145,7 @@ class UserInputNoDefault( Resolvable):
 			return str(self.default)
 		try_again = True
 		while try_again:
-			inp = err_input(self.prompt + ' [{}]: '.format(self.default))
+			inp = err_input(self.prompt + ': ')
 			try_again = False
 			if not inp: # use the default
 				try_again=True
