@@ -355,6 +355,7 @@ class Result(Record):
         super(Result, self).__init__(kwargs['name'])
         self.projectName = kwargs['project_name']
         self.sampleName = kwargs['sample_name']
+        self.experimentName = kwargs['experiment_name']
         self.dataName = kwargs['data_name']
         self.confName = kwargs['conf_name']
         self.resultFiles = []
@@ -369,6 +370,7 @@ class Result(Record):
         out = {
             'name': self.name,
             'project_name': self.projectName,
+            'experiment_name':self.experimentName,
             'sample_name': self.sampleName,
             'data_name': self.dataName,
             'conf_name': self.confName,
@@ -406,12 +408,12 @@ class Result(Record):
 class Conf(Record):
     def __init__(self, **kwargs):
         super(Conf, self).__init__(kwargs['name'])
-        self.conf = kwargs['conf']
+        self.conf = kwargs['conf_dict']
 
     def to_dict(self):
         out = {
             'name': self.name,
-            'conf': self.conf
+            'conf_dict': self.conf
             }
         return out
 

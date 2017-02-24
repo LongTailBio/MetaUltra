@@ -55,9 +55,9 @@ class Test_api(unittest.TestCase):
                                     100,
                                     'test_sample',
                                     'test_exp',
-                                    'test_proj')
+                                    'test_project')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_project')
         api.removeProject('test_project')
         self.assertIs(None, api.getProject('test_project')) 
         self.assertIs(None, api.getSample('test_sample')) 
@@ -104,9 +104,9 @@ class Test_api(unittest.TestCase):
                                     100,
                                     'test_sample',
                                     'test_exp',
-                                    'test_proj')
+                                    'test_project')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_project')
         api.removeConf('test_conf')
         self.assertEquals(None, api.getConf('test_conf'))
         self.assertEquals(None, api.getResult('test_result'))
@@ -122,9 +122,9 @@ class Test_api(unittest.TestCase):
                                     100,
                                     'test_sample',
                                     'test_exp',
-                                    'test_proj')
+                                    'test_project')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_project')
         api.removeConf('test_conf', atomic=True)
         self.assertEquals(None, api.getConf('test_conf'))
         self.assertEquals('test_result', api.getResult('test_result').name)
@@ -165,9 +165,9 @@ class Test_api(unittest.TestCase):
                                     100,
                                     'test_sample',
                                     'test_exp',
-                                    'test_proj')
+                                    'test_project')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_project')
         api.removeExperiment('test_exp')
         self.assertIs(None, api.getSample('test_exp')) 
         self.assertEquals(None, api.getDataRec('test_SEDSD'))
@@ -203,7 +203,7 @@ class Test_api(unittest.TestCase):
         api.init()
         api.saveExperiment('test_exp_1', 'DNA_SEQ_PAIRED_END', None)
         api.saveExperiment('test_exp_2', 'DNA_SEQ_SINGLE_END', None)
-        expNames = [el.name for el in api.getExperiments(dataTypes=DataType.DNA_SEQ_SINGLE_END)]
+        expNames = [el.name for el in api.getExperiments(dataTypes=[DataType.DNA_SEQ_SINGLE_END])]
         self.assertNotIn('test_exp_1', expNames)
         self.assertIn('test_exp_2', expNames)
 
@@ -237,7 +237,7 @@ class Test_api(unittest.TestCase):
         api.init()
         api.saveProject('test_project', None)
         api.saveSample('test_sample', 'test_project', None)
-        api.removeProject('test_project')
+        api.removeProject('test_project', atomic=True)
         self.assertFalse(api.getSample('test_sample').validStatus())
         
     def test_remove_sample(self):
@@ -250,9 +250,9 @@ class Test_api(unittest.TestCase):
                                     100,
                                     'test_sample',
                                     'test_exp',
-                                    'test_proj')
+                                    'test_project')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_project')
         api.removeSample('test_sample')
         self.assertIs(None, api.getSample('test_sample')) 
         self.assertEquals(None, api.getDataRec('test_SEDSD'))
@@ -281,7 +281,7 @@ class Test_api(unittest.TestCase):
         api.saveProject('test_project', None)
         api.saveSample('test_sample_1', 'test_project', None)
         api.saveSample('test_sample_2', 'test_project', None)
-        sNames = [el.name for el in api.getSamples(names='test_project_1')]
+        sNames = [el.name for el in api.getSamples(names='test_sample_1')]
         self.assertIn('test_sample_1', sNames)
         self.assertNotIn('test_sample_2', sNames)
 
@@ -418,7 +418,7 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
-        api.removeProject('test_project', atomic=True)
+        api.removeProject('test_proj', atomic=True)
         self.assertFalse(api.getDataRec('test_SEDSD').validStatus())
 
 
@@ -464,7 +464,7 @@ class Test_api(unittest.TestCase):
                                     'test_exp',
                                     'test_proj')
         api.saveConf('test_conf', {})
-        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_project')
+        api.saveResult('test_result', [], 'test_SEDSD', 'test_conf', 'test_sample', 'test_exp', 'test_proj')
         api.removeData('test_SEDSD')
         self.assertEquals(None, api.getDataRec('test_SEDSD'))
         self.assertEquals(None, api.getResult('test_result'))
@@ -523,7 +523,7 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
-        names = [el.name for el in api.getData(bnames=['test_SEDSD_1'])]
+        names = [el.name for el in api.getData(names=['test_SEDSD_1'])]
         self.assertIn('test_SEDSD_1', names)
         self.assertNotIn('test_SEDSD_2', names)
 

@@ -14,7 +14,19 @@ def removeData(name, atomic=False):
         results = getResults(dataRecs=[name])
         for result in results:
             removeResult(result)
-
+        Data.get(name).remove()
+        
+def removeConf(name, atomic=False):
+    if type(name) != str:
+        name = name.name
+    if atomic:
+        Conf.get(name).remove()
+    else:
+        results = getResults(confs=[name])
+        for result in results:
+            removeResult(result)
+        Conf.get(name).remove()
+            
 def removeProject(name, atomic=False):
     if type(name) != str:
         name = name.name
@@ -24,6 +36,7 @@ def removeProject(name, atomic=False):
         samples = getSamples(projects=[name])
         for sample in samples:
             removeSample(sample)
+        Project.get(name).remove()
 
 def removeExperiment(name, atomic=False):
     if type(name) != str:
@@ -34,6 +47,7 @@ def removeExperiment(name, atomic=False):
         dataRecs = getData(experiments=[name])
         for dataRec in dataRecs:
             removeData(dataRec)
+        Experiment.get(name).remove()
 
 def removeSample(name, atomic=False):
     if type(name) != str:
@@ -44,7 +58,7 @@ def removeSample(name, atomic=False):
         dataRecs = getData(samples=[name])
         for dataRec in dataRecs:
             removeData(dataRec)
-
+        Sample.get(name).remove()
 
     
 def removeResult(name, atomic=False):

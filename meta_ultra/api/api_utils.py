@@ -18,6 +18,8 @@ def toName(record):
     return record.name()
 
 def convertDataTypes(dataTypes):
+    if not dataTypes:
+        return []
     out = []
     for dataType in dataTypes:
         out.append( convertDataType(dataType))

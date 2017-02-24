@@ -31,11 +31,12 @@ def getExperiment(name):
     except NoSuchRecordError:
         return None
 
-def getExperiments(dataTypes=None):
+def getExperiments(names=None, dataTypes=None):
     dataTypes = convertDataTypes(dataTypes)
     out = []
     for exp in Experiment.all():
-        if exp.dataType in dataTypes:
+        if( (not names or len(names) == 0 or exp.name in names)
+            and (len(dataTypes) == 0 or exp.dataType in dataTypes)):
             out.append(exp)
     return out
 
@@ -64,12 +65,13 @@ def getSample(name):
 def getSampleTypes():
     raise NotImplementedError
 
-def getSamples(projects=None):
+def getSamples(projects=None, names=None):
     projNames = toNameList(projects)
     samples = Sample.all()
     out = []
     for sample in samples:
-        if len(projNames) == 0 or sample.projectName in projNames:
+        if( (not names or len(names) == 0 or sample.name in names)
+            and (len(projNames) == 0 or sample.projectName in projNames)):
             out.append(sample)
     return out
 
@@ -92,7 +94,8 @@ def getData(names=None, dataTypes=None, samples=None, experiments=None, projects
     dataRecs = Data.all()
     out = []
     for dataRec in dataRecs:
-        if ( ( len(dataTypes) == 0 or dataRec.dataType in dataTypes)
+        if ( (not names or len(names) == 0 or dataRec.name in names)
+             and (len(dataTypes) == 0 or dataRec.dataType in dataTypes)
              and (len(expNames) == 0 or dataRec.experimentName in expNames)
              and (len(projNames) == 0 or dataRec.projectName in projNames)
              and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)):
@@ -112,6 +115,12 @@ def getPairedEndedSeqData(samples=None, experiments=None, projects=None):
                    experiments=experiments,
                    projects=projects
                    )
+
+def getResult(name):
+    try:
+        return Result.get(name)
+    except NoSuchRecordError:
+        return None
 
 def getResults(names=None, dataTypes=None, samples=None, experiments=None, projects=None, dataRecs=None, confs=None):
     sampleNames = toNameList(samples)
