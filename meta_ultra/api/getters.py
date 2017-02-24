@@ -14,7 +14,7 @@ import os
 def getProject(name):
     try:
         return Project.get(name)
-    except TypeError:
+    except NoSuchRecordError:
         return None
 
 def getProjects(names=None):
@@ -26,7 +26,10 @@ def getProjects(names=None):
 ############################################################
 
 def getExperiment(name):
-    return experiment.get(name)
+    try:
+        return Experiment.get(name)
+    except NoSuchRecordError:
+        return None
 
 def getExperiments(dataTypes=None):
     dataTypes = convertDataTypes(dataTypes)
@@ -39,7 +42,10 @@ def getExperiments(dataTypes=None):
 ############################################################
 
 def getConf(name):
-    return Conf.get(name)
+    try:
+        return Conf.get(name)
+    except NoSuchRecordError:
+        return None
 
 def getConfs(names=None):
     if not names or len(names) == 0:
@@ -50,8 +56,10 @@ def getConfs(names=None):
 ###########################################################
 
 def getSample(name):
-    raise NotImplementedError
-
+    try:
+        return Sample.get(name)
+    except NoSuchRecordError:
+        return None
 
 def getSampleTypes():
     raise NotImplementedError
@@ -68,10 +76,13 @@ def getSamples(projects=None):
 ###########################################################
 
 def getDataTypes():
-    raise NotImplementedError
+    return config.DataType
 
 def getDataRec(name):
-    return Data.get(name)
+    try:
+        return Data.get(name)
+    except NoSuchRecordError:
+        return None
 
 def getData(names=None, dataTypes=None, samples=None, experiments=None, projects=None):
     sampleNames = toNameList(samples)

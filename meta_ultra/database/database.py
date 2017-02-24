@@ -1,5 +1,6 @@
 from tinydb import TinyDB, Query, where
 import meta_ultra.config as config
+from meta_ultra.config import DataType, DataTypeNotFoundError
 from meta_ultra.utils import *
 from os.path import basename
 import json
@@ -20,9 +21,17 @@ confTbl = config.db_conf_table
 class RecordExistsError(Exception):
     pass
 
+class NoSuchRecordError(Exception):
+    pass
+
+class InvalidRecordStateError(Exception):
+    pass
+
 def asDataType(dataType):
+    if type(dataType) == DataType:
+        return dataType
     try:
-        return DataType[dataType]
+        return DataType.fromString(dataType)
     except:
         raise DataTypeNotFoundError() 
 
@@ -43,12 +52,18 @@ class Record:
         return True
         
     def record(self):
-        return type(self).dbTbl().get(where('name') == self.name)
+        rec = type(self).dbTbl().get(where('name') == self.name)
+        if not rec:
+            raise NoSuchRecordError()
+        return rec
 
     def saved(self):
         return type(self).exists(self.name)
     
     def save(self,modify=False):
+        if not self.validStatus:
+            raise InvalidRecordStateError()
+        
         if self.saved() and not modify:
             raise RecordExistsError()
         elif modify:
@@ -71,6 +86,9 @@ class Record:
         record = self.record()
         type(self).dbTbl().remove(eids=[record.eid])
 
+    def validStatus(self):
+        return True
+        
     @classmethod
     def build(ctype, *args, **kwargs):
         return ctype(**kwargs)
@@ -79,6 +97,8 @@ class Record:
     @classmethod
     def get(ctype, name):
         rec = ctype.dbTbl().get(where('name') == name)
+        if not rec:
+            raise NoSuchRecordError()
         return ctype.build(**rec)
 
     @classmethod
@@ -114,7 +134,7 @@ class Data( Record):
     def to_dict(self):
         out = {
             'name': self.name,
-            'data_type': self.dataType,
+            'data_type': DataType.toString(self.dataType),
             'sample_name':self.sampleName,
             'project_name': self.projectName,
             'experiment_name':self.experimentName
@@ -122,6 +142,15 @@ class Data( Record):
         self._to_dict(out)
         return out
 
+    def validStatus(self):
+        try:
+            Sample.get(self.sampleName)
+            Project.get(self.projectName)
+            Experiment.get(self.experimentName)
+        except NoSuchRecordError:
+            return False
+        return True
+    
     @staticmethod
     def dbTbl():
         return dataTbl()
@@ -130,15 +159,15 @@ class Data( Record):
     def build(ctype, *args, **kwargs):
         dataType = asDataType( kwargs['data_type'])
         if dataType == DataType.DNA_SEQ_SINGLE_END:
-            return SingleEndedSeqData(**kwargs)
+            return SingleEndDNASeqData(**kwargs)
         elif dataType == DataType.DNA_SEQ_PAIRED_END:
-            return PairedEndedSeqData(**kwargs)
+            return PairedEndDNASeqData(**kwargs)
         else:
             raise DataTypeNotFoundError()
     
-class SingleEndedSeqData(Data):
+class SingleEndDNASeqData(Data):
     def __init__(self,**kwargs):
-        super(SingleEndedSeqData, self).__init__(kwargs['name'],
+        super(SingleEndDNASeqData, self).__init__(kwargs['name'],
                                                  type(self).dataType(),
                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
@@ -158,11 +187,11 @@ class SingleEndedSeqData(Data):
 
     @staticmethod
     def dataType():
-        return 'seq_single_ended'
+        return DataType.DNA_SEQ_SINGLE_END
 
-class PairedEndedSeqData(Data):
+class PairedEndDNASeqData(Data):
     def __init__(self,**kwargs):
-        super(PairedEndedSeqData, self).__init__(kwargs['name'],
+        super(PairedEndDNASeqData, self).__init__(kwargs['name'],
                                                  type(self).dataType(),
                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
@@ -172,8 +201,11 @@ class PairedEndedSeqData(Data):
         self.reads2 = kwargs['reads_2']
         self.registerFile(self.reads2)
         self.aveReadLen = int(kwargs['ave_read_length'])
-        self.aveGapLen = int(kwargs['ave_gap_length'])
-
+        try:
+            self.aveGapLen = int(kwargs['ave_gap_length'])
+        except (TypeError, KeyError):
+            self.aveGapLen = None
+            
     def _to_dict(self, out):
         out['reads_1'] = self.reads1
         out['reads_2'] = self.reads2
@@ -187,7 +219,7 @@ class PairedEndedSeqData(Data):
 
     @staticmethod
     def dataType():
-        return 'seq_paired_ended'
+        return DataType.DNA_SEQ_PAIRED_END
 
 
 ################################################################################
@@ -200,7 +232,7 @@ class Experiment(Record):
     def to_dict(self):
         out = {
             'name': self.name,
-            'data_type': self.dataType
+            'data_type': DataType.toString( self.dataType)
         }
         self._to_dict(out)
         return(out)
@@ -208,26 +240,40 @@ class Experiment(Record):
     @staticmethod
     def dbTbl():
         return experimentTbl()
+
+    @classmethod
+    def build(ctype, *args, **kwargs):
+        dataType = asDataType( kwargs['data_type'])
+        if dataType == DataType.DNA_SEQ_SINGLE_END:
+            return SingleEndDNASeqRun(**kwargs)
+        elif dataType == DataType.DNA_SEQ_PAIRED_END:
+            return PairedEndDNASeqRun(**kwargs)
+        else:
+            raise DataTypeNotFoundError()
+
+
     
-class SingleEndedSequencingRun( Experiment):
+class SingleEndDNASeqRun( Experiment):
     def __init__(self,**kwargs):
-        super(SingleEndedSequencingRun, self).__init__(kwargs['name'],
-                                                       'seq_single_ended')
-        self.machineType = kwargs['machine_type']
+        super(SingleEndDNASeqRun, self).__init__(kwargs['name'],
+                                                       DataType.DNA_SEQ_SINGLE_END)
+        self.metadata = kwargs['metadata']
 
     def _to_dict(self,out):
-        out['machine_type'] = self.machineType
+        out['metadata'] = self.metadata
         return out
 
-class PairedEndedSequencingRun( Experiment):
+class PairedEndDNASeqRun( Experiment):
     def __init__(self,**kwargs):
-        super(PairedEndedSequencingRun, self).__init__(kwargs['name'],
-                                                       'seq_paired_ended')
-        self.machineType = kwargs['machine_type']
+        super(PairedEndDNASeqRun, self).__init__(kwargs['name'],
+                                                       DataType.DNA_SEQ_PAIRED_END)
+        self.metadata = kwargs['metadata']
 
     def _to_dict(self,out):
-        out['machine_type'] = self.machineType
+        out['metadata'] = self.metadata
         return out
+
+
 
     
 ################################################################################
@@ -249,6 +295,14 @@ class Sample(Record):
             }
         return out
 
+    def validStatus(self):
+        try:
+            Project.get(self.projectName)
+        except NoSuchRecordError:
+            return False
+        return True
+
+    
     def __str__(self):
         out = '{}\t{}'.format(self.name, self.projectName)
         for k, v in self.metadata.items():
@@ -322,6 +376,17 @@ class Result(Record):
             }
         return out
 
+    def validStatus(self):
+        try:
+            Sample.get(self.sampleName)
+            Project.get(self.projectName)
+            Experiment.get(self.experimentName)
+            Data.get(self.dataName)
+        except NoSuchRecordError:
+            return False
+        return True
+
+    
     def __str__(self):
         out = '{}\t{}\t{}\t{}\t{}\t{}'.format(self.name,
                                               self.projectName,

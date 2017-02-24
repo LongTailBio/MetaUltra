@@ -1,5 +1,6 @@
 from .api_utils import *
 import meta_ultra.config as config
+from meta_ultra.config import DataType
 from meta_ultra.database import *
 import os.path
 import os
@@ -24,7 +25,7 @@ def saveSingleEndDNASeqData(name,
         project = project.name
     dataRec = SingleEndDNASeqData(name=name,
                                  reads_1=readFilename,
-                                 ave_read_len=aveReadLen,
+                                 ave_read_length=aveReadLen,
                                  sample_name=sample,
                                  project_name=project,
                                  experiment_name=experiment)
@@ -47,7 +48,7 @@ def savePairedEndDNASeqData(name,
     dataRec = PairedEndDNASeqData(name=name,
                                  reads_1=read1Filename,
                                  reads_2=read2Filename,
-                                 ave_read_len=aveReadLen,
+                                 ave_read_length=aveReadLen,
                                  sample_name=sample,
                                  project_name=project,
                                  experiment_name=experiment,
@@ -79,7 +80,15 @@ def saveSample(name, project, metadata):
 ###########################################################
 
 def saveExperiment(name, dataType, metadata):
-    pass
+    dataType = convertDataType(dataType)
+    if dataType == DataType.DNA_SEQ_SINGLE_END:
+        exp = SingleEndDNASeqRun(name=name, metadata=metadata)
+    elif dataType == DataType.DNA_SEQ_PAIRED_END:
+        exp = PairedEndDNASeqRun(name=name, metadata=metadata)
+    else:
+        raise DataTypeNotFoundError()
+    
+    return exp.save()
 
 def saveSingleEndedSeqRun(name, metadata):
     return saveExperiment(name, SingleEndedSeqData.dataType(), metadata)
@@ -90,7 +99,8 @@ def savePairedEndedSeqRun(name, metadata):
 ###########################################################
 
 def saveConf(name, confDict):
-    raise NotImplementedError()
+    conf = Conf(name=name, conf_dict=confDict)
+    return conf.save()
 
 ###########################################################
 

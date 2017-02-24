@@ -20,8 +20,13 @@ def toName(record):
 def convertDataTypes(dataTypes):
     out = []
     for dataType in dataTypes:
-        try:
-            out.append( DataType[dataType])
-        except:
-            raise DataTypeNotFoundError()
+        out.append( convertDataType(dataType))
     return out
+
+def convertDataType(dataType):
+    if type(dataType) == config.DataType:
+        return dataType
+    try:
+        return config.DataType.fromString(dataType)
+    except:
+        raise config.DataTypeNotFoundError()
