@@ -6,7 +6,9 @@ def toNameList(l):
         return []
     names = []
     for el in l:
-        if type(el) == str:
+        if not el:
+            pass
+        elif type(el) == str:
             names.append(el)
         else:
             names.append(el.name)

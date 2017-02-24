@@ -150,6 +150,14 @@ class Data( Record):
         except NoSuchRecordError:
             return False
         return True
+
+    def __str__(self):
+        out = '{}\t{}\t{}\t{}\t{}'.format(self.name,
+                                    DataType.toString( self.dataType),
+                                    self.sampleName,
+                                    self.experimentName,
+                                    self.projectName)
+        return out
     
     @staticmethod
     def dbTbl():
@@ -164,7 +172,7 @@ class Data( Record):
             return PairedEndDNASeqData(**kwargs)
         else:
             raise DataTypeNotFoundError()
-    
+
 class SingleEndDNASeqData(Data):
     def __init__(self,**kwargs):
         super(SingleEndDNASeqData, self).__init__(kwargs['name'],
@@ -189,6 +197,8 @@ class SingleEndDNASeqData(Data):
     def dataType():
         return DataType.DNA_SEQ_SINGLE_END
 
+
+    
 class PairedEndDNASeqData(Data):
     def __init__(self,**kwargs):
         super(PairedEndDNASeqData, self).__init__(kwargs['name'],
@@ -258,7 +268,9 @@ class SingleEndDNASeqRun( Experiment):
         super(SingleEndDNASeqRun, self).__init__(kwargs['name'],
                                                        DataType.DNA_SEQ_SINGLE_END)
         self.metadata = kwargs['metadata']
-
+        if not self.metadata:
+            self.metadata = {}
+            
     def _to_dict(self,out):
         out['metadata'] = self.metadata
         return out
@@ -268,6 +280,8 @@ class PairedEndDNASeqRun( Experiment):
         super(PairedEndDNASeqRun, self).__init__(kwargs['name'],
                                                        DataType.DNA_SEQ_PAIRED_END)
         self.metadata = kwargs['metadata']
+        if not self.metadata:
+            self.metadata = {}
 
     def _to_dict(self,out):
         out['metadata'] = self.metadata
@@ -282,7 +296,7 @@ class Sample(Record):
     def __init__(self,**kwargs):
         super(Sample, self).__init__(kwargs['name'])
         self.projectName = kwargs['project_name']
-        if 'metadata' in kwargs:
+        if 'metadata' in kwargs and kwargs['metadata']:
             self.metadata = kwargs['metadata']
         else:
             self.metadata = {}
@@ -321,7 +335,7 @@ class Sample(Record):
 class Project(Record):
     def __init__(self,**kwargs):
         super(Project, self).__init__(kwargs['name'])
-        if 'metadata' in kwargs:
+        if 'metadata' in kwargs and kwargs['metadata']:
             self.metadata = kwargs['metadata']
         else:
             self.metadata = {}

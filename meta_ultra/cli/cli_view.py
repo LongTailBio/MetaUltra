@@ -64,7 +64,9 @@ def viewData(names, tree=False, type=None, project=None, sample=None):
     if tree:
         raise NotImplementedError()
     else:
+        print('foo')
         for dataRec in api.getData(names=names, dataTypes=[type], projects=[project], samples=[sample]):
+            print('bar')
             print(dataRec)
 
 @view.command(name='result')

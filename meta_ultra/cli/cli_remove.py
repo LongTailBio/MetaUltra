@@ -15,10 +15,9 @@ def removeDataRecs(names, check=True):
     for name in names:
         remove = True
         if check:
-            remove = BoolUserInput('Remove data record {}?'.format(name),False)
+            remove = BoolUserInput('Remove data record {}?'.format(name),False).resolve()
         if remove:
             results = api.getResults(dataRecs=[name])
-            removeResults([result.name for result in results],check=check)
             api.removeData(name)
 
             
@@ -26,13 +25,12 @@ def removeDataRecs(names, check=True):
 @click.option('--check/--no-check',default=True,help='ask before removing')
 @click.argument('names',nargs=-1)
 def removeProjects(names, check=True):
-    for names in names:
+    for name in names:
         remove = True
         if check:
-            remove = BoolUserInput('Remove project {}?'.format(name),False)
+            remove = BoolUserInput('Remove project {}?'.format(name),False).resolve()
         if remove:
             samples = api.getSamples(projects=[name])
-            removeSamples([sample.name for sample in samples],check=check)
             api.removeProject(name)
 
 @remove.command(name='experiments')
@@ -42,10 +40,9 @@ def removeExperiments(names, check=True):
     for name in names:
         remove = True
         if check:
-            remove = BoolUserInput('Remove experiment {}?'.format(name),False)
+            remove = BoolUserInput('Remove experiment {}?'.format(name),False).resolve()
         if remove:
             dataRecs = api.getData(experiments=[name])
-            removeDataRecs([dataRec.name for dataRec in dataRecs],check=check)
             api.removeExperiment(name)
 
 
@@ -56,10 +53,9 @@ def removeSamples(names, check=True):
     for name in names:
         remove = True
         if check:
-            remove = BoolUserInput('Remove sample {}?'.format(name),False)
+            remove = BoolUserInput('Remove sample {}?'.format(name),False).resolve()
         if remove:
             dataRecs = api.getData(samples=[name])
-            removeDataRecs([dataRec.name for dataRec in dataRecs],check=check)
             api.removeSample(name)
 
             
@@ -70,7 +66,7 @@ def removeResults(names=None, check=True):
     for name in names:
         remove = True
         if check:
-            remove = BoolUserInput('Remove result {}?'.format(name),False)
+            remove = BoolUserInput('Remove result {}?'.format(name),False).resolve()
         if remove:
             api.removeResult(name)
 

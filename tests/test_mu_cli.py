@@ -8,6 +8,7 @@ import unittest
 from contextlib import contextmanager
 from click.testing import CliRunner
 from meta_ultra import api
+import meta_ultra.cli as cli
 from meta_ultra import config
 from meta_ultra.config import DataType
 from meta_ultra.database import RecordExistsError, InvalidRecordStateError
@@ -26,107 +27,77 @@ class Test_api(unittest.TestCase):
         rmtree(self.tdir)
         
     def test_cli_init(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
+        result = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
         self.assertIn(config.mu_dir, os.listdir(self.tdir))
 
     # projects
     
     def test_cli_add_project(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        self.assertEquals('test_project', api.getProject('test_project').name)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        self.assertEquals('test_project', api.getProject('test_project').name, msg=result1.output)
         
     def test_cli_view_project(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        self.assertIn('test_project', result.output)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        result2 = CliRunner().invoke(cli.main, ['view', 'projects', 'test_project'])
+        self.assertEquals(0, result2.exit_code, msg=result2.output)
+        self.assertIn('test_project', result2.output, msg=result2.output)
 
     def test_cli_remove_project(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('remove', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        self.assertNotIn('test_project', result.output)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        result2 = CliRunner().invoke(cli.main, ['remove', 'projects', 'test_project', '--no-check'])
+        self.assertEquals(0, result2.exit_code, msg=result2.output)
+        result3 = CliRunner().invoke(cli.main, ['view', 'projects', 'test_project'])
+        self.assertEquals(0, result3.exit_code, msg=result3.output)
+        self.assertNotIn('test_project', result3.output, msg=result3.output)
 
-
-    # experiments
-    
-    def test_cli_add_experiment(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        self.assertEquals('test_exp', api.getExperiment('test_exp').name)
-
-
-    def test_cli_view_experiment(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        self.assertIn('test_exp', result.output)
-        self.assertEquals('test_exp', api.getExperiment('test_exp').name)
-
-    def test_cli_remove_experiment(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('remove', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'experiment', 'test_exp')
-        self.assertEquals(0, result.exit_code)
-        self.assertNotIn('test_exp', result.output)
 
     # samples
     
     def test_cli_add_sample(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        result2 = CliRunner().invoke(cli.main, ['add', 'sample', '-n', 'test_sample', '-p', 'test_project'])
+        self.assertEquals(0, result2.exit_code, msg=result2.output)
         self.assertEquals('test_sample', api.getSample('test_sample').name)
 
 
     def test_cli_view_sample(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
-        self.assertIn('test_sample', result.output)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        result2 = CliRunner().invoke(cli.main, ['add', 'sample', '-n', 'test_sample', '-p', 'test_project'])
+        self.assertEquals(0, result2.exit_code, msg=result2.output)
+        result3 = CliRunner().invoke(cli.main, ['view', 'samples', 'test_sample'])
+        self.assertEquals(0, result3.exit_code, msg=result3.output)
+        self.assertIn('test_sample', result3.output)
 
         
     def test_cli_remove_sample(self):
-        result = CliRunner().invoke('init')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'project', 'test_project')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('add', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('view', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('remove', 'sample', 'test_sample')
-        self.assertEquals(0, result.exit_code)
-        self.assertNotIn('test_sample', result.output)
+        result0 = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result0.exit_code, msg=result0.output)
+        result1 = CliRunner().invoke(cli.main, ['add', 'project', '-n', 'test_project'])
+        self.assertEquals(0, result1.exit_code, msg=result1.output)
+        result2 = CliRunner().invoke(cli.main, ['add', 'sample', '-n', 'test_sample', '-p', 'test_project'])
+        self.assertEquals(0, result2.exit_code, msg=result2.output)
+        result3 = CliRunner().invoke(cli.main, ['view', 'samples', 'test_sample'])
+        self.assertEquals(0, result3.exit_code, msg=result3.output)
+        result4 = CliRunner().invoke(cli.main, ['remove', 'samples','test_sample', '--no-check'])
+        print(result4.output)
+        self.assertEquals(0, result4.exit_code, msg=result4.output)
+        self.assertNotIn('test_sample', result4.output, msg=result4.output)
 
     # data records
 
@@ -141,8 +112,9 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
-        result = CliRunner().invoke('view', 'data', 'test_SEDSD')
-        self.assertEquals(0, result.exit_code)
+        result = CliRunner().invoke(cli.main, ['view', 'data', 'test_SEDSD'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        print(result.output)
         self.assertIn('test_SEDSD', result.output)
 
     def test_cli_remove_data_rec(self):
@@ -156,10 +128,10 @@ class Test_api(unittest.TestCase):
                                     'test_sample',
                                     'test_exp',
                                     'test_proj')
-        result = CliRunner().invoke('view', 'data', 'test_SEDSD')
-        self.assertEquals(0, result.exit_code)
-        result = CliRunner().invoke('rmove', 'data', 'test_SEDSD')
-        self.assertEquals(0, result.exit_code)
+        result = CliRunner().invoke(cli.main, ['view', 'data', 'test_SEDSD'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        result = CliRunner().invoke(cli.main, ['remove', 'data',  'test_SEDSD', '--no-check'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
         self.assertNotIn('test_SEDSD', result.output)
 
     # misc
@@ -174,3 +146,36 @@ class Test_api(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+        # experiments
+'''    
+    def test_cli_add_experiment(self):
+        result = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        result = CliRunner().invoke(cli.main, ['add', 'experiments', '-n', 'test_exp'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        self.assertEquals('test_exp', api.getExperiment('test_exp').name)
+
+
+    def test_cli_view_experiment(self):
+        result = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result.exit_code)
+        result = CliRunner().invoke(cli.main, ['add', 'experiment','-n',  'test_exp'])
+        self.assertEquals(0, result.exit_code)
+        result = CliRunner().invoke(cli.main, ['view', 'experiments', 'test_exp'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        self.assertIn('test_exp', result.output, msg=result.output)
+        self.assertEquals('test_exp', api.getExperiment('test_exp').name)
+
+    def test_cli_remove_experiment(self):
+        result = CliRunner().invoke(cli.main, ['init'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        result = CliRunner().invoke(cli.main, ['add', 'experiment', '-n', 'test_exp'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        result = CliRunner().invoke(cli.main, ['remove', 'experiment', '-n', 'test_exp'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        result = CliRunner().invoke(cli.main, ['view', 'experiments', 'test_exp'])
+        self.assertEquals(0, result.exit_code, msg=result.output)
+        self.assertNotIn('test_exp', result.output)
+'''
