@@ -210,7 +210,7 @@ class PairedEndDNASeqData(Data):
         self.aveReadLen = int(kwargs['ave_read_length'])
         try:
             self.aveGapLen = int(kwargs['ave_gap_length'])
-        except (TypeError, KeyError):
+        except (TypeError, KeyError, ValueError):
             self.aveGapLen = None
             
     def _to_dict(self, out):
@@ -255,7 +255,12 @@ class Experiment(Record):
         else:
             raise DataTypeNotFoundError()
 
+    def __str__(self):
+        out = '{}\t{}'.format(self.name,
+                                    DataType.asString( self.dataType))
+        return out
 
+        
     
 class SingleEndDNASeqRun( Experiment):
     def __init__(self,**kwargs):

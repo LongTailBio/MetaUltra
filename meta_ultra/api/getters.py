@@ -1,6 +1,8 @@
 from .api_utils import *
 import meta_ultra.config as config
 from meta_ultra.database import *
+from meta_ultra.data_type import *
+from meta_ultra.sample_type import *
 import os.path
 import os
     
@@ -56,14 +58,14 @@ def getConfs(names=None):
 
 ###########################################################
 
+def getSampleTypes():
+    return SampleType
+
 def getSample(name):
     try:
         return Sample.get(name)
     except NoSuchRecordError:
         return None
-
-def getSampleTypes():
-    raise NotImplementedError
 
 def getSamples(projects=None, names=None):
     projNames = toNameList(projects)
@@ -78,7 +80,7 @@ def getSamples(projects=None, names=None):
 ###########################################################
 
 def getDataTypes():
-    return config.DataType
+    return DataType
 
 def getDataRec(name):
     try:

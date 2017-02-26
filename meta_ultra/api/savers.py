@@ -13,11 +13,11 @@ import os
 ################################################################################
 
 def saveSingleEndDNASeqData(name,
-                           readFilename,
-                           aveReadLen,
-                           sample,
-                           experiment,
-                           project):
+			    readFilename,
+			    aveReadLen,
+			    sample,
+			    experiment,
+			    project):
     if type(sample) != str:
         sample = sample.name
     if type(experiment) != str:
@@ -25,21 +25,21 @@ def saveSingleEndDNASeqData(name,
     if type(project) != str:
         project = project.name
     dataRec = SingleEndDNASeqData(name=name,
-                                 reads_1=readFilename,
-                                 ave_read_length=aveReadLen,
-                                 sample_name=sample,
-                                 project_name=project,
-                                 experiment_name=experiment)
+				  reads_1=readFilename,
+				  ave_read_length=aveReadLen,
+				  sample_name=sample,
+				  project_name=project,
+				  experiment_name=experiment)
     return dataRec.save()
-        
+	
 def savePairedEndDNASeqData(name,
-                           read1Filename,
-                           read2Filename,
-                           aveReadLen,
-                           sample,
-                           experiment,
-                           project,
-                           aveGapLen=None):
+			   read1Filename,
+			   read2Filename,
+			   aveReadLen,
+			   sample,
+			   experiment,
+			   project,
+			   aveGapLen=None):
     if type(sample) != str:
         sample = sample.name
     if type(experiment) != str:
@@ -47,13 +47,13 @@ def savePairedEndDNASeqData(name,
     if type(project) != str:
         project = project.name
     dataRec = PairedEndDNASeqData(name=name,
-                                 reads_1=read1Filename,
-                                 reads_2=read2Filename,
-                                 ave_read_length=aveReadLen,
-                                 sample_name=sample,
-                                 project_name=project,
-                                 experiment_name=experiment,
-                                 ave_gap_len=aveGapLen)
+				 reads_1=read1Filename,
+				 reads_2=read2Filename,
+				 ave_read_length=aveReadLen,
+				 sample_name=sample,
+				 project_name=project,
+				 experiment_name=experiment,
+				 ave_gap_len=aveGapLen)
     return dataRec.save()
 
 
@@ -74,8 +74,8 @@ def saveSample(name, project, metadata):
     if type(project) != str:
         project = project.name
     sample = Sample(name=name,
-                    project_name=project,
-                    metadata=metadata)
+		    project_name=project,
+		    metadata=metadata)
     return sample.save()
 
 ###########################################################
@@ -117,26 +117,26 @@ def saveResult(name, resultFilenames, data, conf, sample, experiment, project):
     if type(experiment) != str:
         experiment = experiment.name
     result = Result(name=name,
-                    data_name=data,
-                    conf_name=conf,
-                    sample_name=sample,
-                    experiment_name=experiment,
-                    project_name=project,
-                    result_files=resultFilenames)
+		    data_name=data,
+		    conf_name=conf,
+		    sample_name=sample,
+		    experiment_name=experiment,
+		    project_name=project,
+		    result_files=resultFilenames)
     return result.save()
-                    
+		    
 
 ###########################################################
 	
 def bulkSaveSamplesAndSingleEndDNASeqData(project,
-			                 filenames,
-			                 readSuffix,
-			                 singleEndedSeqRun,
-			                 aveReadLen,
-			                 modify=False,
-			                 readPrefix=None,
-			                 sampleNameFunc=lambda x: x,
-			                 metadataFunc=lambda x: None):
+					 filenames,
+					 readSuffix,
+					 singleEndedSeqRun,
+					 aveReadLen,
+					 modify=False,
+					 readPrefix=None,
+					 sampleNameFunc=lambda x: x,
+					 metadataFunc=lambda x: None):
 	samplesToFilenames = {}
 	for filename in filenames:
 		sample = basename(filename).split(readSuffix)[0]
@@ -145,6 +145,13 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 		sample = sampleNameFunc(sample)
 		samplesToFilenames[sample] = filename
 
+	projectName = project
+	if type(project) != str:
+	    projectName = project.name
+	ruName = singleEndedSeqRun
+	if type(singleEndedSeqRun) != str:
+	    runName = singleEndedSeqRun.name
+	    
 	seqDats = []
 	samples = []
 	for sampleName, filename in samplesToFilenames.items():
@@ -152,30 +159,35 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)
-		seqDataName='{}|{}|{}|seq1end'.format(projectName,sampleName,singleEndedSeqRun.machineType)
-		seqData = SingleEndedSeqData( name=seqDataName,
+		seqDataName='{}|{}|{}|seq1end'.format(projectName,sampleName,runName)
+		seqData = SingleEndDNASeqData( name=seqDataName,
 					  data_type='seq_single_ended',
 					  sample_name=sampleName,
 					  project_name=projectName,
 					  reads_1=filename,
-					  experiment_name=singleEndedSeqRun.name,
+					  experiment_name=runName,
 					  ave_read_length=aveReadLen)
-		seqData.save(modify=modify)
-		seqDats.append(seqData)
+		try:
+		    seqData.save(modify=modify)
+		    seqDats.append(seqData)
+		except RecordExistsError:
+		    pass
+		
 	return samples, seqDats
 
 ###########################################################
 
-def bulkSaveSamplesAndPairedEndedSeqData(project,
-			                 filenames,
-			                 read1Suffix,
-			                 read2Suffix,
-			                 pairedEndSeqRun,
-			                 aveReadLen,
-			                 aveGapLen=None,
-			                 readPrefix=None,
-			                 sampleNameFunc=lambda x: x,
-			                 metadataFunc=lambda x: None):
+def bulkSaveSamplesAndPairedEndDNASeqData(project,
+					 filenames,
+					 read1Suffix,
+					 read2Suffix,
+					 pairedEndSeqRun,
+					 aveReadLen,
+					 aveGapLen=None,
+					 readPrefix=None,
+					 sampleNameFunc=lambda x: x,
+					  metadataFunc=lambda x: None,
+                                          modify=False):
 	samplesToFilenames = {}
 	for filename in filenames:
 		first=True
@@ -196,6 +208,15 @@ def bulkSaveSamplesAndPairedEndedSeqData(project,
 		else:
 			samplesToFilenames[sample]['2'] = filename
 
+
+	projectName = project
+	if type(project) != str:
+	    projectName = project.name
+	ruName = pairedEndSeqRun
+	if type(pairedEndSeqRun) != str:
+	    runName = pairedEndSeqRun.name
+
+			
 	seqDats = []
 	samples = []
 	for sampleName, filenames in samplesToFilenames.items():
@@ -205,17 +226,21 @@ def bulkSaveSamplesAndPairedEndedSeqData(project,
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)
-		seqDataName='{}|{}|{}|seq2end'.format(projectName,sampleName,pairedEndSeqRun.machineType)
-		seqData = PairedEndedSeqData( name=seqDataName,
+		seqDataName='{}|{}|{}|seq2end'.format(projectName,sampleName, runName)
+		seqData = PairedEndDNASeqData( name=seqDataName,
 			   data_type='seq_paired_end',
 			   sample_name=sampleName,
 			   project_name=projectName,
 			   reads_1=reads1,
 			   reads_2=reads2,
-			   experiment_name=pairedEndSeqRun.name,
+			   experiment_name=runName,
 			   ave_read_length=aveReadLen,
 			   ave_gap_length=aveGapLen)
-	seqData.save(modify=modify)
-	seqDats.append(seqData)
+		try:
+		    seqData.save(modify=modify)
+		    seqDats.append(seqData)
+		except RecordExistsError:
+		    pass
+		
 	return samples, seqDats
 

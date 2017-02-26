@@ -34,7 +34,7 @@ class UserChoice(Resolvable):
 	def __init__(self, name, options, new=None, fineControlOnly=False):
 		super(UserChoice, self).__init__()
 		self.name = name
-		self.opts = options
+		self.opts = [el for el in options]
 		self.fineOnly=fineControlOnly
 		self.new = new
 		
@@ -71,7 +71,7 @@ class UserMultiChoice( Resolvable):
 	def __init__(self, name, options, new=None, fineControlOnly=False):
 		super(UserMultiChoice, self).__init__()
 		self.name = name
-		self.opts = options
+		self.opts = [el for el in options]
 		self.fineOnly=fineControlOnly
 		self.new = new
 

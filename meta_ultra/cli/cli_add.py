@@ -17,26 +17,57 @@ def addData(filenames):
     sampleType = UserChoice('sample_type', api.getSampleTypes()).resolve()
     dataType = UserChoice('data_type', api.getDataTypes()).resolve()
     if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
-        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType),
+        seqRun = UserChoice('sequencer_type', api.getExperiments(dataTypes=[dataType]),
                             new=lambda : addExperiment(dataType=dataType)).resolve()
-        extension = UserInput('Please enter the file extension for the read files', '.fastq.gz').resolve()
+        nfiles = 0
+        while nfiles == 0:
+            extension = UserInput('Please enter the file extension for the read files', '.fastq.gz').resolve()
+            for filename in filenames:
+                if extension in filename:
+                    nfiles += 1
+            if nfiles == 0:
+                sys.stderr.write('No files match extension.\n')
+            else:
+                sys.stderr.write('{} files match extension\n'.format(nfiles))
         prefix = UserInput('Optionally, indicate a prefix for the read files', '').resolve()
-        aveReadLen = UserInput('What is the average read length', type=int).resolve()
-        api.bulkSaveSamplesAndSingleEndDNASeqData(project,
+        aveReadLen = UserInputNoDefault('What is the average read length', type=int).resolve()
+        samples, seqData = api.bulkSaveSamplesAndSingleEndDNASeqData(project,
                                                   filenames,
                                                   extension,
                                                   seqRun,
                                                   aveReadLen, 
                                                   readPrefix=prefix)
     elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
-        seqRun = UserChoice('sequencer_type', api.getExperiments(dataType=dataType),
+        seqRun = UserChoice('sequencer_type', api.getExperiments(dataTypes=[dataType]),
                             new=lambda : addExperiment(dataType=dataType)).resolve()
-        extension1 = UserInput('Please enter the file extension for the forward read files', '_1.fastq.gz').resolve()
-        extension2 = UserInput('Please enter the file extension for the reverse read files', '_2.fastq.gz').resolve()
+
+        nfiles = 0
+        while nfiles == 0:
+            extension1 = UserInput('Please enter the file extension for the forward read files', '_1.fastq.gz').resolve()
+            for filename in filenames:
+                if extension1 in filename:
+                    nfiles += 1
+            if nfiles == 0:
+                sys.stderr.write('No files match extension.\n')
+            else:
+                sys.stderr.write('{} files match extension\n'.format(nfiles))
+
+
+        nfiles = 0
+        while nfiles == 0:
+            extension2 = UserInput('Please enter the file extension for the reverse read files', '_2.fastq.gz').resolve()
+            for filename in filenames:
+                if extension2 in filename:
+                    nfiles += 1
+            if nfiles == 0:
+                sys.stderr.write('No files match extension.\n')
+            else:
+                sys.stderr.write('{} files match extension\n'.format(nfiles))
+
         prefix = UserInput('Optionally, indicate a prefix for the read files',default='').resolve()
-        aveReadLen = UserInput('What is the average read length', 101, type=int).resolve()
+        aveReadLen = UserInputNoDefault('What is the average read length', type=int).resolve()
         aveGapLen = UserInput('What is the average gap length, if known', None, type=int).resolve()
-        api.bulkSaveSamplesAndPairedEndDNASeqData(project,
+        samples, seqData = api.bulkSaveSamplesAndPairedEndDNASeqData(project,
                                                   filenames,
                                                   extension1,
                                                   extension2,
@@ -44,6 +75,11 @@ def addData(filenames):
                                                   aveReadLen,
                                                   aveGapLen=aveGapLen,
                                                   readPrefix=prefix)
+
+    sys.stderr.write('Added {} data records.\n'.format(len(seqData)))
+    for dataRec in seqData:
+        sys.stderr.write('{}\n'.format(dataRec))
+        
 @add.command(name='project')
 @click.option('-n', '--name', default=None, help='The project name')
 def cli_addProject(name=None):
