@@ -2,6 +2,7 @@ from meta_ultra.user_input import *
 import meta_ultra.api as api
 from .cli import main
 import click
+import meta_ultra.conf_builder as conf_builder
 
 @main.group()
 def add():
@@ -145,3 +146,17 @@ def addSample(name=None, project=None):
             name=None
     api.saveSample(name,project, None)
     
+
+
+def addConf(name=None, dataType=None, useDefaults=None, fineControl=None):
+    if not name:
+        name = UserInputNoDefault('What is the name of this conf?').resolve()
+    if dataType is None:
+        dataType = UserChoice('Select data type to analyze',
+                              api.getDataTypes()).resolve()
+    if not fineControl and useDefaults is None:
+        useDefaults = BoolUserInput('Accept all default parameters for this conf?', False).resolve()
+    if fineControl is None and not useDefaults:
+        fineControl = BoolUserInput('Control absolutely every aspect of this conf?', False).resolve()
+
+    conf_builder.buildNewConf(name, dataType=dataType, useDefaults=useDefaults, fineControl=fineControl)

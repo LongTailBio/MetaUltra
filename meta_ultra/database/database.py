@@ -421,17 +421,17 @@ class Result(Record):
 class Conf(Record):
     def __init__(self, **kwargs):
         super(Conf, self).__init__(kwargs['name'])
-        self.conf = kwargs['conf_dict']
+        self.confDict = kwargs['conf_dict']
 
     def to_dict(self):
         out = {
             'name': self.name,
-            'conf_dict': self.conf
+            'conf_dict': self.confDict
             }
         return out
 
     def __str__(self):
-        return json.dumps(self.to_dict(), indent=4, sort_keys=True)
+        return self.name
     
     @staticmethod
     def dbTbl():

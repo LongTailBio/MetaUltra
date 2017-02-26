@@ -7,10 +7,15 @@ from meta_ultra.conf_builder import *
 class MicrobeCensusModule( Module):
 	def __init__(self, **kwargs):
 		super(MicrobeCensusModule, self).__init__(**kwargs)		
-		self.ext = self.getParamOrDefault('ext', '.mic_census.txt')
+		self.ext = self.getParamOrDefault('ext', 'mic_census.txt')
 		self.time = self.getParamOrDefault('time', 1)
 		self.ram = self.getParamOrDefault('ram', 10)
 
+	def expectedOutputFiles(self, dataRec):
+		sname = dataRec.sampleName
+		dname = dataRec.name
+		return ['{}.{}.{}'.format(sname, dname, self.ext)]
+		
 	def buildConf(self, conf):
 		micCensus = conf.addModule('MICROBE_CENSUS')
 		micCensus.add_field('EXC',
@@ -37,7 +42,11 @@ class MicrobeCensusModule( Module):
 					      type=int,
 					      fineControlOnly=True
 				    ))
-
+	@classmethod
+	def worksForDataType(ctype, dataType):
+		dataType = DataType.asDataType(dataType)
+		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		return dataType in allowed
 
 	@staticmethod
 	def moduleName():

@@ -3,6 +3,7 @@ import os.path
 import os
 from glob import glob
 import meta_ultra.config as mup_config
+from  meta_ultra.data_type import *
 
 ################################################################################
 #
@@ -10,11 +11,8 @@ import meta_ultra.config as mup_config
 #
 ################################################################################
 
-paired = config['PAIRED_END'].lower() in ['y', 'true', 'yes', 't']
-if not paired:
-	sys.stderr.write('Running in Single Ended Mode\n')
-else:
-	sys.stderr.write('Running in Paired Ended Mode\n')
+dataType = DataType.asDataType(config['DATA_TYPE'])
+sys.stderr.write('Running with data type {}\n'.format(dataType))
 
 if not os.path.isdir(config['OUTPUT_DIR']):
 	os.mkdir(config['OUTPUT_DIR'])
@@ -29,9 +27,13 @@ output_builders = []
 
 def getReads(wildcards):
 	reads = []
-	reads.append(config['SAMPLE_DIR'] + wildcards.sample + config['READ_1_EXT'])
-	if paired:
-		reads.append(config['SAMPLE_DIR'] + wildcards.sample + config['READ_2_EXT'])
+        if dataType == DataType.DNA_SEQ_SINGLE_END:
+                reads.append(config['SAMPLES'][wildcards.sample]['1'])
+	        
+	elif dataType == DataType.DNA_SEQ_PAIRED_END:
+                reads.append(config['SAMPLES'][wildcards.sample]['1'])
+                reads.append(config['SAMPLES'][wildcards.sample]['2'])
+		
 	return reads
 
 def getCleanReads(wildcards):
@@ -55,7 +57,7 @@ def all_input(wildcards):
 ################################################################################
 
 snakefiles = glob(mup_config.pipeline_dir + '*.snkmk')
-snakefiles.remove('all.snkmk')
+snakefiles.remove(mup_config.pipeline_dir + 'all.snkmk')
 
 for snakefile in snakefiles:
     include: snakefile

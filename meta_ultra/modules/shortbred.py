@@ -2,15 +2,20 @@ import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.modules import *
 from meta_ultra.conf_builder import *
-
+from meta_ultra.data_type import *
 
 class ShortBredModule( Module):
 	def __init__(self, **kwargs):
 		super(ShortBredModule, self).__init__(**kwargs)		
-		self.ext = self.getParamOrDefault('ext', '.shortbred.tsv')
+		self.ext = self.getParamOrDefault('ext', 'shortbred.tsv')
 		self.time = self.getParamOrDefault('time', 1)
 		self.ram = self.getParamOrDefault('ram', 4)
 
+	def expectedOutputFiles(self, dataRec):
+		sname = dataRec.sampleName
+		dname = dataRec.name
+		return ['{}.{}.{}'.format(sname,dname,self.ext)]
+	
 	def buildConf(self, confBuilder):
 		shortbred = confBuilder.addModule(self.moduleName().upper())
 
@@ -50,10 +55,16 @@ class ShortBredModule( Module):
 					      self.ram,
 					      type=int,
 					      fineControlOnly=True))
+
+	@classmethod
+	def worksForDataType(ctype, dataType):
+		dataType = DataType.asDataType(dataType)
+		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		return dataType in allowed
 		
 	@staticmethod
 	def moduleName():
 		return 'shortbred'
 
-		
+	
 modules.append(ShortBredModule)

@@ -16,6 +16,12 @@ class DiamondModule( Module):
 					     self.tools,
 					     new=lambda :self.askUserForTool('diamond')
 				  ))
+
+	@classmethod
+	def worksForDataType(ctype, dataType):
+		dataType = DataType.asDataType(dataType)
+		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		return dataType in allowed
 		
 	@staticmethod
 	def moduleName():

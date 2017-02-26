@@ -11,6 +11,11 @@ class Metaphlan2Module( Module):
 		self.time = self.getParamOrDefault('time', 1)
 		self.ram = self.getParamOrDefault('ram', 4)
 
+	def expectedOutputFiles(self, dataRec):
+		sname = dataRec.sampleName
+		dname = dataRec.name
+		return ['{}.{}.{}'.format(sname, dname, self.ext)]
+		
 	def buildConf(self, conf):
 		metaphlan2 = conf.addModule('METAPHLAN2')
 		metaphlan2.add_field('EXC',
@@ -43,6 +48,12 @@ class Metaphlan2Module( Module):
 				     ))
 		metaphlan2.add_field('EXT', self.ext)
 
+	@classmethod
+	def worksForDataType(ctype, dataType):
+		dataType = DataType.asDataType(dataType)
+		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		return dataType in allowed
+		
 	@staticmethod
 	def moduleName():
 		return 'metaphlan2'

@@ -21,9 +21,8 @@ def init(dir='.'):
 #
 ################################################################################
 
-def runModules(conf,dataRecs,dryrun=False,unlock=False,rerun=False):
-    confName = toName(conf)
-    confWithData = ConfBuilder.addSamplesToConf(confName, dataRecs)
+def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False):
+
     return snakemake(config.snake_file,
                      config=confWithData,
                      cluster=config.cluster_wrapper,
@@ -32,5 +31,5 @@ def runModules(conf,dataRecs,dryrun=False,unlock=False,rerun=False):
                      dryrun=dryrun,
                      unlock=unlock,
                      force_incomplete=rerun,
-                     cores=njobs)
+                     cores=jobs)
     

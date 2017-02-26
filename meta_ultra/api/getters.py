@@ -50,11 +50,23 @@ def getConf(name):
     except NoSuchRecordError:
         return None
 
-def getConfs(names=None):
+def getConfs(names=None, dataTypes=None):
     if not names or len(names) == 0:
-        Conf.all()
+        confs = Conf.all()
     else:
-        return [getConf(name) for name in names]
+        confs = [getConf(name) for name in names]
+
+    dataTypes = convertDataTypes(dataTypes)
+    if not dataTypes or len(dataTypes) == 0:
+        return confs
+    
+    out = []
+    for conf in confs:
+        confType = DataType.asDataType( conf.confDict['DATA_TYPE'])
+        if confType in dataTypes:
+            out.append(conf)
+    return out
+    
 
 ###########################################################
 

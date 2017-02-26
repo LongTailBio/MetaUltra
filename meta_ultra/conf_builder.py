@@ -1,5 +1,6 @@
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
+from meta_ultra.data_type import *
 import meta_ultra.modules as modules
 import meta_ultra.api as api
 import sys
@@ -106,43 +107,43 @@ class ToolBuilder:
 ################################################################################
 	
 def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
-	finalConf = api.getConf(confName)
+	finalConf = api.getConf(confName).confDict
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
 		sys.stderr.write(msg)
 		sys.exit(1)
-                
-        dataType=dataRecs[0].dataType()
-        for dataRec in dataRecs:
-                assert dataRec.dataType() == dataType
-        
-	newConf = ConfBuilder(useDefaults, fineControlOnly) 
-	newConf.add_global_field('DATA_TYPE', str(dataType))
+		
+	dataType = DataType.asDataType(finalConf['DATA_TYPE'])
+	for dataRec in dataRecs:
+		if dataRec.dataType != dataType:
+			msg = 'Data type of samples does not match data type of conf. Exiting.\n'
+			sys.stderr.write(msg)
+			sys.exit(1)
+	
+	newConf = ConfBuilder(useDefaults, fineControl) 
 	newConf.add_global_field('OUTPUT_DIR',
 			      UserInput('Give the directory where output files '+
 					'should go.',
-                                        'results/'
-                              ))
+					'results/'
+			      ))
 	outDir = newConf.get_global_field('OUTPUT_DIR')
-	if not os.path.isdir(outDir):
-                os.mkdir(dir)
-                
+		
 	samples = {}
 	for dataRec in dataRecs:
-                if dataType == api.getDataTypes().DNA_SEQ_SINGLE_ENDED:
-                        samples[dataRec.sampleName] = {}
-		        samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
-		        samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
-		        samples[dataRec.sampleName]['1'] = dataRec.reads1
-                elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_ENDED:
-                        samples[dataRec.sampleName] = {}
-		        samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
-		        samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
-		        samples[dataRec.sampleName]['1'] = dataRec.reads1
-                        samples[dataRec.sampleName]['2'] = dataRec.reads2
+		if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
+			samples[dataRec.sampleName] = {}
+			samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
+			samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
+			samples[dataRec.sampleName]['1'] = dataRec.reads1
+		elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
+			samples[dataRec.sampleName] = {}
+			samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
+			samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
+			samples[dataRec.sampleName]['1'] = dataRec.reads1
+			samples[dataRec.sampleName]['2'] = dataRec.reads2
 
 
-                        
+			
 	newConf.add_global_field('SAMPLES',samples)
 	for k, v in newConf.to_dict().items():
 		finalConf[k] = v
@@ -151,8 +152,8 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 	
 ################################################################################
 		
-def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
-	if mupdb.Conf.exists(name) and not modify:
+def buildNewConf(name, dataType=None, useDefaults=False, fineControl=False, modify=False):
+	if api.getConf(name) and not modify:
 		msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
 		sys.stderr.write(msg)
 		sys.exit(1)
@@ -161,6 +162,11 @@ def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 
 	# global opts	
 	confBldr.add_global_field('NAME', name)
+	if not dataType:
+		confBldr.add_global_field('DATA_TYPE',
+					  UserChoice('data_type', api.getDataTypes()))
+	else:
+		confBldr.add_global_field('DATA_TYPE', DataType.asString(dataType))
 	confBldr.add_global_field('TMP_DIR',
 			      UserInput('Please select a temporary directory',
 					'/tmp'))
@@ -177,16 +183,18 @@ def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 			      UserInput('Prefix for job names',
 					'MUP_'))
 
+	dataType = DataType.asDataType(confBldr.get_global_field('DATA_TYPE'))
 	# ToolSets register themselves by adding their class type
 	# to the toolsets list. They then employ a visitor
 	# pattern (ish) to add their own parameters to the conf.
 	for moduleType in modules.modules:
-		module = moduleType.build()
-		module.buildConf(confBldr)
+		if moduleType.worksForDataType(dataType):
+			module = moduleType.build()
+			module.buildConf(confBldr)
 
 	
 	conf_dict = confBldr.to_dict()
 
-        return api.saveConf(name, conf_dict)
+	return api.saveConf(name, conf_dict)
 
 ################################################################################

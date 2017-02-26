@@ -7,12 +7,19 @@ from meta_ultra.conf_builder import *
 class KrakenModule( Module):
 	def __init__(self, **kwargs):
 		super(KrakenModule, self).__init__(**kwargs)		
-		self.rawExt = self.getParamOrDefault('raw_ext', '.raw_kraken.tsv')
-		self.mpaExt = self.getParamOrDefault('mpa_ext', '.mpa_kraken.tsv')
+		self.rawExt = self.getParamOrDefault('raw_ext', 'raw_kraken.tsv')
+		self.mpaExt = self.getParamOrDefault('mpa_ext', 'mpa_kraken.tsv')
 		self.time = self.getParamOrDefault('time', 1)
 		self.ram = self.getParamOrDefault('ram', 4)
 		self.mpaTime = self.getParamOrDefault('mpa_time', 1)
 		self.mpaRam = self.getParamOrDefault('mpa_ram', 10)
+		
+	def expectedOutputFiles(self, dataRec):
+		sname = dataRec.sampleName
+		dname = dataRec.name
+		rawName = '{}.{}.{}'.format(sname, dname, self.rawExt)
+		mpaName = '{}.{}.{}'.format(sname, dname, self.mpaExt)
+		return [rawName, mpaName]
 		
 	def buildConf(self, conf):
 		kraken = conf.addModule('KRAKEN')
@@ -20,12 +27,12 @@ class KrakenModule( Module):
 		kraken.add_field('MPA_EXT', self.mpaExt)
 		kraken.add_field('EXC',
 				 UserChoice('Kraken',
-                                            self.getToolsOfType('kraken'),
+					    self.getToolsOfType('kraken'),
 					    new=lambda : self.askUserForTool('kraken')
 				 ))
 		kraken.add_field('MPA_EXC',
 				 UserChoice('Kraken MPA report generator',
-                                            self.getToolsOfType('kraken-mpa-report'),
+					    self.getToolsOfType('kraken-mpa-report'),
 					    new=lambda : self.askUserForTool('kraken-mpa-report')
 				 ))
 		kraken.add_field('DB',
@@ -54,9 +61,18 @@ class KrakenModule( Module):
 				 ))
 		kraken.add_field('MPA_RAM', self.mpaRam)
 
+	@classmethod
+	def worksForDataType(ctype, dataType):
+		dataType = DataType.asDataType(dataType)
+		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		return dataType in allowed
+	
+		
 	@staticmethod
 	def moduleName():
 		return 'kraken'
 
+
+	
 		
 modules.append(KrakenModule)
