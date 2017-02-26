@@ -2,6 +2,8 @@ from meta_ultra.user_input import *
 import meta_ultra.api as api
 from .cli import main
 import click
+from py_archy import archy
+from json import dumps as jdumps
 
 @main.group()
 def view():
@@ -12,7 +14,23 @@ def view():
 @click.argument('names',nargs=-1)
 def viewProjects(names, tree=False):
     if tree:
-        raise NotImplementedError()
+
+        for project in api.getProjects(names=names):
+            projTree = {'label':'Project '+project.name, 'nodes':[]}
+
+            for sample in api.getSamples(projects=[project]):
+                sampleTree = { 'label': 'Sample '+sample.name, 'nodes': []}
+                projTree['nodes'].append(sampleTree)
+
+                for dataRec in api.getData(projects=[project], samples=[sample]):
+                    dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
+                    sampleTree['nodes'].append(dataTree)
+
+                    for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                        dataTree['nodes'].append('Result '+result.name)
+
+            print( archy(projTree))
+
     else:
         for project in api.getProjects(names=names):
             print(project)
@@ -22,7 +40,13 @@ def viewProjects(names, tree=False):
 @click.argument('names',nargs=-1)
 def viewConfs(names, tree=False):
     if tree:
-        raise NotImplementedError()
+        for conf in api.getConfs(names=names):
+            confTree = { 'label': 'Data '+conf.name, 'nodes': []}
+
+            for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                confTree['nodes'].append('Result '+result.name)
+            print(archy(confTree))
+
     else:
         for conf in api.getConfs(names=names):
             print(conf)
@@ -34,7 +58,20 @@ def viewConfs(names, tree=False):
 @click.argument('names',nargs=-1)
 def viewSamples(names, tree=False, project=None):
     if tree:
-        raise NotImplementedError()
+
+        for sample in api.getSamples(names=names, projects=[project]):
+            sampleTree = { 'label': 'Sample '+sample.name, 'nodes': []}
+
+            for dataRec in api.getData(projects=[project], samples=[sample]):
+                dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
+                sampleTree['nodes'].append(dataTree)
+
+                for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                    dataTree['nodes'].append('Result '+result.name)
+
+            print( archy(sampleTree))
+
+
     else:
         for sample in api.getSamples(names=names, projects=[project]):
             print(sample)
@@ -47,7 +84,19 @@ def viewSamples(names, tree=False, project=None):
 @click.argument('names',nargs=-1)
 def viewExperiments(names, tree=False,type=None):
     if tree:
-        raise NotImplementedError()
+        for exp in api.getExperiments(names=names):
+            expTree = { 'label': 'Experiment '+exp.name, 'nodes': []}
+
+            for dataRec in api.getData(projects=[project], samples=[sample]):
+                dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
+                expTree['nodes'].append(dataTree)
+
+                for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                    dataTree['nodes'].append('Result '+result.name)
+
+            print( archy(expTree))
+
+
     else:
         for experiment in api.getExperiments(names=names, dataTypes=[type]):
             print(experiment)
@@ -62,7 +111,13 @@ def viewExperiments(names, tree=False,type=None):
 @click.argument('names',nargs=-1)
 def viewData(names, tree=False, type=None, project=None, sample=None):
     if tree:
-        raise NotImplementedError()
+        for dataRec in api.getData(names=names, projects=[project], samples=[sample]):
+            dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
+
+            for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                dataTree['nodes'].append('Result '+result.name)
+            print(archy(dataTree))
+        
     else:
         for dataRec in api.getData(names=names, dataTypes=[type], projects=[project], samples=[sample]):
             print(dataRec)
