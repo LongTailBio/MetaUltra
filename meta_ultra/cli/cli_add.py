@@ -147,16 +147,19 @@ def addSample(name=None, project=None):
     api.saveSample(name,project, None)
     
 
+@add.command(name='conf')
+@click.option('-n', '--name', default=None, help='The sample name')
+@click.option('--default/--no-default',default=False,help='accept defaults')
+@click.option('--fine-control/--no-fine-control',default=False,help='control every aspect')
+def cli_addConf(name, default, fine_control):
+    return addConf(name=name, useDefaults=default, fineControl=fine_control)
 
-def addConf(name=None, dataType=None, useDefaults=None, fineControl=None):
+def addConf(name=None, useDefaults=None, fineControl=None):
     if not name:
         name = UserInputNoDefault('What is the name of this conf?').resolve()
-    if dataType is None:
-        dataType = UserChoice('Select data type to analyze',
-                              api.getDataTypes()).resolve()
     if not fineControl and useDefaults is None:
         useDefaults = BoolUserInput('Accept all default parameters for this conf?', False).resolve()
     if fineControl is None and not useDefaults:
         fineControl = BoolUserInput('Control absolutely every aspect of this conf?', False).resolve()
 
-    conf_builder.buildNewConf(name, dataType=dataType, useDefaults=useDefaults, fineControl=fineControl)
+    conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)

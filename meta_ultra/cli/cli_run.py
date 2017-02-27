@@ -14,9 +14,7 @@ import meta_ultra.conf_builder as conf_builder
 @click.option('--rerun/--no-rerun',default=False,help='Rebuild files that might be incomplete')
 def run(jobs, dryrun=False, unlock=False, rerun=False):
 
-    dataType = UserChoice('Select data type to analyze',
-                          api.getDataTypes()).resolve()
-    conf = UserChoice('conf', api.getConfs(dataTypes=[dataType]), new=lambda : addConf(dataType=dataType)).resolve()
+    conf = UserChoice('conf', api.getConfs(), new=addConf).resolve()
 
     projects = None
     if BoolUserInput('Select data from specific projects?', False).resolve():
@@ -26,7 +24,7 @@ def run(jobs, dryrun=False, unlock=False, rerun=False):
     if BoolUserInput('Select data from a specific samples?', False).resolve():
         samples = UserMultiChoice('What samples should data be taken from?',
                                   api.getSamples(projects=projects)).resolve()
-    dataRecs = api.getData(dataTypes=[dataType], projects=projects,samples=samples)
+    dataRecs = api.getData(projects=projects,samples=samples)
 
     confName = conf.name
     confWithData = conf_builder.addSamplesToConf(confName, dataRecs)              

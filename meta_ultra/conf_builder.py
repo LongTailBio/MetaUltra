@@ -113,13 +113,6 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 		sys.stderr.write(msg)
 		sys.exit(1)
 		
-	dataType = DataType.asDataType(finalConf['DATA_TYPE'])
-	for dataRec in dataRecs:
-		if dataRec.dataType != dataType:
-			msg = 'Data type of samples does not match data type of conf. Exiting.\n'
-			sys.stderr.write(msg)
-			sys.exit(1)
-	
 	newConf = ConfBuilder(useDefaults, fineControl) 
 	newConf.add_global_field('OUTPUT_DIR',
 			      UserInput('Give the directory where output files '+
@@ -130,17 +123,25 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 		
 	samples = {}
 	for dataRec in dataRecs:
+                if dataRec.sampleName not in samples:
+                        samples[dataRec.sampleName] = {}
+                        
+                dataConf = {}
+                samples[dataRec.name] = dataConf
+
+                dataType = DataType.asDataType(dataRec.dataType)
+		dataConf['PROJECT_NAME'] = dataRec.projectName
+                dataConf['DATA_NAME'] = dataRec.name
+                dataConf['SAMPLE_NAME'] = dataRec.sampleName
+                dataConf['DATE_TYPE'] = DataType.asString(dataRec.dataType)
+                dataConf['SAMPLE_TYPE'] = SampleType.asString(dataRec.sampleType)
+
 		if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
-			samples[dataRec.sampleName] = {}
-			samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
-			samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
-			samples[dataRec.sampleName]['1'] = dataRec.reads1
+                        dataConf['1'] = dataRec.reads1
+
 		elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
-			samples[dataRec.sampleName] = {}
-			samples[dataRec.sampleName]['PROJECT'] = dataRec.projectName
-			samples[dataRec.sampleName]['DATA_NAME'] = dataRec.name
-			samples[dataRec.sampleName]['1'] = dataRec.reads1
-			samples[dataRec.sampleName]['2'] = dataRec.reads2
+                        dataConf['1'] = dataRec.reads1
+                        dataConf['2'] = dataRec.reads2
 
 
 			
@@ -152,7 +153,7 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 	
 ################################################################################
 		
-def buildNewConf(name, dataType=None, useDefaults=False, fineControl=False, modify=False):
+def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 	if api.getConf(name) and not modify:
 		msg = 'Conf with name {} already exists. Exiting.\n'.format(name)
 		sys.stderr.write(msg)
@@ -162,11 +163,6 @@ def buildNewConf(name, dataType=None, useDefaults=False, fineControl=False, modi
 
 	# global opts	
 	confBldr.add_global_field('NAME', name)
-	if not dataType:
-		confBldr.add_global_field('DATA_TYPE',
-					  UserChoice('data_type', api.getDataTypes()))
-	else:
-		confBldr.add_global_field('DATA_TYPE', DataType.asString(dataType))
 	confBldr.add_global_field('TMP_DIR',
 			      UserInput('Please select a temporary directory',
 					'/tmp'))
@@ -183,14 +179,12 @@ def buildNewConf(name, dataType=None, useDefaults=False, fineControl=False, modi
 			      UserInput('Prefix for job names',
 					'MUP_'))
 
-	dataType = DataType.asDataType(confBldr.get_global_field('DATA_TYPE'))
 	# ToolSets register themselves by adding their class type
 	# to the toolsets list. They then employ a visitor
 	# pattern (ish) to add their own parameters to the conf.
 	for moduleType in modules.modules:
-		if moduleType.worksForDataType(dataType):
-			module = moduleType.build()
-			module.buildConf(confBldr)
+		module = moduleType.build()
+		module.buildConf(confBldr)
 
 	
 	conf_dict = confBldr.to_dict()
