@@ -70,10 +70,11 @@ def saveProject(name, metadata):
 
 ###########################################################
 
-def saveSample(name, project, metadata):
+def saveSample(name, project, sampleType, metadata):
     if type(project) != str:
         project = project.name
     sample = Sample(name=name,
+                    sample_type=sampleType
 		    project_name=project,
 		    metadata=metadata)
     return sample.save()
@@ -129,6 +130,7 @@ def saveResult(name, resultFilenames, data, conf, sample, experiment, project):
 ###########################################################
 	
 def bulkSaveSamplesAndSingleEndDNASeqData(project,
+                                          sampleType,
 					 filenames,
 					 readSuffix,
 					 singleEndedSeqRun,
@@ -155,7 +157,7 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 	seqDats = []
 	samples = []
 	for sampleName, filename in samplesToFilenames.items():
-		sample = Sample(name=sampleName, project_name=projectName, metadata=metadataFunc(sampleName))
+		sample = Sample(name=sampleName, sample_type=sampleType, project_name=projectName, metadata=metadataFunc(sampleName))
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)
@@ -178,6 +180,7 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 ###########################################################
 
 def bulkSaveSamplesAndPairedEndDNASeqData(project,
+                                          sampleType,
 					 filenames,
 					 read1Suffix,
 					 read2Suffix,
@@ -222,7 +225,7 @@ def bulkSaveSamplesAndPairedEndDNASeqData(project,
 	for sampleName, filenames in samplesToFilenames.items():
 		reads1 = filenames['1']
 		reads2 = filenames['2']
-		sample = Sample(name=sampleName, project_name=projectName, metadata=metadataFunc(sampleName)) 
+		sample = Sample(name=sampleName, sample_type=sampleType, project_name=projectName, metadata=metadataFunc(sampleName)) 
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)

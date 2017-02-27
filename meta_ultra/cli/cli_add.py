@@ -33,6 +33,7 @@ def addData(filenames):
         prefix = UserInput('Optionally, indicate a prefix for the read files', '').resolve()
         aveReadLen = UserInputNoDefault('What is the average read length', type=int).resolve()
         samples, seqData = api.bulkSaveSamplesAndSingleEndDNASeqData(project,
+                                                                     sampleType,
                                                   filenames,
                                                   extension,
                                                   seqRun,
@@ -69,6 +70,7 @@ def addData(filenames):
         aveReadLen = UserInputNoDefault('What is the average read length', type=int).resolve()
         aveGapLen = UserInput('What is the average gap length, if known', None, type=int).resolve()
         samples, seqData = api.bulkSaveSamplesAndPairedEndDNASeqData(project,
+                                                                     sampleType,
                                                   filenames,
                                                   extension1,
                                                   extension2,
@@ -119,13 +121,17 @@ def addExperiment(name=None, dataType=None):
 
 @add.command(name='sample')
 @click.option('-n', '--name', default=None, help='The sample name')
+@click.option('--sample-type', default=None, help='The sample type')
 @click.option('-p', '--project', default=None, help='The project name')
-def cli_addSample(name=None, project=None):
-    addSample(name=name, project=project)
+def cli_addSample(name=None, sample_type=None ,project=None):
+    addSample(name=name, sampleType=sample_type, project=project)
     
-def addSample(name=None, project=None):
+def addSample(name=None, project=None, sampleType=None):
     if not project:
-        project = UserChoice('project', api.getProjects(), new=addProject()).resolve()
+        project = UserChoice('project', api.getProjects(), new=addProject).resolve()
+    if not sampleType:
+        sampleType = UserChoice('sample_type', api.getSampleTypes()).resolve()
+    sampleType = SampleType.asSampleType(sampleType)
     elif not api.getProject(project):
         add = BoolUserInput('Project {} not. found Would you like to add it?'.format(project),False)
         if not add:
@@ -144,7 +150,7 @@ def addSample(name=None, project=None):
             tryAgain= True
             sys.stderr.write('Sample {} already exists. Please pick a new name.\n'.format(name))
             name=None
-    api.saveSample(name,project, None)
+    api.saveSample(name,sampleType,project, None)
     
 
 @add.command(name='conf')

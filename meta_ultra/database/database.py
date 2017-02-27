@@ -3,6 +3,7 @@ import meta_ultra.config as config
 from meta_ultra.data_type import DataType, DataTypeNotFoundError
 from meta_ultra.sample_type import SampleType, SampleTypeNotFoundError
 from meta_ultra.utils import *
+import meta_ultra.api as api
 from os.path import basename
 import json
 
@@ -27,14 +28,6 @@ class NoSuchRecordError(Exception):
 
 class InvalidRecordStateError(Exception):
     pass
-
-def asDataType(dataType):
-    if type(dataType) == DataType:
-        return dataType
-    try:
-        return DataType.fromString(dataType)
-    except:
-        raise DataTypeNotFoundError() 
 
 class Record:
     dbTbl = None
@@ -127,8 +120,9 @@ class Record:
 class Data( Record):
     def __init__(self, name, dataType, sampleName, projectName, experimentName):
         super(Data, self).__init__(name)
-        self.dataType = asDataType(dataType)
+        self.dataType = DataType.asDataType(dataType)
         self.sampleName = sampleName
+        self.sampleType = SampleType.asSampleType(api.getSample(self.sampleName).sampleType)
         self.projectName = projectName
         self.experimentName = experimentName
         
@@ -166,7 +160,7 @@ class Data( Record):
 
     @classmethod
     def build(ctype, *args, **kwargs):
-        dataType = asDataType( kwargs['data_type'])
+        dataType = DataType.asDataType( kwargs['data_type'])
         if dataType == DataType.DNA_SEQ_SINGLE_END:
             return SingleEndDNASeqData(**kwargs)
         elif dataType == DataType.DNA_SEQ_PAIRED_END:
@@ -295,6 +289,7 @@ class Sample(Record):
     def __init__(self,**kwargs):
         super(Sample, self).__init__(kwargs['name'])
         self.projectName = kwargs['project_name']
+        self.sampleType = SampleType.asSampleType(kwargs['sample_type'])
         if 'metadata' in kwargs and kwargs['metadata']:
             self.metadata = kwargs['metadata']
         else:
@@ -304,6 +299,7 @@ class Sample(Record):
         out = {
             'name' : self.name,
             'project_name':self.projectName,
+            'sample_type':SampleType.asString(self.sampleType),
             'metadata':self.metadata
             }
         return out
