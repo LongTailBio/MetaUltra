@@ -48,7 +48,7 @@ class Test_api(unittest.TestCase):
     def test_remove_project(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -97,7 +97,7 @@ class Test_api(unittest.TestCase):
     def test_remove_conf(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -115,7 +115,7 @@ class Test_api(unittest.TestCase):
     def test_atomic_remove_conf(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -158,7 +158,7 @@ class Test_api(unittest.TestCase):
     def test_remove_experiment(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -215,35 +215,35 @@ class Test_api(unittest.TestCase):
     def test_add_sample(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
 
     def test_add_sample_fails_without_project(self):
         api.init()
-        self.assertRaises(InvalidRecordStateError, api.saveSample, 'test_sample', 'test_project', None)
+        self.assertRaises(InvalidRecordStateError, api.saveSample, 'test_sample', 'PHONE_SAMPLE', 'test_project', None)
 
     def test_double_add_sample_fails(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
-        self.assertRaises(RecordExistsError, api.saveSample, 'test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
+        self.assertRaises(RecordExistsError, api.saveSample, 'test_sample', 'PHONE_SAMPLE', 'test_project', None)
 
     def test_get_sample(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         self.assertEquals('test_sample', api.getSample('test_sample').name)
         
     def test_remove_project_creates_sample_error_state(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.removeProject('test_project', atomic=True)
         self.assertFalse(api.getSample('test_sample').validStatus())
         
     def test_remove_sample(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -262,15 +262,15 @@ class Test_api(unittest.TestCase):
     def test_atomic_remove_sample(self, atomic=True):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample', 'test_project', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_project', None)
         api.removeSample('test_sample', atomic=True)
         self.assertIs(None, api.getSample('test_sample')) 
 
     def test_query_samples_all(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample_1', 'test_project', None)
-        api.saveSample('test_sample_2', 'test_project', None)
+        api.saveSample('test_sample_1','PHONE_SAMPLE',  'test_project', None)
+        api.saveSample('test_sample_2','PHONE_SAMPLE',  'test_project', None)
         sNames = [el.name for el in api.getSamples()]
         self.assertIn('test_sample_1', sNames)
         self.assertIn('test_sample_2', sNames)
@@ -279,8 +279,8 @@ class Test_api(unittest.TestCase):
     def test_query_samples_names(self):
         api.init()
         api.saveProject('test_project', None)
-        api.saveSample('test_sample_1', 'test_project', None)
-        api.saveSample('test_sample_2', 'test_project', None)
+        api.saveSample('test_sample_1', 'PHONE_SAMPLE', 'test_project', None)
+        api.saveSample('test_sample_2', 'PHONE_SAMPLE', 'test_project', None)
         sNames = [el.name for el in api.getSamples(names='test_sample_1')]
         self.assertIn('test_sample_1', sNames)
         self.assertNotIn('test_sample_2', sNames)
@@ -293,8 +293,8 @@ class Test_api(unittest.TestCase):
         api.init()
         api.saveProject('test_project_1', None)
         api.saveProject('test_project_2', None)
-        api.saveSample('test_sample_1', 'test_project_1', None)
-        api.saveSample('test_sample_2', 'test_project_2', None)
+        api.saveSample('test_sample_1', 'PHONE_SAMPLE', 'test_project_1', None)
+        api.saveSample('test_sample_2', 'PHONE_SAMPLE', 'test_project_2', None)
         sNames = [el.name for el in api.getSamples(projects=['test_project_1'])]
         self.assertIn('test_sample_1', sNames)
         self.assertNotIn('test_sample_2', sNames)
@@ -304,7 +304,7 @@ class Test_api(unittest.TestCase):
     def test_add_SEDSD(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -316,7 +316,7 @@ class Test_api(unittest.TestCase):
     def test_add_PEDSD(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_PAIRED_END', None)
         api.savePairedEndDNASeqData('test_PEDSD',
                                     'test_1.fastq.gz',
@@ -330,7 +330,7 @@ class Test_api(unittest.TestCase):
     def test_add_data_rec_fails_without_project(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.removeProject('test_proj', atomic=True)
         self.assertRaises(InvalidRecordStateError,
@@ -359,7 +359,7 @@ class Test_api(unittest.TestCase):
     def test_add_data_rec_fails_without_exp(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         self.assertRaises(InvalidRecordStateError,
                           api.savePairedEndDNASeqData,
                           'test_PEDSD',
@@ -375,7 +375,7 @@ class Test_api(unittest.TestCase):
     def test_double_add_data_rec_fails(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -397,7 +397,7 @@ class Test_api(unittest.TestCase):
     def test_get_data_rec(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -410,7 +410,7 @@ class Test_api(unittest.TestCase):
     def test_remove_project_creates_data_error_state(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -425,7 +425,7 @@ class Test_api(unittest.TestCase):
     def test_remove_sample_creates_data_error_state(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -440,7 +440,7 @@ class Test_api(unittest.TestCase):
     def test_remove_exp_creates_data_error_state(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -455,7 +455,7 @@ class Test_api(unittest.TestCase):
     def test_remove_data_rec(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -473,7 +473,7 @@ class Test_api(unittest.TestCase):
     def test_atomic_remove_data_rec(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
@@ -487,7 +487,7 @@ class Test_api(unittest.TestCase):
     def test_query_data_recs_all(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
                                     'test.fastq.gz',
@@ -509,7 +509,7 @@ class Test_api(unittest.TestCase):
     def test_query_data_recs_names(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
                                     'test.fastq.gz',
@@ -531,7 +531,7 @@ class Test_api(unittest.TestCase):
     def test_query_data_recs_data_types(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
                                     'test.fastq.gz',
@@ -555,8 +555,8 @@ class Test_api(unittest.TestCase):
     def test_query_data_recs_samples(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample_1', 'test_proj', None)
-        api.saveSample('test_sample_2', 'test_proj', None)
+        api.saveSample('test_sample_1', 'PHONE_SAMPLE', 'test_proj', None)
+        api.saveSample('test_sample_2', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
                                     'test.fastq.gz',
@@ -578,7 +578,7 @@ class Test_api(unittest.TestCase):
     def test_query_data_recs_exps(self):
         api.init()
         api.saveProject('test_proj', None)
-        api.saveSample('test_sample', 'test_proj', None)
+        api.saveSample('test_sample', 'PHONE_SAMPLE', 'test_proj', None)
         api.saveExperiment('test_exp_1', 'DNA_SEQ_SINGLE_END', None)
         api.saveExperiment('test_exp_2', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
@@ -602,8 +602,8 @@ class Test_api(unittest.TestCase):
         api.init()
         api.saveProject('test_proj_1', None)
         api.saveProject('test_proj_2', None)
-        api.saveSample('test_sample_1', 'test_proj_1', None)
-        api.saveSample('test_sample_2', 'test_proj_2', None)
+        api.saveSample('test_sample_1', 'PHONE_SAMPLE', 'test_proj_1', None)
+        api.saveSample('test_sample_2', 'PHONE_SAMPLE', 'test_proj_2', None)
         api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD_1',
                                     'test.fastq.gz',

@@ -70,11 +70,11 @@ def saveProject(name, metadata):
 
 ###########################################################
 
-def saveSample(name, project, sampleType, metadata):
+def saveSample(name, sampleType, project, metadata):
     if type(project) != str:
         project = project.name
     sample = Sample(name=name,
-                    sample_type=sampleType
+                    sample_type=sampleType,
 		    project_name=project,
 		    metadata=metadata)
     return sample.save()

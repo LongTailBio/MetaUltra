@@ -3,7 +3,6 @@ import meta_ultra.config as config
 from meta_ultra.data_type import DataType, DataTypeNotFoundError
 from meta_ultra.sample_type import SampleType, SampleTypeNotFoundError
 from meta_ultra.utils import *
-import meta_ultra.api as api
 from os.path import basename
 import json
 
@@ -122,7 +121,10 @@ class Data( Record):
         super(Data, self).__init__(name)
         self.dataType = DataType.asDataType(dataType)
         self.sampleName = sampleName
-        self.sampleType = SampleType.asSampleType(api.getSample(self.sampleName).sampleType)
+        try:
+            self.sampleType = SampleType.asSampleType(Sample.get(self.sampleName).sampleType)
+        except NoSuchRecordError:
+            raise InvalidRecordStateError()
         self.projectName = projectName
         self.experimentName = experimentName
         
@@ -225,7 +227,7 @@ class PairedEndDNASeqData(Data):
 class Experiment(Record):
     def __init__(self, name, dataType):
         super(Experiment, self).__init__(name)
-        self.dataType = asDataType(dataType)
+        self.dataType = DataType.asDataType(dataType)
 
     def to_dict(self):
         out = {
@@ -241,7 +243,7 @@ class Experiment(Record):
 
     @classmethod
     def build(ctype, *args, **kwargs):
-        dataType = asDataType( kwargs['data_type'])
+        dataType = DataType.asDataType( kwargs['data_type'])
         if dataType == DataType.DNA_SEQ_SINGLE_END:
             return SingleEndDNASeqRun(**kwargs)
         elif dataType == DataType.DNA_SEQ_PAIRED_END:
