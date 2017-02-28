@@ -4,8 +4,8 @@ class DataTypeNotFoundError(Exception):
     pass
 
 class DataType(Enum):
-    DNA_SEQ_SINGLE_END='DNA_SEQ_SINGLE_END'
-    DNA_SEQ_PAIRED_END='DNA_SEQ_PAIRED_END'
+    WGS_DNA_SEQ_SINGLE_END='WGS_DNA_SEQ_SINGLE_END'
+    WGS_DNA_SEQ_PAIRED_END='WGS_DNA_SEQ_PAIRED_END'
 
     @classmethod
     def asDataType(ctype, val):

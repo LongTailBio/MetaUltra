@@ -17,7 +17,7 @@ def addData(filenames):
     project = UserChoice('project', api.getProjects(), new=addProject).resolve()
     sampleType = UserChoice('sample_type', api.getSampleTypes()).resolve()
     dataType = UserChoice('data_type', api.getDataTypes()).resolve()
-    if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
+    if dataType == api.getDataTypes().WGS_DNA_SEQ_SINGLE_END:
         seqRun = UserChoice('sequencer_type', api.getExperiments(dataTypes=[dataType]),
                             new=lambda : addExperiment(dataType=dataType)).resolve()
         nfiles = 0
@@ -39,7 +39,7 @@ def addData(filenames):
                                                   seqRun,
                                                   aveReadLen, 
                                                   readPrefix=prefix)
-    elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
+    elif dataType == api.getDataTypes().WGS_DNA_SEQ_PAIRED_END:
         seqRun = UserChoice('sequencer_type', api.getExperiments(dataTypes=[dataType]),
                             new=lambda : addExperiment(dataType=dataType)).resolve()
 

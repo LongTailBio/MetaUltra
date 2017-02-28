@@ -136,10 +136,10 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
                 dataConf['DATE_TYPE'] = DataType.asString(dataRec.dataType)
                 dataConf['SAMPLE_TYPE'] = SampleType.asString(dataRec.sampleType)
 
-		if dataType == api.getDataTypes().DNA_SEQ_SINGLE_END:
+		if dataType == api.getDataTypes().WGS_DNA_SEQ_SINGLE_END:
                         dataConf['1'] = dataRec.reads1
 
-		elif dataType == api.getDataTypes().DNA_SEQ_PAIRED_END:
+		elif dataType == api.getDataTypes().WGS_DNA_SEQ_PAIRED_END:
                         dataConf['1'] = dataRec.reads1
                         dataConf['2'] = dataRec.reads2
 

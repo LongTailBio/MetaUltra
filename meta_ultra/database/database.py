@@ -163,9 +163,9 @@ class Data( Record):
     @classmethod
     def build(ctype, *args, **kwargs):
         dataType = DataType.asDataType( kwargs['data_type'])
-        if dataType == DataType.DNA_SEQ_SINGLE_END:
+        if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
             return SingleEndDNASeqData(**kwargs)
-        elif dataType == DataType.DNA_SEQ_PAIRED_END:
+        elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
             return PairedEndDNASeqData(**kwargs)
         else:
             raise DataTypeNotFoundError()
@@ -188,7 +188,7 @@ class SingleEndDNASeqData(Data):
 
     @staticmethod
     def dataType():
-        return DataType.DNA_SEQ_SINGLE_END
+        return DataType.WGS_DNA_SEQ_SINGLE_END
 
 
     
@@ -219,7 +219,7 @@ class PairedEndDNASeqData(Data):
 
     @staticmethod
     def dataType():
-        return DataType.DNA_SEQ_PAIRED_END
+        return DataType.WGS_DNA_SEQ_PAIRED_END
 
 
 ################################################################################
@@ -244,9 +244,9 @@ class Experiment(Record):
     @classmethod
     def build(ctype, *args, **kwargs):
         dataType = DataType.asDataType( kwargs['data_type'])
-        if dataType == DataType.DNA_SEQ_SINGLE_END:
+        if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
             return SingleEndDNASeqRun(**kwargs)
-        elif dataType == DataType.DNA_SEQ_PAIRED_END:
+        elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
             return PairedEndDNASeqRun(**kwargs)
         else:
             raise DataTypeNotFoundError()
@@ -261,7 +261,7 @@ class Experiment(Record):
 class SingleEndDNASeqRun( Experiment):
     def __init__(self,**kwargs):
         super(SingleEndDNASeqRun, self).__init__(kwargs['name'],
-                                                       DataType.DNA_SEQ_SINGLE_END)
+                                                       DataType.WGS_DNA_SEQ_SINGLE_END)
         self.metadata = kwargs['metadata']
         if not self.metadata:
             self.metadata = {}
@@ -273,7 +273,7 @@ class SingleEndDNASeqRun( Experiment):
 class PairedEndDNASeqRun( Experiment):
     def __init__(self,**kwargs):
         super(PairedEndDNASeqRun, self).__init__(kwargs['name'],
-                                                       DataType.DNA_SEQ_PAIRED_END)
+                                                       DataType.WGS_DNA_SEQ_PAIRED_END)
         self.metadata = kwargs['metadata']
         if not self.metadata:
             self.metadata = {}

@@ -104,7 +104,7 @@ class Test_cli(unittest.TestCase):
         api.init()
         api.saveProject('test_proj', None)
         api.saveSample('test_sample', 'test_proj', None)
-        api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
+        api.saveExperiment('test_exp', 'WGS_DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
                                     100,
@@ -120,7 +120,7 @@ class Test_cli(unittest.TestCase):
         api.init()
         api.saveProject('test_proj', None)
         api.saveSample('test_sample', 'test_proj', None)
-        api.saveExperiment('test_exp', 'DNA_SEQ_SINGLE_END', None)
+        api.saveExperiment('test_exp', 'WGS_DNA_SEQ_SINGLE_END', None)
         api.saveSingleEndDNASeqData('test_SEDSD',
                                     'test.fastq.gz',
                                     100,

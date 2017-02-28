@@ -83,9 +83,9 @@ def saveSample(name, sampleType, project, metadata):
 
 def saveExperiment(name, dataType, metadata):
     dataType = convertDataType(dataType)
-    if dataType == DataType.DNA_SEQ_SINGLE_END:
+    if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
         exp = SingleEndDNASeqRun(name=name, metadata=metadata)
-    elif dataType == DataType.DNA_SEQ_PAIRED_END:
+    elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
         exp = PairedEndDNASeqRun(name=name, metadata=metadata)
     else:
         raise DataTypeNotFoundError()

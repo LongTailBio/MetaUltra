@@ -51,7 +51,7 @@ class Metaphlan2Module( Module):
 	@classmethod
 	def worksForDataType(ctype, dataType):
 		dataType = DataType.asDataType(dataType)
-		allowed = [ DataType.DNA_SEQ_SINGLE_END, DataType.DNA_SEQ_PAIRED_END]
+		allowed = [ DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]
 		return dataType in allowed
 		
 	@staticmethod
