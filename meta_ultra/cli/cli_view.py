@@ -37,8 +37,9 @@ def viewProjects(names, tree=False):
 
 @view.command(name='confs')
 @click.option('--tree/--list',default=False, help='Show as a tree')
+@click.option('--json/--no-json',default=False, help='Show as a json file')
 @click.argument('names',nargs=-1)
-def viewConfs(names, tree=False):
+def viewConfs(names, tree=False,json=False):
     if tree:
         for conf in api.getConfs(names=names):
             confTree = { 'label': 'Data '+conf.name, 'nodes': []}
@@ -46,6 +47,10 @@ def viewConfs(names, tree=False):
             for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
                 confTree['nodes'].append('Result '+result.name)
             print(archy(confTree))
+
+    elif json:
+        for conf in api.getConfs(names=names):
+            print(jdumps(conf.confDict, indent=4, sort_keys=True))
 
     else:
         for conf in api.getConfs(names=names):

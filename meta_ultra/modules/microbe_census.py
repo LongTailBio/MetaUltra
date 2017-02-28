@@ -18,6 +18,9 @@ class MicrobeCensusModule( Module):
 		
 	def buildConf(self, conf):
 		micCensus = conf.addModule('MICROBE_CENSUS')
+		if not micCensus:
+			return
+		
 		micCensus.add_field('EXC',
 				    UserChoice('Microbe Census',
 					       self.tools,

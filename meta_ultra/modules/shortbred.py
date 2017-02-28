@@ -18,7 +18,9 @@ class ShortBredModule( Module):
 	
 	def buildConf(self, confBuilder):
 		shortbred = confBuilder.addModule(self.moduleName().upper())
-
+		if not shortbred:
+			return
+		
 		shortbred.add_field('EXT', self.ext)
 		shortbred.add_field('EXC',
 				    UserChoice('ShortBred Quantify',

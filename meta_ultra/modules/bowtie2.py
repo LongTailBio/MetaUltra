@@ -11,6 +11,9 @@ class Bowtie2Module( Module):
 
 	def buildConf(self, confBuilder):
 		bowtie2 = confBuilder.addModule(self.moduleName().upper())
+		if not bowtie2:
+			return
+		
 		bowtie2.add_field('EXC',
 				  UserChoice('Bowtie2',
 					     self.tools,

@@ -132,7 +132,7 @@ def addSample(name=None, project=None, sampleType=None):
     if not sampleType:
         sampleType = UserChoice('sample_type', api.getSampleTypes()).resolve()
     sampleType = SampleType.asSampleType(sampleType)
-    elif not api.getProject(project):
+    if not api.getProject(project):
         add = BoolUserInput('Project {} not. found Would you like to add it?'.format(project),False)
         if not add:
             sys.stderr.write('No project {}. Exiting.\n'.format(project))

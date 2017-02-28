@@ -11,6 +11,9 @@ class SamtoolsModule( Module):
 
 	def buildConf(self, confBuilder):
 		samtools = confBuilder.addModule(self.moduleName().upper())
+		if not samtools:
+			return
+		
 		samtools.add_field('EXC',
 				  UserChoice('Samtools',
 					     self.tools,

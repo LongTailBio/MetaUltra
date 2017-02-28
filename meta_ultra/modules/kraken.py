@@ -23,6 +23,9 @@ class KrakenModule( Module):
 		
 	def buildConf(self, conf):
 		kraken = conf.addModule('KRAKEN')
+		if not kraken:
+			return
+		
 		kraken.add_field('RAW_EXT', self.rawExt)
 		kraken.add_field('MPA_EXT', self.mpaExt)
 		kraken.add_field('EXC',

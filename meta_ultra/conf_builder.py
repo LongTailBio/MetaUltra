@@ -64,8 +64,11 @@ class ConfBuilder:
 		if 'y' in inp:
 			self.tools[tool_name] = ToolBuilder(tool_name, self.useDefaults, self.fineControl)
 			self.global_fields['TOOLS_TO_RUN'].append(tool_name)
-			
-		return self.tools[tool_name]
+
+		try:	
+			return self.tools[tool_name]
+		except KeyError:
+			return None
 
 	def to_dict(self):
 		out = self.global_fields
@@ -123,25 +126,25 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 		
 	samples = {}
 	for dataRec in dataRecs:
-                if dataRec.sampleName not in samples:
-                        samples[dataRec.sampleName] = {}
-                        
-                dataConf = {}
-                samples[dataRec.name] = dataConf
+		if dataRec.sampleName not in samples:
+			samples[dataRec.sampleName] = {}
+			
+		dataConf = {}
+		samples[dataRec.name] = dataConf
 
-                dataType = DataType.asDataType(dataRec.dataType)
+		dataType = DataType.asDataType(dataRec.dataType)
 		dataConf['PROJECT_NAME'] = dataRec.projectName
-                dataConf['DATA_NAME'] = dataRec.name
-                dataConf['SAMPLE_NAME'] = dataRec.sampleName
-                dataConf['DATE_TYPE'] = DataType.asString(dataRec.dataType)
-                dataConf['SAMPLE_TYPE'] = SampleType.asString(dataRec.sampleType)
+		dataConf['DATA_NAME'] = dataRec.name
+		dataConf['SAMPLE_NAME'] = dataRec.sampleName
+		dataConf['DATE_TYPE'] = DataType.asString(dataRec.dataType)
+		dataConf['SAMPLE_TYPE'] = SampleType.asString(dataRec.sampleType)
 
 		if dataType == api.getDataTypes().WGS_DNA_SEQ_SINGLE_END:
-                        dataConf['1'] = dataRec.reads1
+			dataConf['1'] = dataRec.reads1
 
 		elif dataType == api.getDataTypes().WGS_DNA_SEQ_PAIRED_END:
-                        dataConf['1'] = dataRec.reads1
-                        dataConf['2'] = dataRec.reads2
+			dataConf['1'] = dataRec.reads1
+			dataConf['2'] = dataRec.reads2
 
 
 			

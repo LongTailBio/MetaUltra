@@ -10,6 +10,9 @@ class MashModule( Module):
 
 	def buildConf(self, conf):
 		mash = conf.addModule('MASH')
+		if not mash:
+			return
+		
 		mash.add_field('EXC',
 			       UserChoice('Mash (kmer minhash distances)',
 					  self.getToolsOfType('mash'),

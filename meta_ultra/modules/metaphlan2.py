@@ -18,6 +18,9 @@ class Metaphlan2Module( Module):
 		
 	def buildConf(self, conf):
 		metaphlan2 = conf.addModule('METAPHLAN2')
+		if not metaphlan2:
+			return
+		
 		metaphlan2.add_field('EXC',
 				     UserChoice('MetaPhlAn2 Executable',
 						self.tools,

@@ -11,6 +11,9 @@ class DiamondModule( Module):
 
 	def buildConf(self, confBuilder):
 		diamond = confBuilder.addModule(self.moduleName().upper())
+		if not diamond:
+			return
+		
 		diamond.add_field('EXC',
 				  UserChoice('Diamond',
 					     self.tools,
