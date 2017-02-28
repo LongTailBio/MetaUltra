@@ -3,8 +3,12 @@
 def metaphlan2_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+        dataNames = sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
 	if 'METAPHLAN2' in tools:
-		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['METAPHLAN2']['EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'],
+                              sample=config['SAMPLES'].keys(),
+                              data_name=dataNames,
+                )
 	return inp
 
 output_builders.append( metaphlan2_output)
@@ -13,22 +17,27 @@ rule metaphlan2_single_sample:
 	input:
 		reads = getReads
 	output:
-		main=config['OUTPUT_DIR']+'{sample}' + config['METAPHLAN2']['EXT'],
-		bt2=temp('{sample}' + config['METAPHLAN2']['EXT'] + '.bt2')
+		main=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'],
+		bt2='{sample}.{data_name}.' + config['METAPHLAN2']['EXT'] + '.bt2'
 	threads: int(config['METAPHLAN2']['THREADS'])
 	version: config['METAPHLAN2']['VERSION']
 	params:
 		metaphlan2=config['METAPHLAN2']['EXC'],
-		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample',
+		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample_{sample}_{data_name}',
 	resources:
 		time=int(config['METAPHLAN2']['TIME']),
 		n_gb_ram=int(config['METAPHLAN2']['RAM'])
 
 	run:
-		if paired:
-			cmd = '{params.metaphlan2} --input_type fastq {input.reads[0]},{input.reads[1]} --nproc {threads} --bowtie2out {output.bt2} > {output.main}'
-		else:
-			cmd = '{params.metaphlan2} --input_type fastq {input.reads[0]} --nproc {threads} --bowtie2out {output.bt2} > {output.main}'
+		dataType = getDataType(params.sample_name, params.data_name)
+		if DataType.WGS_DNA_SEQ_PAIRED_END:
+			cmd = ('{params.metaphlan2} --input_type fastq ${{I0}},${{I1}}'
+                               ' --nproc {threads} --bowtie2out ${{TMPDIR}}/{output.bt2} > ${{O0}}')
+                        cmd = loadFiles([input.reads[0], input.reads[1]], [output.main], cmd, 'TMPDIR')  
+		elif DataType.WGS_DNA_SEQ_SINGLE_ENDED:
+			cmd = ('{params.metaphlan2} --input_type fastq ${{I0}}'
+                               ' --nproc {threads} --bowtie2out ${{TMPDIR}}/{output.bt2} > ${{O0}}')
+                        cmd = loadFiles([input.reads[0]], [output.main], cmd, 'TMPDIR')  
 		shell(cmd)
 
 

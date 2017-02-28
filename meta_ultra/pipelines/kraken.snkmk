@@ -3,8 +3,12 @@
 def kraken_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+        dataNames=sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
 	if 'KRAKEN' in tools:
-		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['KRAKEN']['MPA_EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['KRAKEN']['MPA_EXT'],
+                              sample=config['SAMPLES'].keys(),
+                              data_name=dataNames
+                )
 	return inp
 
 output_builders.append( kraken_output)
@@ -14,37 +18,39 @@ rule kraken_raw_single_sample:
 	input:
 		reads = getCleanReads
 	output:
-		main = temp(config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['RAW_EXT'])
+		main = temp(config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT'])
 	threads: int( config['KRAKEN']['THREADS'])
 	version: config['KRAKEN']['VERSION']
 	params:
 		kraken = config['KRAKEN']['EXC'],
 		db = config['KRAKEN']['DB'],
-		job_name=config['JOB_NAME_PREFIX'] + 'kraken_raw_single_sample'
+		job_name=config['JOB_NAME_PREFIX'] + 'kraken_raw_single_sample_{sample}_{data_name}'
 	resources:
 		time=int(config['KRAKEN']['TIME']),
 		n_gb_ram=int(config['KRAKEN']['RAM'])
 	run:
 		if paired:
 			cmd = '{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
-			cmd += '--paired --preload --db {params.db} {input.reads[0]} {input.reads[1]} > {output.main}'
+			cmd += '--paired --preload --db {params.db} ${{I0}} ${{I1}} > ${{O0}}'
+                        cmd = loadFiles([input.reads[0], input.reads[1]], [output.main], cmd, 'TMPDIR')
 		else:
 			cmd = '{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
-			cmd += '--preload --db {params.db} {input.reads[0]} > {output.main}'
+			cmd += '--preload --db {params.db} ${{I0}} > ${{O0}}'
+                        cmd = loadFiles([input.reads[0]], [output.main], cmd, 'TMPDIR')
 		shell(cmd)
 
 
 rule kraken_mpa_single:
 	input:
-		raw = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['RAW_EXT']
+		raw = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT']
 	output:
-		main = config['OUTPUT_DIR']+'{sample}' + config['KRAKEN']['MPA_EXT']
+		main = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['MPA_EXT']
 	threads: 1
 	version: config['KRAKEN']['VERSION']
 	params:
 		kraken_mpa = config['KRAKEN']['MPA_EXC'],
 		db = config['KRAKEN']['DB'],
-		job_name=config['JOB_NAME_PREFIX'] + 'kraken_mpa_single'
+		job_name=config['JOB_NAME_PREFIX'] + 'kraken_mpa_single_{sample}_{data_name}'
 	resources:
 		time=int(config['KRAKEN']['MPA_TIME']),
 		n_gb_ram=int(config['KRAKEN']['MPA_RAM'])

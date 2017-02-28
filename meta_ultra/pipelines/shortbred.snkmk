@@ -5,9 +5,10 @@ def shortbred_out(wildcards):
     	inp = []
 	if 'SHORTBRED' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT'],
-				sample=config['SAMPLES'].keys(),
+			      sample=config['SAMPLES'].keys(),
                               data_name=sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
-				db_name=config['SHORTBRED']['DBS'].keys()																								)
+			      db_name=config['SHORTBRED']['DBS'].keys()
+                )
 	return inp
 
 output_builders.append(shortbred_out)
@@ -30,10 +31,10 @@ rule shortbred_single_sample:
 		n_gb_ram=int(config['SHORTBRED']['RAM'])
 	run:
                 dataType = getDataType(params.sample_name, params.data_name)
-		if dataType == DataType.DNA_SEQ_PAIRED_END:
+		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
 			cmd = '{params.shortbred} --markers {params.ref} --wgs {input.reads[0]} {input.reads[1]} '
 			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
-		elif dataType == DataType.DNA_SEQ_SINGLE_END:
+		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
 			cmd = '{params.shortbred} --markers {params.ref} --wgs {input.reads[0]} '
 			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
 		shell(cmd)

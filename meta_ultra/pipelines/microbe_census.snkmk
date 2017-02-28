@@ -3,8 +3,12 @@
 def microbe_census_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+        dataNames=sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
 	if 'MICROBE_CENSUS' in tools:
-		inp += expand(config['OUTPUT_DIR']+'{sample}'+config['MICROBE_CENSUS']['EXT'], sample=config['SAMPLES'].keys())
+		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['MICROBE_CENSUS']['EXT'],
+                              sample=config['SAMPLES'].keys(),
+                              data_name=dataNames
+                )
 	return inp
 
 output_builders.append( microbe_census_output)
@@ -14,20 +18,24 @@ rule microbe_census_single:
 	input:
 		reads = getReads
 	output:
-		main = config['OUTPUT_DIR']+'{sample}' + config['MICROBE_CENSUS']['EXT']
+		main = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['MICROBE_CENSUS']['EXT']
 	threads: int( config['MICROBE_CENSUS']['THREADS'])
 	version: config['MICROBE_CENSUS']['VERSION']
 	params:
 		mic_census = config['MICROBE_CENSUS']['EXC'],
-		job_name=config['JOB_NAME_PREFIX'] + 'mic_census_single'
+		job_name=config['JOB_NAME_PREFIX'] + 'mic_census_single_{sample}_{data_name}'
 	resources:
 		time=int(config['MICROBE_CENSUS']['TIME']),
 		n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
 	run:
-		if paired:
-			cmd='{params.mic_census} -t {threads} {input.reads[0]},{input.reads[1]} {output.main}'
-		else:
-			cmd='{params.mic_census} -t {threads} {input.reads[0]} {output.main}'
+
+            	dataType = getDataType(params.sample_name, params.data_name)
+		if  dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+			cmd='{params.mic_census} -t {threads} ${{I0}},${{I1}} ${{O0}}'
+                        cmd=loadFiles([input.reads[0], input.reads[1]],[output.main], cmd, 'TMPDIR')
+		elif  dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+			cmd='{params.mic_census} -t {threads} ${{I0}} ${{O0}}'
+			cmd=loadFiles([input.reads[0]],[output.main], cmd, 'TMPDIR')
 		shell(cmd)
 
 

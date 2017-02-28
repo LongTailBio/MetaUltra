@@ -57,6 +57,32 @@ def all_input(wildcards):
 	
 	return inp
 
+def loadFiles(inputs, outputs, cmd, dir):
+        uploadCmds = []
+        for i, inp in enumerate(inputs):
+                cpCmd = 'rsync -av {} {} && I{}='.format(inp, dir,i)
+                cpCmd += '${{'+dir+'}}/`basename '+inp+'` '
+                uploadCmds.append( cpCmd)
+
+        downloadVars = []
+        downloadCmds = []
+        for i, outp in enumerate(outputs):
+                varCmd = 'O{}='.format(i) + '${{'+dir+'}}/`basename {}` '.format(outp)
+                downloadVars.append(varCmd)
+                cpCmd = ' rsync -av $O{} {} '.format(i, outp)
+                downloadCmds.append(cpCmd)
+
+        uploadCmd = '&&'.join(uploadCmds)
+        downloadVar = '&&'.join(downloadVars)
+        downloadCmd = '&&'.join(downloadCmds)
+
+        fullCmd = uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
+
+        print(fullCmd)
+        return fullCmd
+
+                
+                
 ################################################################################
 #
 # I/O Utilities

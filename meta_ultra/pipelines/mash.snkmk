@@ -2,10 +2,17 @@
 def mash_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+        dataNames=[]
+        for dataConf in config['SAMPLES'].values():
+                dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+                if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+                        dataNames.append(dataConf['DATA_NAME'])
+                        
 	if 'MASH' in tools:
-		inp += expand( config['OUTPUT_DIR']+'{sample}.{db_name}.json',
+		inp += expand( config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.json',
 		       	       sample=config['SAMPLES'].keys(),
-			       db_name=config['MASH']['DBS'].keys()
+			       db_name=config['MASH']['DBS'].keys(),
+                               data_name=dataNames
 		)
 	return inp
 
@@ -15,7 +22,7 @@ rule minhash_sketch_single:
 	input:
 		clean = getCleanReads,
 	output:
-		msh = config['OUTPUT_DIR'] + '{sample}.msh',
+		msh = config['OUTPUT_DIR'] + '{sample}.{data_name}.msh',
 	threads: 1
 	params:
 		exc=config['MASH']['EXC'],
@@ -33,17 +40,17 @@ rule minhash_sketch_single:
 
 rule mash_dists_single:
 	input:
-		msh= config['OUTPUT_DIR']+'{sample}.msh',
+		msh= config['OUTPUT_DIR']+'{sample}.{data_name}.msh',
 		ref= config['MASH']['DBS'][wildcards.db_name]
 	output:
-		main=config['OUTPUT_DIR'] + '{sample}.{db_name}.json'
+		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.json'
 	resources:
 		time=1,
 		n_gb_ram=2
 	threads: 1
 	params:
 		script=config['MASH']['DIST_SCRIPT'],
-		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_dists_single'
+		job_name=config['JOB_NAME_PREFIX'] + 'mash_dists_single_{sample}_{data_name}_{db_name}'
 	shell:
 		'{params.script} {input.ref} {input.msh} > {output.main}'
 
