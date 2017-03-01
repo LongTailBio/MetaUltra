@@ -3,6 +3,7 @@ import meta_ultra.config as config
 from meta_ultra.database import *
 from meta_ultra.data_type import *
 from meta_ultra.sample_type import *
+import meta_ultra.modules as modules
 import os.path
 import os
     
@@ -146,3 +147,12 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
             out.append(result)
     return out
 
+
+
+
+def getModules(names=None):
+    out = []
+    for moduleType in modules.modules:
+        if not names or len(names) == 0  or module.moduleName() in names:
+            out.append( moduleType.build())
+    return out

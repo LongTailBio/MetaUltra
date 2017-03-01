@@ -49,8 +49,13 @@ def viewConfs(names, tree=False,json=False):
             print(archy(confTree))
 
     elif json:
+        jlist = []
         for conf in api.getConfs(names=names):
-            print(jdumps(conf.confDict, indent=4, sort_keys=True))
+            jlist.append(conf.confDict)
+
+        if len(jlist) == 1:
+            jlist = jlist[0]
+        print(jdumps(jlist, indent=4, sort_keys=True))
 
     else:
         for conf in api.getConfs(names=names):
@@ -146,3 +151,19 @@ def viewResults(names, type=None, project=None, sample=None, data=None, conf=Non
 
             
 
+@view.command(name='modules')
+@click.option('--json/--no-json',default=False, help='Show as a json file')
+@click.argument('names',nargs=-1)
+def viewConfs(names, tree=False,json=False):
+    if json:
+        jlist = []
+        for module in api.getModules(names=names):
+            jlist.append(module.to_dict())
+        if len(jlist) == 1:
+            jlist = jlist[0]
+
+        print(jdumps(jlist, indent=4, sort_keys=True))
+
+    else:
+        for module in api.getModules(names=names):
+            print(module)

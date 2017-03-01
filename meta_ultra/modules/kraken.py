@@ -1,8 +1,6 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.modules import *
-from meta_ultra.conf_builder import *
-
 
 class KrakenModule( Module):
 	def __init__(self, **kwargs):
