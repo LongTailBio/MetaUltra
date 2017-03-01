@@ -100,9 +100,9 @@ def savePairedEndedSeqRun(name, metadata):
 
 ###########################################################
 
-def saveConf(name, confDict):
+def saveConf(name, confDict, modify=False):
     conf = Conf(name=name, conf_dict=confDict)
-    return conf.save()
+    return conf.save(modify=modify)
 
 ###########################################################
 
@@ -202,7 +202,7 @@ def bulkSaveSamplesAndPairedEndDNASeqData(project,
 		else:
 			continue
 		if readPrefix:
-			sample = sample.split(readPrefix[-1])
+			sample = sample.split(readPrefix)[-1]
 		sample = sampleNameFunc(sample)
 		if sample not in samplesToFilenames:
 			samplesToFilenames[sample] = {}

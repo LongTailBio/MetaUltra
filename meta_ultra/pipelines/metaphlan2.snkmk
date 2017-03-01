@@ -3,7 +3,12 @@
 def metaphlan2_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
-        dataNames = sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
+        dataNames=[]
+        for dataConf in config['SAMPLES'].values():
+                dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+                if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+                        dataNames.append(dataConf['DATA_NAME'])
+
 	if 'METAPHLAN2' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'],
                               sample=config['SAMPLES'].keys(),

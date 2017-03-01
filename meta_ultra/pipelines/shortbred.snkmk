@@ -1,9 +1,16 @@
 
+print( config['SHORTBRED']['VERSION'])
 
 def shortbred_out(wildcards):
     	tools = config['TOOLS_TO_RUN']
     	inp = []
-	if 'SHORTBRED' in tools:
+        dataNames=[]
+        for dataConf in config['SAMPLES'].values():
+                dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+                if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+                        dataNames.append(dataConf['DATA_NAME'])
+
+        if 'SHORTBRED' in tools:
 		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT'],
 			      sample=config['SAMPLES'].keys(),
                               data_name=sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])

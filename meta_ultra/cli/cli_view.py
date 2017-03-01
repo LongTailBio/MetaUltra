@@ -2,7 +2,7 @@ from meta_ultra.user_input import *
 import meta_ultra.api as api
 from .cli import main
 import click
-from py_archy import archy
+from pyarchy import archy
 from json import dumps as jdumps
 
 @main.group()

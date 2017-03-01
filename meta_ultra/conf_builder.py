@@ -1,6 +1,7 @@
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
 from meta_ultra.data_type import *
+from meta_ultra.sample_type import *
 import meta_ultra.modules as modules
 import meta_ultra.api as api
 import sys

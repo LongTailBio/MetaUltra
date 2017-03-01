@@ -14,6 +14,20 @@ cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
 mu_dir = '.mu'
 mu_db_path = os.path.join(mu_dir,'mudb')
 
+def get_mu_dir(dir='.'):
+    dir = os.path.abspath(dir)
+    if mu_dir in os.listdir(dir):
+        return os.path.join(dir, mu_dir)
+    else:
+        # recurse up
+        up = os.path.dirname(dir)
+        if up == dir:
+            # top, fail
+            sys.stderr.write('No MetaUltra database found. Exiting.\n')
+            sys.exit(1)
+        else:
+            return get_mu_dir(up)
+
 def get_db(dir='.'):
     dir = os.path.abspath(dir)
     if mu_dir in os.listdir(dir):

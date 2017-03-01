@@ -168,4 +168,5 @@ def addConf(name=None, useDefaults=None, fineControl=None):
     if fineControl is None and not useDefaults:
         fineControl = BoolUserInput('Control absolutely every aspect of this conf?', False).resolve()
 
-    conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
+    return conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
+    
