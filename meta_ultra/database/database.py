@@ -177,11 +177,16 @@ class SingleEndDNASeqData(Data):
                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
                                                  kwargs['experiment_name'])
+        try:
+            self.metadata = kwargs['metadata']
+        except KeyError:
+            self.metadata = {}
         self.reads1 = kwargs['reads_1']
         self.registerFile(self.reads1)
         self.aveReadLen = int(kwargs['ave_read_length'])
 
     def _to_dict(self, out):
+        out['metadata'] = self.metadata
         out['reads_1'] = self.reads1
         out['ave_read_length'] = self.aveReadLen
         return out
@@ -195,10 +200,15 @@ class SingleEndDNASeqData(Data):
 class PairedEndDNASeqData(Data):
     def __init__(self,**kwargs):
         super(PairedEndDNASeqData, self).__init__(kwargs['name'],
-                                                 type(self).dataType(),
-                                                 kwargs['sample_name'],
+                                                  type(self).dataType(),
+                                                  kwargs['sample_name'],
                                                  kwargs['project_name'],
                                                  kwargs['experiment_name'])
+        try:
+            self.metadata = kwargs['metadata']
+        except KeyError:
+            self.metadata = {}
+
         self.reads1 = kwargs['reads_1']
         self.registerFile(self.reads1)
         self.reads2 = kwargs['reads_2']
@@ -210,6 +220,7 @@ class PairedEndDNASeqData(Data):
             self.aveGapLen = None
             
     def _to_dict(self, out):
+        out['metadata'] = self.metadata
         out['reads_1'] = self.reads1
         out['reads_2'] = self.reads2
         out['ave_read_length'] = self.aveReadLen
@@ -369,6 +380,7 @@ class Result(Record):
         self.experimentName = kwargs['experiment_name']
         self.dataName = kwargs['data_name']
         self.confName = kwargs['conf_name']
+        self.moduleName = kwargs['module_name']
         self.resultFiles = []
         for file in kwargs['result_files']:
             self.resultFiles.append(file)
@@ -385,7 +397,8 @@ class Result(Record):
             'sample_name': self.sampleName,
             'data_name': self.dataName,
             'conf_name': self.confName,
-            'result_files':self.resultFiles
+            'result_files':self.resultFiles,
+            'module_name':self.moduleName
             }
         return out
 

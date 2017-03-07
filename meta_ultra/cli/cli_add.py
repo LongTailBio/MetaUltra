@@ -1,4 +1,6 @@
 from meta_ultra.user_input import *
+from meta_ultra.sample_type import *
+from meta_ultra.data_type import *
 import meta_ultra.api as api
 from .cli import main
 import click
@@ -169,4 +171,11 @@ def addConf(name=None, useDefaults=None, fineControl=None):
         fineControl = BoolUserInput('Control absolutely every aspect of this conf?', False).resolve()
 
     return conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
+    
+@add.command(name='remote')
+@click.argument('name', nargs=1)
+@click.argument('url', nargs=1)
+def addRemote(name, url):
+    api.addRemote(name, url)
+
     

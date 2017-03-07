@@ -34,13 +34,21 @@ def getExperiment(name):
     except NoSuchRecordError:
         return None
 
-def getExperiments(names=None, dataTypes=None):
+def getExperiments(names=None, dataTypes=None, dataRecs=None):
     dataTypes = convertDataTypes(dataTypes)
+
+    if dataRecs and len(dataRecs) > 0:
+        expsInDataRecs = [dR.experimentName for dR in getData(names=dataRecs)]
+        expsInDataRecs = set(expsInDataRecs)
+    else:
+        expsInDataRecs = None
+        
     out = []
     for exp in Experiment.all():
         if( (not names or len(names) == 0 or exp.name in names)
             and (len(dataTypes) == 0 or exp.dataType in dataTypes)):
-            out.append(exp)
+            if not expsInDataRecs or exp.name in expsInDataRecs:
+                out.append(exp)
     return out
 
 ############################################################

@@ -42,3 +42,11 @@ def addConf(name=None, useDefaults=None, fineControl=None):
 
     return conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
     
+    
+@edit.command(name='remote')
+@click.argument('name', nargs=1)
+@click.argument('url', nargs=1)
+def editRemote(name, url):
+    api.editRemote(name, url)
+
+    

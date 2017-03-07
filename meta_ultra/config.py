@@ -6,7 +6,6 @@ from enum import Enum
 
 lib_root = os.path.dirname(__file__)
 
-ref_file = os.path.join( lib_root, 'references')
 pipeline_dir = os.path.join( lib_root, 'pipelines/')
 snake_file = os.path.join( pipeline_dir, 'all.snkmk')
 cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
@@ -42,6 +41,8 @@ def get_db(dir='.'):
             sys.exit(1)
         else:
             return get_db(up)
+
+db_mu_config_remotes = lambda : get_db().table('mu_config_remotes')
 
 db_module_table = lambda : get_db().table('module_table')
 db_sample_table = lambda : get_db().table('sample_table')

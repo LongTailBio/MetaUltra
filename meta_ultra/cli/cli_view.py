@@ -97,11 +97,11 @@ def viewExperiments(names, tree=False,type=None):
         for exp in api.getExperiments(names=names):
             expTree = { 'label': 'Experiment '+exp.name, 'nodes': []}
 
-            for dataRec in api.getData(projects=[project], samples=[sample]):
+            for dataRec in api.getData(experiments=names):
                 dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
                 expTree['nodes'].append(dataTree)
 
-                for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                for result in api.getResults(dataRecs=[dataRec]):
                     dataTree['nodes'].append('Result '+result.name)
 
             print( archy(expTree))
@@ -167,3 +167,10 @@ def viewConfs(names, tree=False,json=False):
     else:
         for module in api.getModules(names=names):
             print(module)
+
+@view.command(name='remotes')
+def viewRemotes():
+    for name, url in api.getRemotes().items():
+        print('{}\t{}'.format(name, url))
+
+        
