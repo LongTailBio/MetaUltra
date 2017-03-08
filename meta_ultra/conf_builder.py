@@ -152,7 +152,7 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 	newConf['SAMPLES'] = samples
 	for k, v in newConf.items():
 		finalConf[k] = v
-	print(samples)
+
 	return finalConf 
 
 	
