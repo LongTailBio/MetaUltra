@@ -8,7 +8,7 @@ lib_root = os.path.dirname(__file__)
 
 pipeline_dir = os.path.join( lib_root, 'pipelines/')
 snake_file = os.path.join( pipeline_dir, 'all.snkmk')
-cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
+cluster_wrapper = os.path.join( pipeline_dir, 'cluster_submission_wrapper_script.py')
 
 mu_dir = '.mu'
 mu_db_path = os.path.join(mu_dir,'mudb')
