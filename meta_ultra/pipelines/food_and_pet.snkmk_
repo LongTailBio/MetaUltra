@@ -1,0 +1,8 @@
+def food_and_pet_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	return inp
+
+output_builders.append(food_and_pet_output)
+
+

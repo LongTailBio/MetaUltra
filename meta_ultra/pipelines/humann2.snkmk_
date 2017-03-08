@@ -1,0 +1,56 @@
+
+
+def humann2_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	if 'HUMANN2' in tools:
+		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_genefamilies.tsv', sample=config['SAMPLES'].keys())
+		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathabundance.tsv', sample=config['SAMPLES'].keys())
+		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathcoverage.tsv', sample=config['SAMPLES'].keys())
+	return inp
+
+output_builders.append( humann2_output)
+		
+def microbeCensusGetReads(wildcards):
+	reads = config['SAMPLE_DIR'] + wildcards.sample + config['READ_1_EXT']
+	if paired:
+		reads += ','
+		reads += config['SAMPLE_DIR'] + wildcards.sample + config['READ_2_EXT']
+	return reads
+
+rule humann2_make_blastm8:
+	input:
+		k1 = getCleanReads,
+		dmnd_db = config['HUMANN2']['DB'] 
+	output:
+		main = temp(config['OUTPUT_DIR']+'{sample}.m8')
+	threads: int( config['HUMANN2']['DMND_THREADS'])
+	params:
+		dmnd = config['DIAMOND'],
+		job_name=config['JOB_NAME_PREFIX'] + 'humann2_make_blastm8',
+		bsize=(int( config['HUMANN2']['DMND_THREADS']) *int(config['HUMANN2']['DMND_RAM']))/6 - 2 
+	resources:
+		time=int(config['HUMANN2']['DMND_TIME']),
+		n_gb_ram=int(config['HUMANN2']['DMND_RAM'])
+	shell:
+		'{params.dmnd} blastx --threads {threads} -d {input.dmnd_db} -q {input.k1} -o {output.main} --block-size {params.bsize}'
+
+
+rule humann2_single:
+	input:
+		m8 = config['OUTPUT_DIR']+'{sample}.m8'
+	output:
+		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_genefamilies.tsv',
+		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathabundance.tsv',
+		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathcoverage.tsv'
+	threads: int( config['HUMANN2']['THREADS'])
+	params:
+		exc= config['HUMANN2']['EXC'],
+		odir = config['OUTPUT_DIR'] + '{sample}_humann2',
+		job_name=config['JOB_NAME_PREFIX'] + 'humann2_single'
+	resources:
+		time=int(config['HUMANN2']['TIME']),
+		n_gb_ram=int(config['HUMANN2']['RAM'])
+	shell:
+		'{params.exc} --input {input.m8} --output {params.odir}'
+

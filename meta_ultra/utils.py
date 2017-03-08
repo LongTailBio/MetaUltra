@@ -18,6 +18,15 @@ def err_input( prompt):
     inp = input('')
     return inp
 
+def out_input( prompt):
+    t = tabCompleter()
+    readline.set_completer_delims('\t')
+    readline.parse_and_bind('tab: complete')
+    readline.set_completer(t.pathCompleter)
+    
+    inp = input(prompt)
+    return inp
+
 
 
 class tabCompleter(object):

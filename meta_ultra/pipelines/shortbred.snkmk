@@ -1,21 +1,22 @@
+import meta_ultra.api as api
 
-print( config['SHORTBRED']['VERSION'])
 
 def shortbred_out(wildcards):
-    	tools = config['TOOLS_TO_RUN']
-    	inp = []
-        dataNames=[]
-        for dataConf in config['SAMPLES'].values():
-                dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-                if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
-                        dataNames.append(dataConf['DATA_NAME'])
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	dataNames=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
-        if 'SHORTBRED' in tools:
-		inp += expand(config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT'],
-			      sample=config['SAMPLES'].keys(),
-                              data_name=sum([dataConfs.keys() for dataConfs in config['SAMPLES'].values()])
-			      db_name=config['SHORTBRED']['DBS'].keys()
-                )
+	if 'SHORTBRED' in tools:
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
+                for sample, data in dataNames:
+                        for db in [el['NAME'] for el in config['SHORTBRED']['DBS']]:
+                                inp.append( pattern.format(sample=sample, data_name=data, db_name=db))
+
 	return inp
 
 output_builders.append(shortbred_out)
@@ -25,19 +26,19 @@ rule shortbred_single_sample:
 		reads = getReads
 	output: config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
 	params:
-		ref=lambda wildcards: config['SHORTBRED']['DBS'][wildcards.db_name],
-		shortbred=config['SHORTBRED']['EXC'],
+		ref=lambda wc: [db['FILEPATH'] for db in config['SHORTBRED']['DBS'] if db['NAME'] == wc.db_name],
+		shortbred=config['SHORTBRED']['EXC']['FILEPATH'],
 		tmp=config['TMP_DIR'],
 		job_name=config['JOB_NAME_PREFIX'] + 'shortbred_single_sample_{sample}_{data_name}_{db_name}',
-                data_name=lambda wildcards: wildcards.data_name,
-                sample_name=lambda wildacrds: wildcards.sample
+		data_name=lambda wildcards: wildcards.data_name,
+		sample_name=lambda wildcards: wildcards.sample
 	threads: int(config['SHORTBRED']['THREADS'])
-	version: config['SHORTBRED']['VERSION']
+	version: config['SHORTBRED']['EXC']['VERSION']
 	resources:
 		time=int(config['SHORTBRED']['TIME']),
 		n_gb_ram=int(config['SHORTBRED']['RAM'])
 	run:
-                dataType = getDataType(params.sample_name, params.data_name)
+		dataType = getDataType(params.sample_name, params.data_name)
 		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
 			cmd = '{params.shortbred} --markers {params.ref} --wgs {input.reads[0]} {input.reads[1]} '
 			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
@@ -46,3 +47,28 @@ rule shortbred_single_sample:
 			cmd += '--results {output} --threads {threads} --tmp {params.tmp}'
 		shell(cmd)
 
+rule register_shortbred_single_sample:
+	input:
+		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
+	output:
+		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']+'.registered'
+	params:
+		conf_name=config['NAME'],
+		sample_name='{sample}',
+		data_name='{data_name}',
+		db_name='{db_name}',
+		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
+		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
+	run:
+		module = 'shortbred'
+		name = '{}_{}'.format(params.data_name, module) 
+		api.saveResult( name,
+				module,
+				[input.inp],
+				params.data_name,
+				params.conf_name,
+				params.sample_name,
+				params.exp_name,
+				params.proj_name
+		)
+		open(output.flag,'a').close()

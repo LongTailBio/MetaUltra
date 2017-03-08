@@ -6,6 +6,7 @@ import meta_ultra.config as mup_config
 from  meta_ultra.data_type import *
 from  meta_ultra.sample_type import *
 
+
 ################################################################################
 #
 # Setup
@@ -25,36 +26,38 @@ output_builders = []
 
 def getReads(wildcards):
 	reads = []
-        sample = wildcards.sample
-        dataRec = wildcards.data_name
-        dataConf = config['SAMPLES'][sample][dataRec]
-        dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-        if dataType == DataType.DNA_SEQ_SINGLE_END:
-                reads.append(dataConf['1'])
-	        
-	elif dataType == DataType.DNA_SEQ_PAIRED_END:
-                reads.append(dataConf['1'])
-                reads.append(dataConf['2'])
+	sample = wildcards.sample
+	dataRec = wildcards.data_name
+	dataConf = config['SAMPLES'][sample][dataRec]
+	dataType = config['SAMPLES'][sample][dataRec]['DATA_TYPE']
+	dataType = DataType.asDataType(dataType)
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		reads.append(dataConf['1'])
 		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		reads.append(dataConf['1'])
+		reads.append(dataConf['2'])
+
 	return reads
 
 def getDataType(sampleName, dataName):
-        dataConf = config['SAMPLES'][sampleName][dataName]
-        dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-        return dataType
+	dataConf = config['SAMPLES'][sampleName][dataName]
+	dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+	return dataType
 
 def getSampleType(sampleName, dataName):
-        dataConf = config['SAMPLES'][sampleName][dataName]
-        sampleType = SampleType.asSampleType(dataConf['SAMPLE_TYPE'])
-        return sampleType
+	dataConf = config['SAMPLES'][sampleName][dataName]
+	sampleType = SampleType.asSampleType(dataConf['SAMPLE_TYPE'])
+	return sampleType
 
 
 def all_input(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
 	for output_builder in output_builders:
-	    	inp += output_builder( wildcards)
-	
+		print(output_builder)
+		inp += output_builder( wildcards)
+
 	return inp
 
 def loadFiles(inputs, outputs, cmd, dir):
@@ -93,7 +96,7 @@ snakefiles = glob(mup_config.pipeline_dir + '*.snkmk')
 snakefiles.remove(mup_config.pipeline_dir + 'all.snkmk')
 
 for snakefile in snakefiles:
-    include: snakefile
+	include: snakefile
 
 
 rule all:

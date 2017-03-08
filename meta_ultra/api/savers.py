@@ -144,7 +144,7 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 	for filename in filenames:
 		sample = basename(filename).split(readSuffix)[0]
 		if readPrefix:
-			sample = sample.split(readPrefix[-1])
+			sample = sample.split(readPrefix)[-1]
 		sample = sampleNameFunc(sample)
 		samplesToFilenames[sample] = filename
 
@@ -158,11 +158,14 @@ def bulkSaveSamplesAndSingleEndDNASeqData(project,
 	seqDats = []
 	samples = []
 	for sampleName, filename in samplesToFilenames.items():
-		sample = Sample(name=sampleName, sample_type=sampleType, project_name=projectName, metadata=metadataFunc(sampleName))
+		sample = Sample(name=sampleName,
+                                sample_type=sampleType,
+                                project_name=projectName,
+                                metadata=metadataFunc(sampleName))
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)
-		seqDataName='{}|{}|{}|seq1end'.format(projectName,sampleName,runName)
+		seqDataName='{}__{}__{}__seq1end'.format(projectName,sampleName,runName)
 		seqData = SingleEndDNASeqData( name=seqDataName,
 					  data_type='seq_single_ended',
 					  sample_name=sampleName,
@@ -226,11 +229,14 @@ def bulkSaveSamplesAndPairedEndDNASeqData(project,
 	for sampleName, filenames in samplesToFilenames.items():
 		reads1 = filenames['1']
 		reads2 = filenames['2']
-		sample = Sample(name=sampleName, sample_type=sampleType, project_name=projectName, metadata=metadataFunc(sampleName)) 
+		sample = Sample(name=sampleName,
+                                sample_type=sampleType,
+                                project_name=projectName,
+                                metadata=metadataFunc(sampleName)) 
 		if not sample.saved() or modify:
 			sample.save(modify=modify)
 		samples.append(sample)
-		seqDataName='{}|{}|{}|seq2end'.format(projectName,sampleName, runName)
+		seqDataName='{}__{}__{}__seq2end'.format(projectName,sampleName, runName)
 		seqData = PairedEndDNASeqData( name=seqDataName,
 			   data_type='seq_paired_end',
 			   sample_name=sampleName,

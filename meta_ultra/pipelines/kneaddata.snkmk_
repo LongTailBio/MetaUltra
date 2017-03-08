@@ -1,0 +1,66 @@
+
+def kneaddata_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+        inp += shortbred_all()
+	if 'KNEADDATA' in tools:
+		inp += expand(config['OUTPUT_DIR'] + '{sample}_host.fastq.gz', sample=config['SAMPLES'])
+		inp += expand(config['OUTPUT_DIR'] + '{sample}_nothost.fastq.gz', sample=config['SAMPLES'])
+	return inp
+
+output_builders.append(kneaddata_output)
+
+# KneadData (QC)
+rule kneadata_single:
+	input:
+		reads = getReads
+	output:
+		clean=temp(config['OUTPUT_DIR']+'{sample}_{knead_db}_kneaddata/{sample}_kneaddata.fastq'),
+		contam=temp(config['OUTPUT_DIR']+'{sample}_{knead_db}_kneaddata/{sample}_kneaddata_{knead_db}_bowtie2_contam.fastq'),
+		flag=config['OUTPUT_DIR'] + '{sample}.{knead_db}.kneaddata.flag'
+		
+	threads: int( config['KNEADDATA']['THREADS'])
+	params:
+		db = config['KNEADDATA']['DB'] ,
+		odir = temp(config['OUTPUT_DIR']+'{sample}_{knead_db}_kneaddata/'),
+		sprefix='{sample}_kneaddata',
+		job_name=config['JOB_NAME_PREFIX'] + 'kneaddata_single',
+		exc= config['KNEADDATA']['EXC']
+	resources:
+		time=int(config['KNEADDATA']['TIME']),
+		n_gb_ram=int(config['KNEADDATA']['RAM'])
+	run:
+		if paired: 
+			cmd = '{params.exc} -i {input.reads[0]} -i {input.reads[1]} -db {params.db} --bypass-trim '
+			cmd += '-o {params.odir} -t {threads} --output-prefix {params.sprefix} ; '
+			cmd += 'touch {output.flag}' # kneaddata doesn't work yet but it fails AFTER the files we need are produced
+		else: 
+			cmd = '{params.exc} -i {input.reads[0]} -db {params.db} --bypass-trim '
+			cmd += '-o {params.odir} -t {threads} --output-prefix {params.sprefix} ; '
+			cmd += 'touch {output.flag}' # kneaddata doesn't work yet but it fails AFTER the files we need are produced
+		shell(cmd)
+
+# Filter Host Reads
+rule filter_host_reads_single:
+	input:
+		reads = getReads
+	output:
+		host=config['OUTPUT_DIR']+'{sample}_host.fastq.gz',
+		nothost=config['OUTPUT_DIR']+'{sample}_nothost.fastq.gz',
+	threads: int( config['KNEADDATA']['THREADS'])
+	params:
+		db = config['KNEADDATA']['DB'] ,
+		job_name=config['JOB_NAME_PREFIX'] + 'filter_host_single',
+		bt2= config['BOWTIE2']
+	resources:
+		time=int(config['KNEADDATA']['TIME']),
+		n_gb_ram=int(config['KNEADDATA']['RAM'])
+	run:
+		if paired:
+			cmd = '{params.bt2} --threads {threads} -x {params.db} -1 {input.reads[0]} -2 {input.reads[1]} | '
+		else:
+			cmd = '{params.bt2} --threads {threads} -x {params.db} -U {input.reads[0]} '
+			cmd += '--un-gz {output.nothost} --al-gz {output.host} > /dev/null' 
+
+		shell(cmd)
+

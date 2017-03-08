@@ -13,6 +13,10 @@ def add():
 @add.command(name='data')
 @click.argument('filenames',nargs=-1)
 def cli_addData(filenames):
+    if len(filenames) == 0:
+        sys.stderr.write('No data found. Please list data files as part of the original command.\n')
+        sys.exit(1)
+
     addData(filenames)
     
 def addData(filenames):
