@@ -9,7 +9,7 @@ def microbe_census_output(wildcards):
 			dataNames.append((sampleName, dataName))
 
 	if 'MICROBE_CENSUS' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['MICROBE_CENSUS']['EXT']
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['MICROBE_CENSUS']['EXT']+'.json.registered'
                 for sample, data in dataNames:
                         inp.append( pattern.format(sample=sample, data_name=data))
 
@@ -56,14 +56,13 @@ rule microbe_census_to_json:
 
 rule register_microbe_census_json:
 	input:
-		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
+		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['MICROBE_CENSUS']['EXT'] +'.json'
 	output:
-		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']+'.registered'
+		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['MICROBE_CENSUS']['EXT'] +'.json.registered'
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',
 		data_name='{data_name}',
-		db_name='{db_name}',
 		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
 		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
 	run:

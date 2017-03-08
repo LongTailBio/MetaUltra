@@ -11,7 +11,7 @@ def metaphlan2_output(wildcards):
 				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'METAPHLAN2' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']+'.registered'
                 for sample, data in dataNames:
                         inp.append( pattern.format(sample=sample, data_name=data))
 
@@ -54,7 +54,6 @@ rule register_metaphlan2_single_sample:
 		conf_name=config['NAME'],
 		sample_name='{sample}',
 		data_name='{data_name}',
-		db_name='{db_name}',
 		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
 		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
 	run:

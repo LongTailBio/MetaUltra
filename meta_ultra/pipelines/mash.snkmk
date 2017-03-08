@@ -11,7 +11,7 @@ def mash_output(wildcards):
 				dataSamplePairs.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'MASH' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.json'
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.mash.json.registered'
                 for sample, data in dataSamplePairs:
                         for db in [db['NAME'] for db in config['MASH']['DBS']]:
                                 inp.append( pattern.format(sample=sample, data_name=data, db_name= db))
@@ -45,7 +45,7 @@ rule mash_dists_single:
 		msh= config['OUTPUT_DIR']+'{sample}.{data_name}.msh',
 		ref= lambda wc: [db['FILEPATH'] for db in config['MASH']['DBS'] if wc.db_name == db['NAME']][0]
 	output:
-		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.json'
+		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json'
 	resources:
 		time=1,
 		n_gb_ram=2
@@ -59,9 +59,9 @@ rule mash_dists_single:
 
 rule register_mash_dists_single:
 	input:
-		inp=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.json'
+		inp=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json'
 	output:
-		flag=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.json.registered'
+		flag=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json.registered'
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

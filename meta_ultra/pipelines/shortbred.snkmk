@@ -12,7 +12,7 @@ def shortbred_out(wildcards):
 				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'SHORTBRED' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']+'.registered'
                 for sample, data in dataNames:
                         for db in [el['NAME'] for el in config['SHORTBRED']['DBS']]:
                                 inp.append( pattern.format(sample=sample, data_name=data, db_name=db))
