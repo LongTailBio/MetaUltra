@@ -8,7 +8,6 @@ from snakemake.utils import read_job_properties
 jobscript = sys.argv[1]
 job_properties = read_job_properties(jobscript)
 
-
 cmd = 	(
 	'ssh dcd3001@panda2.pbtech '
     	'qsub '  

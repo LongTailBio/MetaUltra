@@ -11,14 +11,15 @@ def mash_output(wildcards):
 				dataSamplePairs.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'MASH' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.mash.json.registered'
-                for sample, data in dataSamplePairs:
-                        for db in [db['NAME'] for db in config['MASH']['DBS']]:
-                                inp.append( pattern.format(sample=sample, data_name=data, db_name= db))
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.mash.json.registered'
+		for sample, data in dataSamplePairs:
+			for db in [db['NAME'] for db in config['MASH']['DBS']]:
+				inp.append( pattern.format(sample=sample, data_name=data, db_name= db))
 
 	return inp
 
 output_builders.append( mash_output)
+
 
 rule minhash_sketch_single:
 	input:
@@ -29,13 +30,15 @@ rule minhash_sketch_single:
 	params:
 		exc=config['MASH']['EXC']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_sketch_single',
+		data_type=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['DATA_TYPE']
 	resources:
 		time=1,
 		n_gb_ram=2
 	run:
-		if paired:
+		dataType = DataType.asDataType(params.data_type)
+		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
 			pass
-		else:
+		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
 			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
 		shell(cmd)
 
@@ -56,6 +59,7 @@ rule mash_dists_single:
 	shell:
 		'{params.script} {input.ref} {input.msh} > {output.main}'
 
+localrules: register_mash_dists_single
 
 rule register_mash_dists_single:
 	input:

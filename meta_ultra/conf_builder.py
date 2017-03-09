@@ -120,8 +120,8 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 	newConf = {}
 	newConf['OUTPUT_DIR'] = UserInput('Give the directory where output files '+
 					'should go.',
-					'results/').resolve()
-	outDir = newConf['OUTPUT_DIR']
+                                          'results/').resolve()
+	newConf['OUTPUT_DIR'] = os.path.abspath(newConf['OUTPUT_DIR']) + '/'
 		
 	samples = {}
 	for dataRec in dataRecs:
@@ -152,7 +152,6 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 	newConf['SAMPLES'] = samples
 	for k, v in newConf.items():
 		finalConf[k] = v
-
 	return finalConf 
 
 	

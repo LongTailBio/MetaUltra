@@ -8,11 +8,11 @@ import meta_ultra.conf_builder as conf_builder
 ################################################################################
 
 @main.command()
-@click.option('--jobs',default=1,help='How many jobs should be run simultaneously?')
+@click.option('--jobs',default=1,type=int, help='How many jobs should be run simultaneously?')
 @click.option('--dryrun/--wetrun',default=False,help='Show what result files would be built')
 @click.option('--unlock/--locked',default=False,help='Unlock the working directory')
 @click.option('--rerun/--no-rerun',default=False,help='Rebuild files that might be incomplete')
-def run(jobs, dryrun=False, unlock=False, rerun=False):
+def run( jobs, dryrun=False, unlock=False, rerun=False):
 
     conf = UserChoice('conf', api.getConfs(), new=addConf).resolve()
 

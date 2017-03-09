@@ -42,6 +42,9 @@ def get_db(dir='.'):
         else:
             return get_db(up)
 
+snakemake_static_conf_file = lambda : os.path.abspath( os.path.join(get_mu_dir(),'snakemake_static_config.json'))
+
+        
 db_mu_config_remotes = lambda : get_db().table('mu_config_remotes')
 
 db_module_table = lambda : get_db().table('module_table')

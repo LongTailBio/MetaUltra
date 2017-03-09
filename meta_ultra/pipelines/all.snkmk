@@ -5,13 +5,21 @@ from glob import glob
 import meta_ultra.config as mup_config
 from  meta_ultra.data_type import *
 from  meta_ultra.sample_type import *
-
+import json
 
 ################################################################################
 #
 # Setup
 #
 ################################################################################
+
+# Snakemake sometimes transmits a blank config object to
+# remote worker nodes. This loads a statically stored version of
+# the config as a slightly hacky work around.
+if len(config.keys()) == 0:
+        confFile = mup_config.snakemake_static_conf_file()
+        config = json.loads( open(confFile).read())
+
 
 if not os.path.isdir(config['OUTPUT_DIR']):
 	os.mkdir(config['OUTPUT_DIR'])
@@ -59,17 +67,18 @@ def all_input(wildcards):
 
 	return inp
 
-def loadFiles(inputs, outputs, cmd, dir):
+def loadFiles(inputs, outputs, cmd):
+        tmpDirCheck = '[ -z "$TMPDIR"] && TMPDIR=/tmp ; '
         uploadCmds = []
         for i, inp in enumerate(inputs):
-                cpCmd = 'rsync -av {} {} && I{}='.format(inp, dir,i)
-                cpCmd += '${{'+dir+'}}/`basename '+inp+'` '
+                cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
+                cpCmd += '${{TMPDIR}}/`basename '+inp+'` '
                 uploadCmds.append( cpCmd)
 
         downloadVars = []
         downloadCmds = []
         for i, outp in enumerate(outputs):
-                varCmd = 'O{}='.format(i) + '${{'+dir+'}}/`basename {}` '.format(outp)
+                varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}` '.format(outp)
                 downloadVars.append(varCmd)
                 cpCmd = ' rsync -av $O{} {} '.format(i, outp)
                 downloadCmds.append(cpCmd)
@@ -78,7 +87,7 @@ def loadFiles(inputs, outputs, cmd, dir):
         downloadVar = '&&'.join(downloadVars)
         downloadCmd = '&&'.join(downloadCmds)
 
-        fullCmd = uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
+        fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
 
         print(fullCmd)
         return fullCmd
