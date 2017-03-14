@@ -13,7 +13,6 @@ import meta_ultra.conf_builder as conf_builder
 @click.option('--unlock/--locked',default=False,help='Unlock the working directory')
 @click.option('--rerun/--no-rerun',default=False,help='Rebuild files that might be incomplete')
 def run( jobs, dryrun=False, unlock=False, rerun=False):
-
     conf = UserChoice('conf', api.getConfs(), new=addConf).resolve()
 
     projects = None

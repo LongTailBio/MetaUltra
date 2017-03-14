@@ -37,7 +37,7 @@ def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False)
                      dryrun=dryrun,
                      unlock=unlock,
                      force_incomplete=rerun,
-                     cores=jobs)
+                     nodes=jobs)
     
 ################################################################################
 #

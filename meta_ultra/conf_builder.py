@@ -35,7 +35,7 @@ def resolveVal(value, useDefaults, fineControl):
 	elif type(value) == dict:
 		newVal = {}
 		for k, v in value.items():
-			newVal[k] = resolveVal(v, useDefaults, fineControl)
+			newVal[k.upper()] = resolveVal(v, useDefaults, fineControl)
 		value = newVal
 	elif type(value) == list:
 		newVal = []

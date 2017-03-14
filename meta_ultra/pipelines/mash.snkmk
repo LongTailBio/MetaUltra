@@ -37,7 +37,7 @@ rule minhash_sketch_single:
 	run:
 		dataType = DataType.asDataType(params.data_type)
 		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
-			pass
+			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
 		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
 			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
 		shell(cmd)

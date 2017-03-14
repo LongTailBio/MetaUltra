@@ -59,7 +59,7 @@ class Record:
         
         if self.saved() and not modify:
             raise RecordExistsError()
-        elif modify:
+        elif self.saved() and modify:
             rec = self.record()
             mydict = self.to_dict()
             for k,v in mydict.items():

@@ -17,7 +17,8 @@ def saveSingleEndDNASeqData(name,
 			    aveReadLen,
 			    sample,
 			    experiment,
-			    project):
+			    project,
+                            modify=False):
     if type(sample) != str:
         sample = sample.name
     if type(experiment) != str:
@@ -30,7 +31,7 @@ def saveSingleEndDNASeqData(name,
 				  sample_name=sample,
 				  project_name=project,
 				  experiment_name=experiment)
-    return dataRec.save()
+    return dataRec.save(modify=modify)
 	
 def savePairedEndDNASeqData(name,
 			   read1Filename,
@@ -39,7 +40,8 @@ def savePairedEndDNASeqData(name,
 			   sample,
 			   experiment,
 			   project,
-			   aveGapLen=None):
+			    aveGapLen=None,
+                            modify=False):
     if type(sample) != str:
         sample = sample.name
     if type(experiment) != str:
@@ -54,7 +56,7 @@ def savePairedEndDNASeqData(name,
 				 project_name=project,
 				 experiment_name=experiment,
 				 ave_gap_len=aveGapLen)
-    return dataRec.save()
+    return dataRec.save(modify=modify)
 
 
 
@@ -64,24 +66,24 @@ def savePairedEndDNASeqData(name,
 #
 ################################################################################
 
-def saveProject(name, metadata):
+def saveProject(name, metadata, modify=False):
     proj = Project(**{'name': name, 'metadata': metadata})
-    return proj.save()
+    return proj.save(modify=modify)
 
 ###########################################################
 
-def saveSample(name, sampleType, project, metadata):
+def saveSample(name, sampleType, project, metadata, modify=False):
     if type(project) != str:
         project = project.name
     sample = Sample(name=name,
                     sample_type=sampleType,
 		    project_name=project,
 		    metadata=metadata)
-    return sample.save()
+    return sample.save(modify=modify)
 
 ###########################################################
 
-def saveExperiment(name, dataType, metadata):
+def saveExperiment(name, dataType, metadata, modify=False):
     dataType = convertDataType(dataType)
     if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
         exp = SingleEndDNASeqRun(name=name, metadata=metadata)
@@ -90,13 +92,13 @@ def saveExperiment(name, dataType, metadata):
     else:
         raise DataTypeNotFoundError()
     
-    return exp.save()
+    return exp.save(modify=modify)
 
-def saveSingleEndedSeqRun(name, metadata):
-    return saveExperiment(name, SingleEndedSeqData.dataType(), metadata)
+def saveSingleEndedSeqRun(name, metadata, modify=False):
+    return saveExperiment(name, SingleEndedSeqData.dataType(), metadata, modify=modify)
 
-def savePairedEndedSeqRun(name, metadata):
-    return saveExperiment(name, PairedEndedSeqData.dataType(), metadata)
+def savePairedEndedSeqRun(name, metadata, modify=False):
+    return saveExperiment(name, PairedEndedSeqData.dataType(), metadata, modify=modify)
 
 ###########################################################
 
