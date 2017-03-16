@@ -9,4 +9,7 @@ import meta_ultra.modules.diamond
 import meta_ultra.modules.samtools
 import meta_ultra.modules.mash
 import meta_ultra.modules.microbe_census
+import meta_ultra.modules.filter_host
+import meta_ultra.modules.humann2
+
 

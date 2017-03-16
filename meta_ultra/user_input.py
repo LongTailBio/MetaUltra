@@ -42,15 +42,15 @@ class UserChoice(Resolvable):
 		if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
 			return self.opts[0]
 		elif len(self.opts) == 0 and not self.new:
-			sys.stderr.write('No options for {} found.\n'.format(self.name))
+			sys.stdout.write('No options for {} found.\n'.format(self.name))
 			sys.exit(1)
 			
-		sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
+		sys.stdout.write('\tPlease select an option for {}:\n'.format(self.name))
 		for i, opt in enumerate(self.opts):
-			sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
+			sys.stdout.write('\t\t[{}] {}\n'.format(i, opt))
 		if self.new:
-			sys.stderr.write('\t\t[{}] Pick new\n'.format(len(self.opts)))
-		choice = err_input('\tPlease enter the index of your choice [0]: ')
+			sys.stdout.write('\t\t[{}] Pick new\n'.format(len(self.opts)))
+		choice = out_input('\tPlease enter the index of your choice [0]: ')
 		try:
 			choice = int(choice)
 		except ValueError:
@@ -59,7 +59,7 @@ class UserChoice(Resolvable):
 		if choice == len(self.opts):
 			return self.new()
 
-		sys.stderr.write('Chose: {}\n'.format(self.opts[choice]))
+		sys.stdout.write('Chose: {}\n'.format(self.opts[choice]))
 		return self.opts[choice] 
 
 class UserMultiChoice( Resolvable):
@@ -79,18 +79,18 @@ class UserMultiChoice( Resolvable):
 		if (len(self.opts) == 1 and not self.new) or useDefaults or (self.fineOnly and not fineControl):
 			return [self.opts[0]]
 		elif len(self.opts) == 0 and not self.new:
-			sys.stderr.write('No options for {} found.\n'.format(self.name))
+			sys.stdout.write('No options for {} found.\n'.format(self.name))
 			sys.exit(1)
 
 		choices = []
 		select_more_refs = True
 		while select_more_refs:
-			sys.stderr.write('\tPlease select an option for {}:\n'.format(self.name))
+			sys.stdout.write('\tPlease select an option for {}:\n'.format(self.name))
 			for i, opt in enumerate(self.opts):
-				sys.stderr.write('\t\t[{}] {}\n'.format(i, opt))
+				sys.stdout.write('\t\t[{}] {}\n'.format(i, opt))
 			if self.new:
-				sys.stderr.write('\t\t[{}] Pick new\n'.format( len(self.opts)))
-			choice = err_input('\tPlease enter the index of your choice [0]: ')
+				sys.stdout.write('\t\t[{}] Pick new\n'.format( len(self.opts)))
+			choice = out_input('\tPlease enter the index of your choice [0]: ')
 			try:
 				choice = int(choice)
 			except ValueError:
@@ -103,7 +103,7 @@ class UserMultiChoice( Resolvable):
 			if 'y' not in more.lower():
 				select_more_refs = False
 
-		sys.stderr.write('Chose: {}\n'.format(' '.join([str(choice) for choice in choices])))
+		sys.stdout.write('Chose: {}\n'.format(' '.join([str(choice) for choice in choices])))
 		return choices
 	
 class UserInput( Resolvable):
@@ -119,7 +119,7 @@ class UserInput( Resolvable):
 			return str(self.default)
 		try_again = True
 		while try_again:
-			inp = err_input(self.prompt + ' [{}]: '.format(self.default))
+			inp = out_input(self.prompt + ' [{}]: '.format(self.default))
 			try_again = False
 			if not inp: # use the default
 				inp = self.default
@@ -127,7 +127,7 @@ class UserInput( Resolvable):
 			try:
 				self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
 			except ValueError:
-				sys.stderr.write("Input must be of type '{}'".format(self.type))
+				sys.stdout.write("Input must be of type '{}'".format(self.type))
 				inp = None
 				try_again = True
 		
@@ -145,7 +145,7 @@ class UserInputNoDefault( Resolvable):
 			return str(self.default)
 		try_again = True
 		while try_again:
-			inp = err_input(self.prompt + ': ')
+			inp = out_input(self.prompt + ': ')
 			try_again = False
 			if not inp: # use the default
 				try_again=True
@@ -153,7 +153,7 @@ class UserInputNoDefault( Resolvable):
 				try:
 					self.type( inp) # we don't actually want to convert. We just want to make sure it's possible
 				except ValueError:
-					sys.stderr.write("Input must be of type '{}'".format(self.type))
+					sys.stdout.write("Input must be of type '{}'".format(self.type))
 					inp = None
 					try_again = True
 		
@@ -179,7 +179,7 @@ class BoolUserInput( Resolvable):
 				prompt = self.prompt + ' ([y]/n): '
 			else:
 				prompt = self.prompt + ' (y/[n]): '
-			inp = err_input(prompt)
+			inp = out_input(prompt)
 			try_again = False
 			if not inp: # use the default
 				inp = self.default

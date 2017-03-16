@@ -1,7 +1,6 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.modules import *
-from meta_ultra.conf_builder import *
 from meta_ultra.data_type import *
 
 class ShortBredModule( Module):
@@ -27,20 +26,12 @@ class ShortBredModule( Module):
 					       self.tools,
 					       new=lambda :self.askUserForTool('shortbred_quantify')
 				    ))
-		tool = shortbred.get_field('EXC')
-		shortbred.set_field('EXC', tool['filepath'])
-		shortbred.set_field('VERSION', tool['version'])
 		
 		shortbred.add_field('DBS',
 				    UserMultiChoice('ShortBred References',
 						    self.refs,
 						    new=lambda : self.askUserForRef('shortbred_quantify')
 				    ))
-		dbs = shortbred.get_field('DBS')
-		dbPaths = []
-		for db in dbs:
-			dbPaths.append(db['filepath'])
-		shortbred.set_field('DBS', dbPaths)
 		
 		shortbred.add_field('THREADS',
 				    UserInput('\tHow many threads would you like for shortbred',

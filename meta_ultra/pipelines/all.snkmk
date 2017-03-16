@@ -5,12 +5,21 @@ from glob import glob
 import meta_ultra.config as mup_config
 from  meta_ultra.data_type import *
 from  meta_ultra.sample_type import *
+import json
 
 ################################################################################
 #
 # Setup
 #
 ################################################################################
+
+# Snakemake sometimes transmits a blank config object to
+# remote worker nodes. This loads a statically stored version of
+# the config as a slightly hacky work around.
+if len(config.keys()) == 0:
+	confFile = mup_config.snakemake_static_conf_file()
+	config = json.loads( open(confFile).read())
+
 
 if not os.path.isdir(config['OUTPUT_DIR']):
 	os.mkdir(config['OUTPUT_DIR'])
@@ -25,38 +34,102 @@ output_builders = []
 
 def getReads(wildcards):
 	reads = []
-        sample = wildcards.sample
-        dataRec = wildcards.data_name
-        dataConf = config['SAMPLES'][sample][dataRec]
-        dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-        if dataType == DataType.DNA_SEQ_SINGLE_END:
-                reads.append(dataConf['1'])
-	        
-	elif dataType == DataType.DNA_SEQ_PAIRED_END:
-                reads.append(dataConf['1'])
-                reads.append(dataConf['2'])
+	sample = wildcards.sample
+	dataRec = wildcards.data_name
+	dataConf = config['SAMPLES'][sample][dataRec]
+	dataType = config['SAMPLES'][sample][dataRec]['DATA_TYPE']
+	dataType = DataType.asDataType(dataType)
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		reads.append(dataConf['1'])
 		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		reads.append(dataConf['1'])
+		reads.append(dataConf['2'])
+
 	return reads
 
+def getNotHostReads(wc):
+	if 'FILTER_HOST' not in config['TOOLS_TO_RUN']:
+		return getReads(wc)
+
+	dataType = getDataType(wc.sample, wc.data_name)
+	reads = []
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name))
+		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_{num}.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=1))
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=2))
+
+	return reads
+
+def getHostReads(wc):
+	if 'FILTER_HOST' not in config['TOOLS_TO_RUN']:
+		return getReads(wc)
+
+	dataType = getDataType(wc.sample, wc.data_name)
+	reads = []
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name))
+		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host_{num}.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=1))
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=2))
+
+	return reads
+
+
+
 def getDataType(sampleName, dataName):
-        dataConf = config['SAMPLES'][sampleName][dataName]
-        dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-        return dataType
+	dataConf = config['SAMPLES'][sampleName][dataName]
+	dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+	return dataType
 
 def getSampleType(sampleName, dataName):
-        dataConf = config['SAMPLES'][sampleName][dataName]
-        sampleType = SampleType.asSampleType(dataConf['SAMPLE_TYPE'])
-        return sampleType
+	dataConf = config['SAMPLES'][sampleName][dataName]
+	sampleType = SampleType.asSampleType(dataConf['SAMPLE_TYPE'])
+	return sampleType
 
 
 def all_input(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
 	for output_builder in output_builders:
-	    	inp += output_builder( wildcards)
-	
+		inp += output_builder( wildcards)
+
 	return inp
 
+def loadFiles(inputs, outputs, cmd):
+	tmpDirCheck = '[ -z "$TMPDIR" ] && TMPDIR=/tmp ; '
+	uploadCmds = []
+	for i, inp in enumerate(inputs):
+		cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
+		cpCmd += '${{TMPDIR}}/`basename '+inp+'`'
+		uploadCmds.append( cpCmd)
+
+	downloadVars = []
+	downloadCmds = []
+	for i, outp in enumerate(outputs):
+		varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}`'.format(outp)
+		downloadVars.append(varCmd)
+		cpCmd = 'rsync -av $O{} {}'.format(i, outp)
+		downloadCmds.append(cpCmd)
+
+	uploadCmd = ' && '.join(uploadCmds)
+	downloadVar = ' && '.join(downloadVars)
+	downloadCmd = ' && '.join(downloadCmds)
+
+	fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
+
+	print(fullCmd)
+	return fullCmd
+
+		
+		
 ################################################################################
 #
 # I/O Utilities
@@ -67,7 +140,7 @@ snakefiles = glob(mup_config.pipeline_dir + '*.snkmk')
 snakefiles.remove(mup_config.pipeline_dir + 'all.snkmk')
 
 for snakefile in snakefiles:
-    include: snakefile
+	include: snakefile
 
 
 rule all:

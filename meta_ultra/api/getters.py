@@ -3,6 +3,7 @@ import meta_ultra.config as config
 from meta_ultra.database import *
 from meta_ultra.data_type import *
 from meta_ultra.sample_type import *
+import meta_ultra.modules as modules
 import os.path
 import os
     
@@ -33,13 +34,21 @@ def getExperiment(name):
     except NoSuchRecordError:
         return None
 
-def getExperiments(names=None, dataTypes=None):
+def getExperiments(names=None, dataTypes=None, dataRecs=None):
     dataTypes = convertDataTypes(dataTypes)
+
+    if dataRecs and len(dataRecs) > 0:
+        expsInDataRecs = [dR.experimentName for dR in getData(names=dataRecs)]
+        expsInDataRecs = set(expsInDataRecs)
+    else:
+        expsInDataRecs = None
+        
     out = []
     for exp in Experiment.all():
         if( (not names or len(names) == 0 or exp.name in names)
             and (len(dataTypes) == 0 or exp.dataType in dataTypes)):
-            out.append(exp)
+            if not expsInDataRecs or exp.name in expsInDataRecs:
+                out.append(exp)
     return out
 
 ############################################################
@@ -146,3 +155,12 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
             out.append(result)
     return out
 
+
+
+
+def getModules(names=None):
+    out = []
+    for moduleType in modules.modules:
+        if not names or len(names) == 0  or module.moduleName() in names:
+            out.append( moduleType.build())
+    return out

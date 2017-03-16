@@ -3,54 +3,119 @@
 def humann2_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+	dataNames=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+				dataNames.append((sampleName, dataConf['DATA_NAME']))
+
 	if 'HUMANN2' in tools:
-		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_genefamilies.tsv', sample=config['SAMPLES'].keys())
-		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathabundance.tsv', sample=config['SAMPLES'].keys())
-		inp += expand( config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathcoverage.tsv', sample=config['SAMPLES'].keys())
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.humann2.registered'
+		for sample, data in dataNames:
+			inp.append( pattern.format(sample=sample, data_name=data))
+
+
+
 	return inp
 
+
 output_builders.append( humann2_output)
-		
-def microbeCensusGetReads(wildcards):
-	reads = config['SAMPLE_DIR'] + wildcards.sample + config['READ_1_EXT']
-	if paired:
-		reads += ','
-		reads += config['SAMPLE_DIR'] + wildcards.sample + config['READ_2_EXT']
-	return reads
+
 
 rule humann2_make_blastm8:
 	input:
-		k1 = getCleanReads,
-		dmnd_db = config['HUMANN2']['DB'] 
+		reads = getNotHostReads,
+		dmnd_db = config['HUMANN2']['DB']['FILEPATH']
 	output:
-		main = temp(config['OUTPUT_DIR']+'{sample}.m8')
+		main = temp(config['OUTPUT_DIR']+'{sample}.{data_name}.m8')
 	threads: int( config['HUMANN2']['DMND_THREADS'])
 	params:
-		dmnd = config['DIAMOND'],
-		job_name=config['JOB_NAME_PREFIX'] + 'humann2_make_blastm8',
-		bsize=(int( config['HUMANN2']['DMND_THREADS']) *int(config['HUMANN2']['DMND_RAM']))/6 - 2 
+		dmnd = config['DIAMOND']['EXC']['FILEPATH'],
+		job_name=config['JOB_NAME_PREFIX'] + '{sample}_{data_name}_humann2_make_blastm8',
+		bsize=(int( config['HUMANN2']['DMND_THREADS']) *int(config['HUMANN2']['DMND_RAM']))/6 - 2 ,
+		data_name=lambda wc: wc.data_name,
+		sample_name=lambda wc: wc.sample
 	resources:
 		time=int(config['HUMANN2']['DMND_TIME']),
 		n_gb_ram=int(config['HUMANN2']['DMND_RAM'])
-	shell:
-		'{params.dmnd} blastx --threads {threads} -d {input.dmnd_db} -q {input.k1} -o {output.main} --block-size {params.bsize}'
-
+	run:
+		dataType = getDataType(params.sample_name, params.data_name)
+		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+			cmd = '{params.dmnd} blastx --threads {threads} -d $I0 '
+			cmd += '-q $I1 $I2 -o $O0 --block-size {params.bsize}'
+			cmd = loadFiles([input.dmnd_db, input.reads[0], input.reads[1]],
+					[output.main],
+					cmd)
+		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+			cmd = '{params.dmnd} blastx --threads {threads} -d $I0 '
+			cmd += '-q $I1 -o $O0 --block-size {params.bsize}'
+			cmd = loadFiles([input.dmnd_db, input.reads[0]],
+					[output.main],
+					cmd)
+		shell(cmd)
 
 rule humann2_single:
 	input:
-		m8 = config['OUTPUT_DIR']+'{sample}.m8'
+		m8 = config['OUTPUT_DIR']+'{sample}.{data_name}.m8'
 	output:
-		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_genefamilies.tsv',
-		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathabundance.tsv',
-		config['OUTPUT_DIR'] + '{sample}_humann2/{sample}_pathcoverage.tsv'
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_genefamilies.tsv',
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_pathabundance.tsv',
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_pathcoverage.tsv'
 	threads: int( config['HUMANN2']['THREADS'])
 	params:
-		exc= config['HUMANN2']['EXC'],
-		odir = config['OUTPUT_DIR'] + '{sample}_humann2',
-		job_name=config['JOB_NAME_PREFIX'] + 'humann2_single'
+		exc=config['HUMANN2']['EXC'],
+		odir = config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2',
+		job_name=config['JOB_NAME_PREFIX'] + '{sample}_{data_name}_humann2_single'
 	resources:
 		time=int(config['HUMANN2']['TIME']),
 		n_gb_ram=int(config['HUMANN2']['RAM'])
-	shell:
-		'{params.exc} --input {input.m8} --output {params.odir}'
+	run:
+		inp = os.path.basename( input.m8)
+		inp = '${{TMPDIR}}/'+inp
+		
+		odir = os.path.basename(params.odir)
+		odir = '${{TMPDIR}}/'+odir
+		o0 = odir +'/'+os.path.basename(output[0])
+		o1 = odir +'/'+os.path.basename(output[1])
+		o2 = odir +'/'+os.path.basename(output[2])
 
+		cmd =  ' rsync -av {input.m8} '+inp
+		cmd += ' && {params.exc} --input '+inp+' --output '+odir
+		cmd += ' && rsync -av '+o0+' {output[0]}'
+		cmd += ' && rsync -av '+o1+' {output[1]}'
+		cmd += ' && rsync -av '+o2+' {output[2]}' 
+		
+				
+		shell(cmd)
+
+
+localrules: register_humann2_single_sample
+
+rule register_humann2_single_sample:
+	input:
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_genefamilies.tsv',
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_pathabundance.tsv',
+		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_pathcoverage.tsv'
+
+	output:
+		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.humann2.registered'
+	params:
+		conf_name=config['NAME'],
+		sample_name='{sample}',
+		data_name='{data_name}',
+		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
+		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
+	run:
+		module = 'humann2'
+		name = '{}_{}'.format(params.data_name, module)
+		api.saveResult( name,
+				module,
+				[input[0], input[1], input[2]],
+				params.data_name,
+				params.conf_name,
+				params.sample_name,
+				params.exp_name,
+				params.proj_name
+		)
+		open(output.flag,'a').close()

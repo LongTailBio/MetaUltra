@@ -1,13 +1,12 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.modules import *
-from meta_ultra.conf_builder import *
 
 
 class MicrobeCensusModule( Module):
 	def __init__(self, **kwargs):
 		super(MicrobeCensusModule, self).__init__(**kwargs)		
-		self.ext = self.getParamOrDefault('ext', 'mic_census.txt')
+		self.ext = self.getParamOrDefault('ext', 'mic_census')
 		self.time = self.getParamOrDefault('time', 1)
 		self.ram = self.getParamOrDefault('ram', 10)
 
@@ -23,10 +22,16 @@ class MicrobeCensusModule( Module):
 		
 		micCensus.add_field('EXC',
 				    UserChoice('Microbe Census',
-					       self.tools,
+					       self.getToolsOfType('microbe_census'),
 					       new=lambda :self.askUserForTool('microbe_census')
 				    ))
 		micCensus.add_field('EXT', self.ext)
+		micCensus.add_field('JSON_SCRIPT',
+				    UserChoice('Microbe Census',
+					       self.getToolsOfType('microbe_census_json_converter'),
+					       new=lambda :self.askUserForTool('microbe_census_json_converter')
+				    ))
+
 		micCensus.add_field('THREADS',
 				    UserInput('\tHow many threads would you like for MicrobeCensus',
 					      conf.get_global_field('THREADS'),

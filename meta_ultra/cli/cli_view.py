@@ -2,7 +2,7 @@ from meta_ultra.user_input import *
 import meta_ultra.api as api
 from .cli import main
 import click
-from py_archy import archy
+from pyarchy import archy
 from json import dumps as jdumps
 
 @main.group()
@@ -49,8 +49,13 @@ def viewConfs(names, tree=False,json=False):
             print(archy(confTree))
 
     elif json:
+        jlist = []
         for conf in api.getConfs(names=names):
-            print(jdumps(conf.confDict, indent=4, sort_keys=True))
+            jlist.append(conf.confDict)
+
+        if len(jlist) == 1:
+            jlist = jlist[0]
+        print(jdumps(jlist, indent=4, sort_keys=True))
 
     else:
         for conf in api.getConfs(names=names):
@@ -92,11 +97,11 @@ def viewExperiments(names, tree=False,type=None):
         for exp in api.getExperiments(names=names):
             expTree = { 'label': 'Experiment '+exp.name, 'nodes': []}
 
-            for dataRec in api.getData(projects=[project], samples=[sample]):
+            for dataRec in api.getData(experiments=names):
                 dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
                 expTree['nodes'].append(dataTree)
 
-                for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                for result in api.getResults(dataRecs=[dataRec]):
                     dataTree['nodes'].append('Result '+result.name)
 
             print( archy(expTree))
@@ -146,3 +151,26 @@ def viewResults(names, type=None, project=None, sample=None, data=None, conf=Non
 
             
 
+@view.command(name='modules')
+@click.option('--json/--no-json',default=False, help='Show as a json file')
+@click.argument('names',nargs=-1)
+def viewConfs(names, tree=False,json=False):
+    if json:
+        jlist = []
+        for module in api.getModules(names=names):
+            jlist.append(module.to_dict())
+        if len(jlist) == 1:
+            jlist = jlist[0]
+
+        print(jdumps(jlist, indent=4, sort_keys=True))
+
+    else:
+        for module in api.getModules(names=names):
+            print(module)
+
+@view.command(name='remotes')
+def viewRemotes():
+    for name, url in api.getRemotes().items():
+        print('{}\t{}'.format(name, url))
+
+        

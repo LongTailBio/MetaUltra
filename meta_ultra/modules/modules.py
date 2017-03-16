@@ -253,12 +253,12 @@ class Module:
 		modName = ctype.moduleName().lower()
 		rec = moduleTbl().get(where('name') == modName)
 		if not rec:
-			rec = {'name':modName}
-		return ctype(**rec, use_defaults=useDefaults)
+		        rec = {'name':modName}
+		return ctype(use_defaults=useDefaults, **rec)
 
 	
 '''
-A list of all the registerd modules
+A list of all the registered modules
 
 toolsets add themselves to the list on import
 '''

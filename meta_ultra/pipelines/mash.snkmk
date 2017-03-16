@@ -1,51 +1,88 @@
+import meta_ultra.api as api
 
 def mash_output(wildcards):
 	tools = config['TOOLS_TO_RUN']
 	inp = []
+	dataSamplePairs=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+				dataSamplePairs.append((sampleName, dataConf['DATA_NAME']))
+
 	if 'MASH' in tools:
-		inp += expand( config['OUTPUT_DIR']+'{sample}.{db_name}.json',
-		       	       sample=config['SAMPLES'].keys(),
-			       db_name=config['MASH']['DBS'].keys()
-		)
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.mash.json.registered'
+		for sample, data in dataSamplePairs:
+			for db in [db['NAME'] for db in config['MASH']['DBS']]:
+				inp.append( pattern.format(sample=sample, data_name=data, db_name= db))
+
 	return inp
 
 output_builders.append( mash_output)
 
+
 rule minhash_sketch_single:
 	input:
-		clean = getCleanReads,
+		clean = getNotHostReads,
 	output:
-		msh = config['OUTPUT_DIR'] + '{sample}.msh',
+		msh = config['OUTPUT_DIR'] + '{sample}.{data_name}.msh',
 	threads: 1
 	params:
-		exc=config['MASH']['EXC'],
+		exc=config['MASH']['EXC']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_sketch_single',
+		data_type=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['DATA_TYPE']
 	resources:
 		time=1,
 		n_gb_ram=2
 	run:
-		if paired:
-			pass
-		else:
+		dataType = DataType.asDataType(params.data_type)
+		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
+		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
 			cmd = '{params.exc} sketch -s 10000 -o {output.msh} {input.clean[0]}'
 		shell(cmd)
 
 
 rule mash_dists_single:
 	input:
-		msh= config['OUTPUT_DIR']+'{sample}.msh',
-		ref= config['MASH']['DBS'][wildcards.db_name]
+		msh= config['OUTPUT_DIR']+'{sample}.{data_name}.msh',
+		ref= lambda wc: [db['FILEPATH'] for db in config['MASH']['DBS'] if wc.db_name == db['NAME']][0]
 	output:
-		main=config['OUTPUT_DIR'] + '{sample}.{db_name}.json'
+		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json'
 	resources:
 		time=1,
 		n_gb_ram=2
 	threads: 1
 	params:
-		script=config['MASH']['DIST_SCRIPT'],
-		job_name=config['JOB_NAME_PREFIX'] + '{sample}_mash_dists_single'
+		script=config['MASH']['DIST_SCRIPT']['FILEPATH'],
+		job_name=config['JOB_NAME_PREFIX'] + 'mash_dists_single_{sample}_{data_name}_{db_name}'
 	shell:
 		'{params.script} {input.ref} {input.msh} > {output.main}'
 
+localrules: register_mash_dists_single
 
-
+rule register_mash_dists_single:
+	input:
+		inp=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json'
+	output:
+		flag=config['OUTPUT_DIR'] + '{sample}.{data_name}.{db_name}.mash.json.registered'
+	params:
+		conf_name=config['NAME'],
+		sample_name='{sample}',
+		data_name='{data_name}',
+		db_name='{db_name}',
+		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
+		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
+	run:
+		module = 'mash'
+		name = '{}_{}'.format(params.data_name, module)
+		api.saveResult( name,
+				module,
+				[input.inp],
+				params.data_name,
+				params.conf_name,
+				params.sample_name,
+				params.exp_name,
+				params.proj_name
+		)
+		open(output.flag,'a').close()

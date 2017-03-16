@@ -1,7 +1,6 @@
 import meta_ultra.config as config
 from meta_ultra.utils import *
 from meta_ultra.modules import *
-from meta_ultra.conf_builder import *
 
 
 class SamtoolsModule( Module):

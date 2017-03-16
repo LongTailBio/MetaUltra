@@ -1,4 +1,6 @@
 from meta_ultra.user_input import *
+from meta_ultra.sample_type import *
+from meta_ultra.data_type import *
 import meta_ultra.api as api
 from .cli import main
 import click
@@ -11,6 +13,10 @@ def add():
 @add.command(name='data')
 @click.argument('filenames',nargs=-1)
 def cli_addData(filenames):
+    if len(filenames) == 0:
+        sys.stderr.write('No data found. Please list data files as part of the original command.\n')
+        sys.exit(1)
+
     addData(filenames)
     
 def addData(filenames):
@@ -168,4 +174,12 @@ def addConf(name=None, useDefaults=None, fineControl=None):
     if fineControl is None and not useDefaults:
         fineControl = BoolUserInput('Control absolutely every aspect of this conf?', False).resolve()
 
-    conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
+    return conf_builder.buildNewConf(name, useDefaults=useDefaults, fineControl=fineControl)
+    
+@add.command(name='remote')
+@click.argument('name', nargs=1)
+@click.argument('url', nargs=1)
+def addRemote(name, url):
+    api.addRemote(name, url)
+
+    

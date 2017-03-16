@@ -1,6 +1,7 @@
 from meta_ultra.utils import *
 from meta_ultra.user_input import *
 from meta_ultra.data_type import *
+from meta_ultra.sample_type import *
 import meta_ultra.modules as modules
 import meta_ultra.api as api
 import sys
@@ -34,7 +35,7 @@ def resolveVal(value, useDefaults, fineControl):
 	elif type(value) == dict:
 		newVal = {}
 		for k, v in value.items():
-			newVal[k] = resolveVal(v, useDefaults, fineControl)
+			newVal[k.upper()] = resolveVal(v, useDefaults, fineControl)
 		value = newVal
 	elif type(value) == list:
 		newVal = []
@@ -116,13 +117,11 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 		sys.stderr.write(msg)
 		sys.exit(1)
 		
-	newConf = ConfBuilder(useDefaults, fineControl) 
-	newConf.add_global_field('OUTPUT_DIR',
-			      UserInput('Give the directory where output files '+
+	newConf = {}
+	newConf['OUTPUT_DIR'] = UserInput('Give the directory where output files '+
 					'should go.',
-					'results/'
-			      ))
-	outDir = newConf.get_global_field('OUTPUT_DIR')
+                                          'results/').resolve()
+	newConf['OUTPUT_DIR'] = os.path.abspath(newConf['OUTPUT_DIR']) + '/'
 		
 	samples = {}
 	for dataRec in dataRecs:
@@ -130,13 +129,14 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 			samples[dataRec.sampleName] = {}
 			
 		dataConf = {}
-		samples[dataRec.name] = dataConf
+		samples[dataRec.sampleName][dataRec.name] = dataConf
 
 		dataType = DataType.asDataType(dataRec.dataType)
 		dataConf['PROJECT_NAME'] = dataRec.projectName
+		dataConf['EXPERIMENT_NAME'] = dataRec.experimentName
 		dataConf['DATA_NAME'] = dataRec.name
 		dataConf['SAMPLE_NAME'] = dataRec.sampleName
-		dataConf['DATE_TYPE'] = DataType.asString(dataRec.dataType)
+		dataConf['DATA_TYPE'] = DataType.asString(dataRec.dataType)
 		dataConf['SAMPLE_TYPE'] = SampleType.asString(dataRec.sampleType)
 
 		if dataType == api.getDataTypes().WGS_DNA_SEQ_SINGLE_END:
@@ -147,9 +147,10 @@ def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
 			dataConf['2'] = dataRec.reads2
 
 
+	
 			
-	newConf.add_global_field('SAMPLES',samples)
-	for k, v in newConf.to_dict().items():
+	newConf['SAMPLES'] = samples
+	for k, v in newConf.items():
 		finalConf[k] = v
 	return finalConf 
 
@@ -191,7 +192,7 @@ def buildNewConf(name, useDefaults=False, fineControl=False, modify=False):
 
 	
 	conf_dict = confBldr.to_dict()
-
+	
 	return api.saveConf(name, conf_dict)
 
 ################################################################################

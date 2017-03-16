@@ -1,0 +1,108 @@
+import meta_ultra.api as api
+
+
+def filter_host_out(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	dataNames=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+				dataNames.append((sampleName, dataConf['DATA_NAME']))
+
+	if 'FILTER_HOST' in tools:
+		# host filtering is an intermediate step so it doesn't get registered
+		# but we keep the flag-as-complete paradigm for consistency
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.filter_host.complete'
+		for sample, data in dataNames:
+			inp.append( pattern.format(sample=sample, data_name=data))
+
+	return inp
+
+output_builders.append(filter_host_out)
+
+
+rule filter_host_single_single_end:
+	input:
+		reads = getReads
+	output:
+		host = config['OUTPUT_DIR']+'{sample}.{data_name}_host.fastq.gz',
+		nothost = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host.fastq.gz',
+		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.host.bam')
+	params:
+		bt2=config['BOWTIE2']['EXC']['FILEPATH'],
+		job_name=config['JOB_NAME_PREFIX'] + 'filter_host_single_{sample}_{data_name}',
+		data_name=lambda wildcards: wildcards.data_name,
+		sample_name=lambda wildcards: wildcards.sample,
+                db = config['FILTER_HOST']['DB']['FILEPATH']
+	threads: int(config['FILTER_HOST']['THREADS'])
+	resources:
+		time=int(config['FILTER_HOST']['TIME']),
+		n_gb_ram=int(config['FILTER_HOST']['RAM'])
+	run:
+		dataType = getDataType(params.sample_name, params.data_name)
+                db = glob(params.db+'*')
+                dbname = os.path.basename(params.db)
+		if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+			cmd = ' {params.bt2} -p {threads} --very-fast '
+			cmd += ' --al-gz $O0 '
+			cmd += ' --un-gz $O1 '
+			cmd += ' -x ${{TMPDIR}}/'+dbname+' -U $I0 | samtools view -F 4 -b > $O2 '
+			cmd = loadFiles([input.reads[0]]+db,
+					[output.host, output.nothost, output.bam],
+					cmd)
+
+		shell(cmd)
+
+
+rule filter_host_single_paired_end:
+	input:
+		reads = getReads,
+
+	output:
+		host1 = config['OUTPUT_DIR']+'{sample}.{data_name}_host_1.fastq.gz',
+                host2 = config['OUTPUT_DIR']+'{sample}.{data_name}_host_2.fastq.gz',
+		nothost1 = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_1.fastq.gz',
+                nothost2 = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_2.fastq.gz',
+		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.host.bam')
+	params:
+		db = config['FILTER_HOST']['DB']['FILEPATH'],
+	    	bt2=config['BOWTIE2']['EXC']['FILEPATH'],
+		job_name=config['JOB_NAME_PREFIX'] + 'filter_host_single_{sample}_{data_name}',
+		data_name=lambda wildcards: wildcards.data_name,
+		sample_name=lambda wildcards: wildcards.sample
+	threads: int(config['FILTER_HOST']['THREADS'])
+	resources:
+		time=int(config['FILTER_HOST']['TIME']),
+		n_gb_ram=int(config['FILTER_HOST']['RAM'])
+	run:
+		dataType = getDataType(params.sample_name, params.data_name)
+                db = glob(params.db+'*')
+                dbname = os.path.basename(params.db)
+
+		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+			cmd = ' {params.bt2} -p {threads} --very-fast '
+			cmd += ' --al-conc-gz ${{TMPDIR}}/'+params.sample_name+'.'+params.data_name+'_host_%.fastq.gz '
+			cmd += ' --un-conc-gz ${{TMPDIR}}/'+params.sample_name+'.'+params.data_name+'_not-host_%.fastq.gz '
+			cmd += ' -x ${{TMPDIR}}/'+dbname+' -1 $I0 -2 $I1 | samtools view -F 4 -b > $O4 '
+			cmd = loadFiles([input.reads[0], input.reads[1]]+db,
+					[output.host1, output.host2, output.nothost1, output.nothost2, output.bam],
+					cmd)
+
+		shell(cmd)
+
+		
+localrules: flag_filter_host_complete
+
+rule flag_filter_host_complete:
+	input:
+		host=getHostReads,
+		nothost=getNotHostReads
+	output:
+		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.filter_host.complete'
+	params:
+		sample_name='{sample}',
+		data_name='{data_name}',
+	run:
+		open(output.flag,'a').close()

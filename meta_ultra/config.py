@@ -6,13 +6,26 @@ from enum import Enum
 
 lib_root = os.path.dirname(__file__)
 
-ref_file = os.path.join( lib_root, 'references')
 pipeline_dir = os.path.join( lib_root, 'pipelines/')
 snake_file = os.path.join( pipeline_dir, 'all.snkmk')
-cluster_wrapper = os.path.join( lib_root, 'cluster_wrapper_script.py')
+cluster_wrapper = os.path.join( pipeline_dir, 'cluster_submission_wrapper_script.py')
 
 mu_dir = '.mu'
 mu_db_path = os.path.join(mu_dir,'mudb')
+
+def get_mu_dir(dir='.'):
+    dir = os.path.abspath(dir)
+    if mu_dir in os.listdir(dir):
+        return os.path.join(dir, mu_dir)
+    else:
+        # recurse up
+        up = os.path.dirname(dir)
+        if up == dir:
+            # top, fail
+            sys.stderr.write('No MetaUltra database found. Exiting.\n')
+            sys.exit(1)
+        else:
+            return get_mu_dir(up)
 
 def get_db(dir='.'):
     dir = os.path.abspath(dir)
@@ -28,6 +41,11 @@ def get_db(dir='.'):
             sys.exit(1)
         else:
             return get_db(up)
+
+snakemake_static_conf_file = lambda : os.path.abspath( os.path.join(get_mu_dir(),'snakemake_static_config.json'))
+
+        
+db_mu_config_remotes = lambda : get_db().table('mu_config_remotes')
 
 db_module_table = lambda : get_db().table('module_table')
 db_sample_table = lambda : get_db().table('sample_table')
