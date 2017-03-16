@@ -8,9 +8,17 @@ MetaUltra provides a python API to track samples, metadata, computed-results, an
 Information Retrieval
 =====================
 
-.. py:function:: getProjects()
+.. py:function:: getProject(name)
 
-.. py:function:: getExperiments()
+   :param name: The name of the project to get
+
+
+.. py:function:: getProjects(names=None)
+
+   :param names: a list of project objects and project names. Only projects from this list will be returned
+  
+
+.. py:function:: getExperiments(names=None, dataTypes=None, dataRecs=None)
 
 .. py:function:: getConfs()
 
@@ -27,7 +35,7 @@ Information Retrieval
    :return: A ``list`` of samples from the specified
             projects.
 
-.. py:function:: getData(dataType=None,samples=None, experiments=None, projects=None)
+.. py:function:: getData(names=None, dataType=None,samples=None, experiments=None, projects=None)
 
    Get a list of every data object passing the filter.
 
@@ -49,6 +57,10 @@ Information Retrieval
    Alias for ``getData``
             
 
+.. py:function:: getResults(names=None, dataTypes=None, samples=None, experiments=None, projects=None, dataRecs=None, confs=None)
+
+    
+   
 Information Storage
 ===================
 
@@ -86,7 +98,7 @@ Information Storage
 
   :rtype: PairedEndedSeqRun
 
-.. py:function:: saveResult(name, resultFilenames, data, conf, sample, project)
+.. py:function:: saveResult(name, moduleName, resultFilenames, data, conf, sample, experiment, project)
 
   :rtype: Result
   :param resultFilenames: A ``list`` of the filenames being registered
