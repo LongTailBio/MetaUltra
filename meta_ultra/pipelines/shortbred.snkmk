@@ -12,7 +12,7 @@ def shortbred_out(wildcards):
 				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'SHORTBRED' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']+'.registered'
+                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}.'+config['SHORTBRED']['EXT']+'.registered'
                 for sample, data in dataNames:
                         for db in [el['NAME'] for el in config['SHORTBRED']['DBS']]:
                                 inp.append( pattern.format(sample=sample, data_name=data, db_name=db))
@@ -23,7 +23,7 @@ output_builders.append(shortbred_out)
 
 rule shortbred_single_sample:
 	input:
-		reads = getReads
+		reads = getNotHostReads
 	output: config['OUTPUT_DIR']+'{sample}.{data_name}.{db_name}'+config['SHORTBRED']['EXT']
 	params:
 		ref=lambda wc: [db['FILEPATH'] for db in config['SHORTBRED']['DBS'] if db['NAME'] == wc.db_name],

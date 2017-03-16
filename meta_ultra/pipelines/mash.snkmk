@@ -23,7 +23,7 @@ output_builders.append( mash_output)
 
 rule minhash_sketch_single:
 	input:
-		clean = getReads,
+		clean = getNotHostReads,
 	output:
 		msh = config['OUTPUT_DIR'] + '{sample}.{data_name}.msh',
 	threads: 1

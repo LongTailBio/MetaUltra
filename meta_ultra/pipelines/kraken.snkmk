@@ -21,7 +21,7 @@ output_builders.append( kraken_output)
 # Kraken
 rule kraken_raw_single_sample:
 	input:
-		reads = getReads
+		reads = getNotHostReads
 	output:
 		main = temp(config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT'])
 	threads: int( config['KRAKEN']['THREADS'])

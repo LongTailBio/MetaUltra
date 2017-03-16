@@ -17,8 +17,8 @@ import json
 # remote worker nodes. This loads a statically stored version of
 # the config as a slightly hacky work around.
 if len(config.keys()) == 0:
-        confFile = mup_config.snakemake_static_conf_file()
-        config = json.loads( open(confFile).read())
+	confFile = mup_config.snakemake_static_conf_file()
+	config = json.loads( open(confFile).read())
 
 
 if not os.path.isdir(config['OUTPUT_DIR']):
@@ -48,6 +48,42 @@ def getReads(wildcards):
 
 	return reads
 
+def getNotHostReads(wc):
+	if 'FILTER_HOST' not in config['TOOLS_TO_RUN']:
+		return getReads(wc)
+
+	dataType = getDataType(wc.sample, wc.data_name)
+	reads = []
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name))
+		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_{num}.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=1))
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=2))
+
+	return reads
+
+def getHostReads(wc):
+	if 'FILTER_HOST' not in config['TOOLS_TO_RUN']:
+		return getReads(wc)
+
+	dataType = getDataType(wc.sample, wc.data_name)
+	reads = []
+	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name))
+		
+	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host_{num}.fastq.gz'
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=1))
+		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=2))
+
+	return reads
+
+
+
 def getDataType(sampleName, dataName):
 	dataConf = config['SAMPLES'][sampleName][dataName]
 	dataType = DataType.asDataType(dataConf['DATA_TYPE'])
@@ -68,32 +104,32 @@ def all_input(wildcards):
 	return inp
 
 def loadFiles(inputs, outputs, cmd):
-        tmpDirCheck = '[ -z "$TMPDIR"] && TMPDIR=/tmp ; '
-        uploadCmds = []
-        for i, inp in enumerate(inputs):
-                cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
-                cpCmd += '${{TMPDIR}}/`basename '+inp+'` '
-                uploadCmds.append( cpCmd)
+	tmpDirCheck = '[ -z "$TMPDIR" ] && TMPDIR=/tmp ; '
+	uploadCmds = []
+	for i, inp in enumerate(inputs):
+		cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
+		cpCmd += '${{TMPDIR}}/`basename '+inp+'`'
+		uploadCmds.append( cpCmd)
 
-        downloadVars = []
-        downloadCmds = []
-        for i, outp in enumerate(outputs):
-                varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}` '.format(outp)
-                downloadVars.append(varCmd)
-                cpCmd = ' rsync -av $O{} {} '.format(i, outp)
-                downloadCmds.append(cpCmd)
+	downloadVars = []
+	downloadCmds = []
+	for i, outp in enumerate(outputs):
+		varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}`'.format(outp)
+		downloadVars.append(varCmd)
+		cpCmd = 'rsync -av $O{} {}'.format(i, outp)
+		downloadCmds.append(cpCmd)
 
-        uploadCmd = '&&'.join(uploadCmds)
-        downloadVar = '&&'.join(downloadVars)
-        downloadCmd = '&&'.join(downloadCmds)
+	uploadCmd = ' && '.join(uploadCmds)
+	downloadVar = ' && '.join(downloadVars)
+	downloadCmd = ' && '.join(downloadCmds)
 
-        fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
+	fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
 
-        print(fullCmd)
-        return fullCmd
+	print(fullCmd)
+	return fullCmd
 
-                
-                
+		
+		
 ################################################################################
 #
 # I/O Utilities

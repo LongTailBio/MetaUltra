@@ -20,7 +20,7 @@ output_builders.append( microbe_census_output)
 # MicrobeCensus
 rule microbe_census_single:
 	input:
-		reads = getReads
+		reads = getNotHostReads
 	output:
 		main = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['MICROBE_CENSUS']['EXT']
 	threads: int( config['MICROBE_CENSUS']['THREADS'])
