@@ -151,8 +151,28 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
              and (len(confs) == 0 or result.confName in confs)
              and (len(expNames) == 0 or dataRec.experimentName in expNames)
              and (len(projNames) == 0 or dataRec.projectName in projNames)
-             and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)):
+             and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)
+             and (len(names) == 0 or result.name in names)):
             out.append(result)
+    return out
+
+
+def getProjectResult(name):
+    try:
+        return ProjectResult.get(name)
+    except NoSuchRecordError:
+        return None
+
+def getProjectResults(names=None, projects=None, confs=None):
+    projNames = toNameList(projects)
+    confs = toNameList(confs)
+    projResults = ProjectResult.all()
+    out = []
+    for  pResult in projResults:
+        if ( (len(confs) == 0 or pResult.confName in conf)
+             and (len(projNames) == 0 or pResult.projectName in projNames)
+             and (len(names) == 0 or pResult.name in names)):
+            out.append(pResult)
     return out
 
 
