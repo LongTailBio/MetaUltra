@@ -7,6 +7,7 @@ from snakemake.utils import read_job_properties
 
 jobscript = sys.argv[1]
 job_properties = read_job_properties(jobscript)
+#sys.stderr.write( open(jobscript).read())
 
 cmd = 	(
 	'ssh dcd3001@panda2.pbtech '
@@ -19,6 +20,7 @@ cmd = 	(
 	'-l vf={n_gb_ram}G ' 
 	'-l h_vmem={max_n_gb_ram}G ' 
 	'-l os=rhel6.3 '
+        '-l zenodotus=true '
     	'-V '
 	'{cmd}')
         

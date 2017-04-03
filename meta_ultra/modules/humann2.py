@@ -31,7 +31,7 @@ class Humann2Module( Module):
 		# Diamond
 		humann2.add_field('DMND_THREADS',
 				    UserInput('\tHow many threads would you like for humann2',
-					      2*confBuilder.get_global_field('THREADS'),
+					      2*int(confBuilder.get_global_field('THREADS')),
 					      type=int,
 					      fineControlOnly=True))
 		humann2.add_field('DMND_TIME',

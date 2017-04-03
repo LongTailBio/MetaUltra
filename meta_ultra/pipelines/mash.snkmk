@@ -76,7 +76,8 @@ rule register_mash_dists_single:
 	run:
 		module = 'mash'
 		name = '{}_{}'.format(params.data_name, module)
-		api.saveResult( name,
+		try:
+			api.saveResult( name,
 				module,
 				[input.inp],
 				params.data_name,
@@ -84,5 +85,7 @@ rule register_mash_dists_single:
 				params.sample_name,
 				params.exp_name,
 				params.proj_name
-		)
+			)
+		except RecordExistsError:
+			pass
 		open(output.flag,'a').close()

@@ -153,6 +153,7 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
              and (len(projNames) == 0 or dataRec.projectName in projNames)
              and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)):
             out.append(result)
+#            print(result)
     return out
 
 

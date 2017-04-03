@@ -74,8 +74,11 @@ def removeSamples(names, check=True, atomic=False):
 @remove.command(name='results')
 @click.option('--check/--no-check',default=True,help='ask before removing')
 @click.option('--atomic/--not-atomic',default=False,help='do not remove children')
+@click.option('--all/--not-all',default=False,help='remove all')
 @click.argument('names',nargs=-1)
-def removeResults(names=None, check=True, atomic=False):
+def removeResults(names=None, check=True, atomic=False, all=False):
+    if all:
+        names = [result.name for result in api.getResults()]
     for name in names:
         remove = True
         if check:

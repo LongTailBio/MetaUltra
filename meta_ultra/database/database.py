@@ -160,6 +160,7 @@ class Data( Record):
     def dbTbl():
         return dataTbl()
 
+    
     @classmethod
     def build(ctype, *args, **kwargs):
         dataType = DataType.asDataType( kwargs['data_type'])

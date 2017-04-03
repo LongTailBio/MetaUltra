@@ -16,7 +16,7 @@ def sync(remote, projects, overwrite=False):
                 sys.stdout.write('{}:\tOK\n'.format(obj))
             else:
                 sys.stdout.write('{}:\tFAILED\n'.format(obj))
-
+                
     else:
         raise NotImplementedError()
 

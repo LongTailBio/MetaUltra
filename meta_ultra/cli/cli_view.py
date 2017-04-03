@@ -15,22 +15,38 @@ def view():
 def viewProjects(names, tree=False):
     if tree:
 
-        for project in api.getProjects(names=names):
-            projTree = {'label':'Project '+project.name, 'nodes':[]}
+        projects = api.getProjects(names = names)
+        samples = api.getSamples(projects=projects)
+        dataRecs = api.getData(projects=projects, samples=samples)
+        results = api.getResults(projects=projects, samples=samples, dataRecs=dataRecs)
 
-            for sample in api.getSamples(projects=[project]):
+        sampleDict = {project.name: []  for project in projects}
+        for sample in samples:
+            sampleDict[sample.projectName].append( sample)
+
+        dataDict = {sample.name : [] for sample in samples}
+        for dataRec in dataRecs:
+            dataDict[dataRec.sampleName].append( dataRec)
+
+        resultDict = { dataRec.name : [] for dataRec in dataRecs}
+        for result in results:
+            resultDict[result.dataName].append(result)
+
+        for project in projects:
+            projTree = {'label':'Project '+project.name, 'nodes':[]}
+            for sample in sampleDict[project.name]:
                 sampleTree = { 'label': 'Sample '+sample.name, 'nodes': []}
                 projTree['nodes'].append(sampleTree)
-
-                for dataRec in api.getData(projects=[project], samples=[sample]):
+                for dataRec in dataDict[sample.name]:
                     dataTree = { 'label': 'Data '+dataRec.name, 'nodes': []}
                     sampleTree['nodes'].append(dataTree)
-
-                    for result in api.getResults(projects=[project], samples=[sample], dataRecs=[dataRec]):
+                    for result in resultDict[ dataRec.name]:
                         dataTree['nodes'].append('Result '+result.name)
 
-            print( archy(projTree))
 
+            print( archy(projTree))                                    
+
+        
     else:
         for project in api.getProjects(names=names):
             print(project)

@@ -9,9 +9,9 @@ def microbe_census_output(wildcards):
 			dataNames.append((sampleName, dataName))
 
 	if 'MICROBE_CENSUS' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['MICROBE_CENSUS']['EXT']+'.registered'
-                for sample, data in dataNames:
-                        inp.append( pattern.format(sample=sample, data_name=data))
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['MICROBE_CENSUS']['EXT']+'.registered'
+		for sample, data in dataNames:
+			inp.append( pattern.format(sample=sample, data_name=data))
 
 	return inp
 
@@ -27,14 +27,14 @@ rule microbe_census_single:
 	version: config['MICROBE_CENSUS']['EXC']['VERSION']
 	params:
 		sample_name=lambda wc: wc.sample,
-                data_name=lambda wc: wc.data_name,
-	    	mic_census = config['MICROBE_CENSUS']['EXC']['FILEPATH'],
+		data_name=lambda wc: wc.data_name,
+		mic_census = config['MICROBE_CENSUS']['EXC']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + 'mic_census_single_{sample}_{data_name}'
 	resources:
 		time=int(config['MICROBE_CENSUS']['TIME']),
 		n_gb_ram=int(config['MICROBE_CENSUS']['RAM'])
 	run:
-            
+	    
 		dataType = getDataType(params.sample_name, params.data_name)
 		if  dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
 			cmd='{params.mic_census} -t {threads} ${{I0}},${{I1}} ${{O0}}'
@@ -47,7 +47,7 @@ rule microbe_census_single:
 
 
 localrules: register_microbe_census_json
-                
+		
 rule register_microbe_census_json:
 	input:
 		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['MICROBE_CENSUS']['EXT']
@@ -62,7 +62,8 @@ rule register_microbe_census_json:
 	run:
 		module = 'microbe_census'
 		name = '{}_{}'.format(params.data_name, module)
-		api.saveResult( name,
+		try:
+			api.saveResult( name,
 				module,
 				[input.inp],
 				params.data_name,
@@ -70,5 +71,7 @@ rule register_microbe_census_json:
 				params.sample_name,
 				params.exp_name,
 				params.proj_name
-		)
+			)
+		except RecordExistsError:
+			pass
 		open(output.flag,'a').close()

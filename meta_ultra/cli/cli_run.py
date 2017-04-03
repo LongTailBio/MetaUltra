@@ -23,7 +23,13 @@ def run( jobs, dryrun=False, unlock=False, rerun=False):
     if BoolUserInput('Select data from a specific samples?', False).resolve():
         samples = UserMultiChoice('What samples should data be taken from?',
                                   api.getSamples(projects=projects)).resolve()
-    dataRecs = api.getData(projects=projects,samples=samples)
+
+    experiments=None
+    if BoolUserInput('Select data from a specific experiments?', False).resolve():
+        experiments = UserMultiChoice('What experiments should data be taken from?',
+                                  api.getExperiments()).resolve()
+        
+    dataRecs = api.getData(projects=projects,samples=samples, experiments=experiments)
 
     confName = conf.name
     confWithData = conf_builder.addSamplesToConf(confName, dataRecs)              

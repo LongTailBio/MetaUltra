@@ -29,7 +29,7 @@ rule filter_host_single_single_end:
 	output:
 		host = config['OUTPUT_DIR']+'{sample}.{data_name}_host.fastq.gz',
 		nothost = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host.fastq.gz',
-		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.host.bam')
+		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.single_host.bam')
 	params:
 		bt2=config['BOWTIE2']['EXC']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + 'filter_host_single_{sample}_{data_name}',
@@ -65,7 +65,7 @@ rule filter_host_single_paired_end:
                 host2 = config['OUTPUT_DIR']+'{sample}.{data_name}_host_2.fastq.gz',
 		nothost1 = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_1.fastq.gz',
                 nothost2 = config['OUTPUT_DIR']+'{sample}.{data_name}_not-host_2.fastq.gz',
-		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.host.bam')
+		bam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.paired_host.bam')
 	params:
 		db = config['FILTER_HOST']['DB']['FILEPATH'],
 	    	bt2=config['BOWTIE2']['EXC']['FILEPATH'],
