@@ -65,6 +65,11 @@ def removeResult(name, atomic=False):
     if type(name) != str:
         name = name.name
     Result.get(name).remove()
-            
+
+def removeProjectResult(name, atomic=False):
+    if type(name) != str:
+        name = name.name
+    ProjectResult.get(name).remove()
+
 
 

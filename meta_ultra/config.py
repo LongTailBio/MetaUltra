@@ -82,6 +82,7 @@ db_data_table = lambda : get_db().table('data_table')
 db_experiment_table = lambda : get_db().table('experiment_table')
 db_conf_table = lambda : get_db().table('conf_table')
 db_result_table = lambda : get_db().table('result_table')
+db_project_result_table = lambda : get_db().table('project_result_table')
 
 
 def canon_tool(toolName):

@@ -128,7 +128,23 @@ def saveResult(name, moduleName, resultFilenames, data, conf, sample, experiment
 		    project_name=project,
 		    result_files=resultFilenames)
     return result.save()
-		    
+
+
+###########################################################
+
+def saveProjectResult(name, moduleName, resultFilenames, conf, project):
+    if type(conf) != str:
+        conf = conf.name
+    if type(project) != str:
+        project = project.name
+    projResult = ProjectResult(name=name,
+                               module_name=moduleName,
+		   	       conf_name=conf,
+		               project_name=project,
+		               result_files=resultFilenames)
+    return projResult.save()
+
+
 
 ###########################################################
 	
