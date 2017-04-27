@@ -1,0 +1,65 @@
+import meta_ultra.api as api
+
+def hmp_output(wildcards):
+	tools = config['TOOLS_TO_RUN']
+	inp = []
+	dataSamplePairs=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+				dataSamplePairs.append((sampleName, dataConf['DATA_NAME']))
+
+	if 'HMP_SITE_DISTS' in tools:
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.hmp_site_dists.json.registered'
+		for sample, data in dataSamplePairs:
+			inp.append( pattern.format(sample=sample, data_name=data))
+
+	return inp
+
+output_builders.append( hmp_output)
+
+rule hmp_dists_single:
+	input:
+		mpa= config['OUTPUT_DIR']+'{sample}.{data_name}.metaphlan2.tsv',
+	output:
+		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json'
+	resources:
+		time=1,
+		n_gb_ram=2
+	threads: 1
+	params:
+		script=config['HMP_SITE_DISTS']['EXC']['FILEPATH'],
+		job_name=config['JOB_NAME_PREFIX'] + 'hmp_site_dists_single_{sample}_{data_name}'
+	shell:
+		'{params.script} {input.mpa} > {output.main}'
+
+localrules: register_hmp_dists_single
+
+rule register_hmp_dists_single:
+	input:
+		inp=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json'
+	output:
+		flag=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json.registered'
+	params:
+		conf_name=config['NAME'],
+		sample_name='{sample}',
+		data_name='{data_name}',
+		exp_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['EXPERIMENT_NAME'],
+		proj_name=lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['PROJECT_NAME'],
+	run:
+		module = 'hmp_site_dists'
+		name = '{}_{}'.format(params.data_name, module)
+		try:
+			api.saveResult( name,
+				module,
+				[input.inp],
+				params.data_name,
+				params.conf_name,
+				params.sample_name,
+				params.exp_name,
+				params.proj_name
+			)
+		except RecordExistsError:
+			pass
+		open(output.flag,'a').close()

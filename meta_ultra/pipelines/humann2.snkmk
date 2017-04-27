@@ -43,13 +43,13 @@ rule humann2_make_blastm8:
 		dataType = getDataType(params.sample_name, params.data_name)
 		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
 			cmd = '{params.dmnd} blastx --threads {threads} -d $I0 '
-			cmd += '-q $I1 $I2 -o $O0 --block-size {params.bsize}'
-			cmd = loadFiles([input.dmnd_db, input.reads[0], input.reads[1]],
+			cmd += '-q $I1 --block-size {params.bsize} > $O0 ' # Only uses first read for now
+		        cmd = loadFiles([input.dmnd_db, input.reads[0]],
 					[output.main],
 					cmd)
 		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
 			cmd = '{params.dmnd} blastx --threads {threads} -d $I0 '
-			cmd += '-q $I1 -o $O0 --block-size {params.bsize}'
+			cmd += '-q $I1 --block-size {params.bsize} > $O0 '
 			cmd = loadFiles([input.dmnd_db, input.reads[0]],
 					[output.main],
 					cmd)
@@ -64,7 +64,7 @@ rule humann2_single:
 		config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2/{sample}.{data_name}_pathcoverage.tsv'
 	threads: int( config['HUMANN2']['THREADS'])
 	params:
-		exc=config['HUMANN2']['EXC'],
+		exc=config['HUMANN2']['EXC']['FILEPATH'],
 		odir = config['OUTPUT_DIR'] + '{sample}.{data_name}_humann2',
 		job_name=config['JOB_NAME_PREFIX'] + '{sample}_{data_name}_humann2_single'
 	resources:
@@ -109,7 +109,8 @@ rule register_humann2_single_sample:
 	run:
 		module = 'humann2'
 		name = '{}_{}'.format(params.data_name, module)
-		api.saveResult( name,
+		try:
+			api.saveResult( name,
 				module,
 				[input[0], input[1], input[2]],
 				params.data_name,
@@ -117,5 +118,7 @@ rule register_humann2_single_sample:
 				params.sample_name,
 				params.exp_name,
 				params.proj_name
-		)
+			)
+		except RecordExistsError:
+			pass
 		open(output.flag,'a').close()

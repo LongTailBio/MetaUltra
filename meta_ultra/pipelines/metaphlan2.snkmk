@@ -11,9 +11,9 @@ def metaphlan2_output(wildcards):
 				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
 	if 'METAPHLAN2' in tools:
-                pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']+'.registered'
-                for sample, data in dataNames:
-                        inp.append( pattern.format(sample=sample, data_name=data))
+		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']+'.registered'
+		for sample, data in dataNames:
+			inp.append( pattern.format(sample=sample, data_name=data))
 
 	return inp
 
@@ -26,8 +26,8 @@ rule metaphlan2_single_sample:
 		main=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'],
 	threads: int(config['METAPHLAN2']['THREADS'])
 	params:
-            	sample_name = lambda wc: wc.sample,
-                data_name = lambda wc: wc.data_name,
+		sample_name = lambda wc: wc.sample,
+		data_name = lambda wc: wc.data_name,
 		metaphlan2=config['METAPHLAN2']['EXC']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample_{sample}_{data_name}',
 	resources:
@@ -47,7 +47,7 @@ rule metaphlan2_single_sample:
 		shell(cmd)
 
 localrules: register_metaphlan2_single_sample
-                
+		
 rule register_metaphlan2_single_sample:
 	input:
 		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']
@@ -62,7 +62,8 @@ rule register_metaphlan2_single_sample:
 	run:
 		module = 'metaphlan2'
 		name = '{}_{}'.format(params.data_name, module)
-		api.saveResult( name,
+		try:
+			api.saveResult( name,
 				module,
 				[input.inp],
 				params.data_name,
@@ -70,5 +71,7 @@ rule register_metaphlan2_single_sample:
 				params.sample_name,
 				params.exp_name,
 				params.proj_name
-		)
+			)
+		except RecordExistsError:
+			pass
 		open(output.flag,'a').close()

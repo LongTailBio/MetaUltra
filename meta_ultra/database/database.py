@@ -111,7 +111,6 @@ class Record:
         return recs
 
 
-
 class Conf(Record):
     def __init__(self, **kwargs):
         super(Conf, self).__init__(kwargs['name'])

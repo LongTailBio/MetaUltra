@@ -5,6 +5,7 @@ from glob import glob
 import meta_ultra.config as mup_config
 from  meta_ultra.data_type import *
 from  meta_ultra.sample_type import *
+from meta_ultra.database import RecordExistsError
 import json
 
 ################################################################################
