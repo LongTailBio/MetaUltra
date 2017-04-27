@@ -17,8 +17,15 @@ from tempfile import NamedTemporaryFile
 ################################################################################
 
 def init(dir='.'):
-    muDir = os.path.join(dir, config.mu_dir)
-    os.makedirs(muDir)
+    try:
+        os.makedirs( config.mu_config_dir)
+    except FileExistsError:
+        pass
+    muDir = os.path.join(dir, config.mu_repo_dir)
+    try:
+        os.makedirs(muDir)
+    except FileExistsError:
+        pass
 
 ################################################################################
 #
