@@ -137,13 +137,25 @@ def loadFiles(inputs, outputs, cmd):
 #
 ################################################################################
 
-snakefiles = glob(mup_config.pipeline_dir + '*.snkmk')
-snakefiles.remove(mup_config.pipeline_dir + 'all.snkmk')
 
-for snakefile in snakefiles:
-	include: snakefile
+snakefiles = {
+        "SHORTBRED": 'shortbred.snkmk',
+        "METAPHLAN2": 'metaphlan2.snkmk',
+        "KRAKEN": 'kraken.snkmk',
+        "MASH" : 'mash.snkmk',
+        "MICROBE_CENSUS": 'microbe_census.snkmk',
+        "FILTER_HOST": 'filter_host.snkmk',
+        "HUMANN2": 'humann2.snkmk',
+        "COUNT_CLASSIFIED": 'count_classified.snkmk',
+        "FOOD_PETS": 'food_and_pets.snkmk',
+        "HMP_SITE_DISTS": 'hmp_site_dists.snkmk',
+        "HOST_VCF": 'host_vcf.snkmk'
+        }
 
-
+for moduleName, snakefile in snakefiles.items():
+        if moduleName in config['TOOLS_TO_RUN']:
+                include: snakefile
+        
 rule all:
 	input:
 		all_input

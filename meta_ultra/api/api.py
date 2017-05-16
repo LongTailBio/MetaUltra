@@ -36,9 +36,9 @@ def init(dir='.'):
 def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False):
     with open(config.snakemake_static_conf_file(), 'w') as snkConf:
         snkConf.write( jdumps(confWithData))
-    snakemake(config.snake_file,
+    snakemake(config.snake_file(),
                      config=confWithData,
-                     cluster=config.cluster_wrapper,
+                     cluster=config.cluster_wrapper(),
                      keepgoing=True,
                      printshellcmds=True,
                      dryrun=dryrun,

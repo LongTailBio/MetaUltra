@@ -10,12 +10,19 @@ from tinydb.middlewares import CachingMiddleware
 lib_root = os.path.dirname(__file__)
 
 pipeline_dir = os.path.join( lib_root, 'pipelines/')
-snake_file = os.path.join( pipeline_dir, 'all.snkmk')
-snakemake_static_conf_file = lambda : os.path.abspath( os.path.join( os.path.dirname(get_repo()),'snakemake_static_config.json'))
+snake_file = lambda : os.path.join( pipeline_dir, 'all.snkmk')
+
+def snakemake_static_conf_file():
+    repo = get_repo(path=True)
+    repo = os.path.dirname(repo)
+    staticConf = os.path.join( repo,'snakemake_static_config.json')
+    staticConf = os.path.abspath( staticConf)
+    return staticConf
 
 def cluster_wrapper():
-    customWrapper = os.path.join( os.path.dirname(get_repo()), 'cluster_submission_wrapper_script.py')
-    if customWrapper.is_file():
+    customWrapper = os.path.join( os.path.dirname(get_repo(path=True)),
+                                  'cluster_submission_wrapper_script.py')
+    if os.path.exists(customWrapper):
         return customWrapper
     defaultWrapper = os.path.join( pipeline_dir, 'default_cluster_submission_wrapper_script.py')
     return defaultWrapper
@@ -27,14 +34,22 @@ mu_repo_path = os.path.join(mu_repo_dir,'mu_repo.tinydb.json')
 mu_config_dir = os.path.join( os.environ['HOME'], '.muconfig')
 if 'MU_CONFIG' in os.environ:
     mu_config_dir = os.environ['MU_CONFIG']
-get_config = lambda : TinyDB( os.path.join( mu_config_dir, 'mu_config.tinydb.json'))
+
+def get_config(path=False):
+    configPath = os.path.join( mu_config_dir, 'mu_config.tinydb.json')
+    if path:
+        return os.path.dirname(configPath)
+    return TinyDB( configPath)
 
 
         
-def get_repo(dir='.'):
+def get_repo(dir='.', path=False):
     dir = os.path.abspath(dir)
-    if mu_dir in os.listdir(dir):
-        mu_db = TinyDB( os.path.join(dir,mu_db_path))
+    if mu_repo_dir in os.listdir(dir):
+        mu_db = os.path.join(dir,mu_repo_path)
+        if path:
+            return mu_db
+        mu_db = TinyDB(mu_db)
         return mu_db
     else:
         # recurse up
@@ -44,7 +59,7 @@ def get_repo(dir='.'):
             sys.stderr.write('No MetaUltra database found. Exiting.\n')
             sys.exit(1)
         else:
-            return get_db(up)
+            return get_repo(up)
 
 db_conf_table = lambda : get_config().table('conf_table')        
 db_mu_config_remotes = lambda : get_config().table('mu_config_remotes')

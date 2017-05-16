@@ -9,7 +9,8 @@ jobscript = sys.argv[1]
 job_properties = read_job_properties(jobscript)
 
 cmd = 	(
-	'ssh dcd3001@panda2.pbtech '
+	'ssh dcd3001@panda2.pbtech "'
+    ' cd {run_dir} ; '
     	'qsub '  
 	'-j y ' 
         '-cwd '  	
@@ -20,9 +21,11 @@ cmd = 	(
 	'-l h_vmem={max_n_gb_ram}G ' 
 	'-l os=rhel6.3 '
     	'-V '
-	'{cmd}')
+	'{cmd} "')
         
-cmd = 	cmd.format(job_name=job_properties['params']['job_name'],
+cmd = 	cmd.format(
+    run_dir=os.getcwd(),
+    job_name=job_properties['params']['job_name'],
                    wall_time_rqst='{}:00:00'.format(job_properties['resources']['time']),
                    n_cores=job_properties['threads'],
                    n_gb_ram=job_properties['resources']['n_gb_ram'],

@@ -104,7 +104,7 @@ def addProject(name=None):
             tryAgain= True
             sys.stderr.write('Project {} already exists. Please pick a new name.\n'.format(name))
             name=None
-    api.saveProject(name,None)
+    return api.saveProject(name,None)
 
 @add.command(name='experiment')
 @click.option('-n', '--name', default=None, help='The experiment name')

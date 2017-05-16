@@ -110,17 +110,20 @@ class ToolBuilder:
 #
 ################################################################################
 	
-def addSamplesToConf(confName, dataRecs, useDefaults=False, fineControl=False):
+def addSamplesToConf(confName, dataRecs, outDir=None, useDefaults=False, fineControl=False):
 	finalConf = api.getConf(confName).confDict
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
 		sys.stderr.write(msg)
 		sys.exit(1)
-		
+
+
 	newConf = {}
-	newConf['OUTPUT_DIR'] = UserInput('Give the directory where output files '+
+	if not outDir:
+		outDir = UserInput('Give the directory where output files '+
 					'should go.',
-                                          'results/').resolve()
+					  'results/').resolve()
+	newConf['OUTPUT_DIR'] = outDir
 	newConf['OUTPUT_DIR'] = os.path.abspath(newConf['OUTPUT_DIR']) + '/'
 		
 	samples = {}

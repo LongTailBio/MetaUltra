@@ -20,7 +20,7 @@ def edit():
 def cli_editConf(name,raw=False):
     conf = api.getConf(name)
     if raw:
-        tf = NamedTemporaryFile(mode='w',dir=config.get_mu_dir(), delete=False)
+        tf = NamedTemporaryFile(mode='w',dir=config.get_config(path=True), delete=False)
         confDict = json.dumps(conf.confDict, indent=4, sort_keys=True)
         tf.write(confDict)
         tf.close()
@@ -29,7 +29,7 @@ def cli_editConf(name,raw=False):
             with open(tf.name) as edited:
                 editedDict = json.load(edited)
                 api.saveConf(conf.name, editedDict, modify=True)
-
+        os.remove(tf.name)
     return api.getConf(name)
 
 def addConf(name=None, useDefaults=None, fineControl=None):

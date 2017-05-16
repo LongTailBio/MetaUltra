@@ -1,4 +1,7 @@
 from .database import *
+from .sample import *
+from .project import *
+from .experiment import *
 
 dataTbl = config.db_data_table
 

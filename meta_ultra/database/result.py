@@ -1,5 +1,8 @@
 from .database import *
-
+from .data_record import *
+from .sample import *
+from .project import *
+from .experiment import *
 resultTbl = config.db_result_table
 
 class Result(Record):
