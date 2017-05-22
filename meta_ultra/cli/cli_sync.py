@@ -1,5 +1,6 @@
 from meta_ultra.user_input import *
 import meta_ultra.api as api
+from meta_ultra.cli_colors import *
 from .cli import main
 import click
 
@@ -12,10 +13,11 @@ import click
 def sync(remote, projects, overwrite=False):
     if overwrite:
         for success, obj in api.syncOverwrite(remote, projects=projects):
+            objType = type(obj).__name__.split('.')[-1]
             if success:
-                sys.stdout.write('{}:\tOK\n'.format(obj))
+                sys.stdout.write( cols.OKGREEN+ '{} {}: OK\n'.format(objType, obj.name) + cols.ENDC)
             else:
-                sys.stdout.write('{}:\tFAILED\n'.format(obj))
+                sys.stdout.write(cols.FAIL+'{} {}: FAILED\n'.format( objType, obj.name) +  cols.ENDC)
                 
     else:
         raise NotImplementedError()

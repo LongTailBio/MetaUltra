@@ -136,6 +136,7 @@ def getResult(name):
         return None
 
 def getResults(names=None, dataTypes=None, samples=None, experiments=None, projects=None, dataRecs=None, confs=None):
+    names = toNameList(names)
     sampleNames = toNameList(samples)
     expNames = toNameList(experiments)
     projNames = toNameList(projects)

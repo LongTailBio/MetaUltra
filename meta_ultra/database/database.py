@@ -81,7 +81,7 @@ class Record:
 
     def validStatus(self):
         return True
-        
+
     @classmethod
     def build(ctype, *args, **kwargs):
         return ctype(**kwargs)
@@ -110,7 +110,9 @@ class Record:
         recs = [ctype.build(**rec) for rec in recs]
         return recs
 
+    
 
+    
 class Conf(Record):
     def __init__(self, **kwargs):
         super(Conf, self).__init__(kwargs['name'])

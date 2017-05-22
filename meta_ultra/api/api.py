@@ -153,6 +153,7 @@ def syncOverwrite(remoteName, projects=[]):
             yield False, dataRec
 
     for result in getResults(dataRecs=successfulData):
+        upResult = None
         try:
             upResult = uploader.new_result(result.name,
                                        result.dataName,
