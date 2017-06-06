@@ -46,8 +46,10 @@ def addData(filenames):
                                                   aveReadLen, 
                                                   readPrefix=prefix)
     elif dataType == api.getDataTypes().WGS_DNA_SEQ_PAIRED_END:
+        def newExp():
+            return addExperiment(dataType=dataType)
         seqRun = UserChoice('sequencer_type', api.getExperiments(dataTypes=[dataType]),
-                            new=lambda : addExperiment(dataType=dataType)).resolve()
+                            new=newExp).resolve()
 
         nfiles = 0
         while nfiles == 0:
@@ -123,7 +125,7 @@ def addExperiment(name=None, dataType=None):
             tryAgain= True
             sys.stderr.write('Experiment {} already exists. Please pick a new name.\n'.format(name))
             name=None
-    api.saveExperiment(name, dataType, None)
+    return api.saveExperiment(name, dataType, None)
 
 @add.command(name='sample')
 @click.option('-n', '--name', default=None, help='The sample name')
