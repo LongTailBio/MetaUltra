@@ -4,9 +4,13 @@ class DataTypeNotFoundError(Exception):
     pass
 
 class DataType(Enum):
-    WGS_DNA_SEQ_SINGLE_END='WGS_DNA_SEQ_SINGLE_END'
-    WGS_DNA_SEQ_PAIRED_END='WGS_DNA_SEQ_PAIRED_END'
-
+    SR_WMGS_DNA_SINGLE_END='SR_WMGS_DNA_SINGLE_END'
+    SR_WMGS_DNA_PAIRED_END='SR_WMGS_DNA_PAIRED_END'
+    LR_WMGS_ONT_DNA='LR_WMGS_ONT_DNA'
+    RC_WMGS_10X_DNA='RC_WMGS_10X_DNA'
+    SR_WMTS_RNA_SINGLE_END='SR_WMTS_RNA_SINGLE_END'
+    SR_WMTS_RNA_PAIRED_END='SR_WMTS_RNA_PAIRED_END'
+    
     @classmethod
     def asDataType(ctype, val):
         if type(val) == str:

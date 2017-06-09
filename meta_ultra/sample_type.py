@@ -6,7 +6,11 @@ class SampleTypeNotFoundError(Exception):
 class SampleType(Enum):
     ENVIROMENTAL_MICROBIOME='ENVIROMENTAL_MICROBIOME'
     PHONE_MICROBIOME='PHONE_MICROBIOME'
+    HUMAN_GUT_MICROBIOME='HUMAN_GUT_MICROBIOME'
+    HUMAN_SKIN_MICROBIOME='HUMAN_SKIN_MICROBIOME'
+    
 
+    
     @classmethod
     def asSampleType(ctype, val):
         if type(val) == str:
