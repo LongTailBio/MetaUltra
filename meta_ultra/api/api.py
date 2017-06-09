@@ -95,14 +95,14 @@ def syncOverwrite(remoteName, projects=[], resultsOnly=False, resultType=None):
     if not resultsOnly:
         successfulProjects = []
         for project in getProjects(names=projects):
-            result = uploader.new_project(project.name,
+            success, response = uploader.new_project(project.name,
                                           metadata=project.metadata,
                                           overwrite=True)
-            if result:
+            if success:
                 successfulProjects.append(project)
-                yield True, project
+                yield True, project, response
             else:
-                yield False, project
+                yield False, project, response
 
 
             
@@ -110,29 +110,29 @@ def syncOverwrite(remoteName, projects=[], resultsOnly=False, resultType=None):
         for sample in getSamples(projects=successfulProjects):
             if not sample.validStatus():
                 continue
-            result = uploader.new_sample(sample.name,
+            success, response = uploader.new_sample(sample.name,
                                          sample.projectName,
                                          SampleType.asString(sample.sampleType),
                                          metadata=sample.metadata,
                                          overwrite=True)
-            if result:
+            if success:
                 successfulSamples.append(sample)
-                yield True, sample
+                yield True, sample, response
             else:
-                yield False, sample
+                yield False, sample, response
 
 
         successfulExps = []
         for exp in getExperiments():
-            result = uploader.new_experiment(exp.name,
+            success, response = uploader.new_experiment(exp.name,
                                              DataType.asString(exp.dataType),
                                              metadata=exp.metadata,
                                              overwrite=True)
-            if result:
+            if success:
                 successfulExps.append(exp)
-                yield True, exp
+                yield True, exp, response
             else:
-                yield False, exp
+                yield False, exp, response
             
 
     
@@ -141,36 +141,41 @@ def syncOverwrite(remoteName, projects=[], resultsOnly=False, resultType=None):
                                experiments=successfulExps,
                                samples=successfulSamples):
 
-            result = uploader.new_data_record(dataRec.name,
+            success, response = uploader.new_data_record(dataRec.name,
                                               dataRec.sampleName,
                                               dataRec.experimentName,
                                               DataType.asString(dataRec.dataType),
                                               metadata=dataRec.metadata,
                                               overwrite=True)
-            if result:
+            if success:
                 successfulData.append( dataRec)
-                yield True, dataRec
+                yield True, dataRec, response
             else:
-                yield False, dataRec
+                yield False, dataRec, response
 
     if resultsOnly:
         successfulData = []
     
     for result in getResults(dataRecs=successfulData, modules=[resultType]):
-        upResult = None
+        success = False
         try:
-            upResult = uploader.new_result(result.name,
+            rFiles = result.resultFiles
+            if result.moduleName == 'humann2':
+                rFiles = [el for el in rFiles if 'coverage' in el or 'abundance' in el]
+            success, response = uploader.new_result(result.name,
                                            result.dataName,
                                            result.moduleName,
-                                           filenames=result.resultFiles,
+                                           filenames=rFiles,
                                            overwrite=True)
-        except:
-            yield False, result
+        except Exception as e:
+            print(e, file=sys.stderr)
+            yield False, result, None
+            
 
-        if upResult:
-            yield True, result
+        if success:
+            yield True, result, response
         else:
-            yield False, result
+            yield False, result, response
                                      
     
 

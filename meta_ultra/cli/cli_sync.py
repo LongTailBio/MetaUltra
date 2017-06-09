@@ -14,10 +14,10 @@ import click
 @click.argument('projects', nargs=-1)
 def sync(remote, projects, overwrite=False, results=False, module=None):
     if overwrite:
-        for success, obj in api.syncOverwrite(remote,
-                                              projects=projects,
-                                              resultsOnly=results,
-                                              resultType=module):
+        for success, obj, response  in api.syncOverwrite(remote,
+                                                projects=projects,
+                                                resultsOnly=results,
+                                                resultType=module):
             objType = type(obj)
             objType = objType.__name__
             objType = objType.split('.')[-1]
@@ -25,7 +25,7 @@ def sync(remote, projects, overwrite=False, results=False, module=None):
                 sys.stdout.write( cols.OKGREEN+ '{} {}: OK\n'.format(objType, obj.name) + cols.ENDC)
             else:
                 sys.stdout.write(cols.FAIL+'{} {}: FAILED\n'.format( objType, obj.name) +  cols.ENDC)
-                
+                sys.stderr.write('{}\n'.format(response))
     else:
         raise NotImplementedError()
 
