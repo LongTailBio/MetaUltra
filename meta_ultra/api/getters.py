@@ -135,7 +135,14 @@ def getResult(name):
     except NoSuchRecordError:
         return None
 
-def getResults(names=None, dataTypes=None, samples=None, experiments=None, projects=None, dataRecs=None, confs=None):
+def getResults(names=None,
+               dataTypes=None,
+               samples=None,
+               experiments=None,
+               projects=None,
+               dataRecs=None,
+               confs=None,
+               modules=None):
     names = toNameList(names)
     sampleNames = toNameList(samples)
     expNames = toNameList(experiments)
@@ -144,6 +151,7 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
     confs = toNameList(confs)
     dataTypes = convertDataTypes(dataTypes)
     results = Result.all()
+    modules = toNameList(modules)
     out = []
     for  result in results:
         dataRec = getDataRec(result.dataName)
@@ -153,7 +161,8 @@ def getResults(names=None, dataTypes=None, samples=None, experiments=None, proje
              and (len(expNames) == 0 or dataRec.experimentName in expNames)
              and (len(projNames) == 0 or dataRec.projectName in projNames)
              and (len(sampleNames) == 0 or dataRec.sampleName in sampleNames)
-             and (len(names) == 0 or result.name in names)):
+             and (len(names) == 0 or result.name in names)
+             and ( len(modules) == 0 or result.moduleName in modules)):
             out.append(result)
 #            print(result)
     return out

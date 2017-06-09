@@ -8,12 +8,19 @@ import click
 
 @main.command()
 @click.option('--overwrite/--no-overwrite', default=False, help='Overwrite any matching data on the server')
+@click.option('--results/--all', default=False, help='Only sync results, not objects')
+@click.option('-m','--module',default=None, help='Only sync results from a given module')
 @click.argument('remote',nargs=1)
 @click.argument('projects', nargs=-1)
-def sync(remote, projects, overwrite=False):
+def sync(remote, projects, overwrite=False, results=False, module=None):
     if overwrite:
-        for success, obj in api.syncOverwrite(remote, projects=projects):
-            objType = type(obj).__name__.split('.')[-1]
+        for success, obj in api.syncOverwrite(remote,
+                                              projects=projects,
+                                              resultsOnly=results,
+                                              resultType=module):
+            objType = type(obj)
+            objType = objType.__name__
+            objType = objType.split('.')[-1]
             if success:
                 sys.stdout.write( cols.OKGREEN+ '{} {}: OK\n'.format(objType, obj.name) + cols.ENDC)
             else:

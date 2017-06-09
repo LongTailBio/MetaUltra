@@ -88,78 +88,82 @@ def removeRemote(remoteName):
         remote = muRemotes.get(where('name') == remoteName)
         return muRemotes.remove(eids=[remote.eid])
 
-def syncOverwrite(remoteName, projects=[]):
+def syncOverwrite(remoteName, projects=[], resultsOnly=False, resultType=None):
     remoteURL = getRemoteURL(remoteName)
     uploader = mgs_api.Uploader(remoteURL)
 
-    successfulProjects = []
-    for project in getProjects(names=projects):
-        result = uploader.new_project(project.name,
-                                      metadata=project.metadata,
-                                      overwrite=True)
-        if result:
-            successfulProjects.append(project)
-            yield True, project
-        else:
-            yield False, project
+    if not resultsOnly:
+        successfulProjects = []
+        for project in getProjects(names=projects):
+            result = uploader.new_project(project.name,
+                                          metadata=project.metadata,
+                                          overwrite=True)
+            if result:
+                successfulProjects.append(project)
+                yield True, project
+            else:
+                yield False, project
 
 
             
-    successfulSamples = []
-    for sample in getSamples(projects=successfulProjects):
-        if not sample.validStatus():
-            continue
-        result = uploader.new_sample(sample.name,
-                                     sample.projectName,
-                                     SampleType.asString(sample.sampleType),
-                                     metadata=sample.metadata,
-                                     overwrite=True)
-        if result:
-            successfulSamples.append(sample)
-            yield True, sample
-        else:
-            yield False, sample
-
-
-    successfulExps = []
-    for exp in getExperiments():
-        result = uploader.new_experiment(exp.name,
-                                         DataType.asString(exp.dataType),
-                                         metadata=exp.metadata,
+        successfulSamples = []
+        for sample in getSamples(projects=successfulProjects):
+            if not sample.validStatus():
+                continue
+            result = uploader.new_sample(sample.name,
+                                         sample.projectName,
+                                         SampleType.asString(sample.sampleType),
+                                         metadata=sample.metadata,
                                          overwrite=True)
-        if result:
-            successfulExps.append(exp)
-            yield True, exp
-        else:
-            yield False, exp
+            if result:
+                successfulSamples.append(sample)
+                yield True, sample
+            else:
+                yield False, sample
+
+
+        successfulExps = []
+        for exp in getExperiments():
+            result = uploader.new_experiment(exp.name,
+                                             DataType.asString(exp.dataType),
+                                             metadata=exp.metadata,
+                                             overwrite=True)
+            if result:
+                successfulExps.append(exp)
+                yield True, exp
+            else:
+                yield False, exp
             
 
     
-    successfulData = []
-    for dataRec in getData(projects=successfulProjects,
-                           experiments=successfulExps,
-                           samples=successfulSamples):
+        successfulData = []
+        for dataRec in getData(projects=successfulProjects,
+                               experiments=successfulExps,
+                               samples=successfulSamples):
 
-        result = uploader.new_data_record(dataRec.name,
-                                          dataRec.sampleName,
-                                          dataRec.experimentName,
-                                          DataType.asString(dataRec.dataType),
-                                          metadata=dataRec.metadata,
-                                          overwrite=True)
-        if result:
-            successfulData.append( dataRec)
-            yield True, dataRec
-        else:
-            yield False, dataRec
+            result = uploader.new_data_record(dataRec.name,
+                                              dataRec.sampleName,
+                                              dataRec.experimentName,
+                                              DataType.asString(dataRec.dataType),
+                                              metadata=dataRec.metadata,
+                                              overwrite=True)
+            if result:
+                successfulData.append( dataRec)
+                yield True, dataRec
+            else:
+                yield False, dataRec
 
-    for result in getResults(dataRecs=successfulData):
+    if resultsOnly:
+        successfulData = []
+    
+    for result in getResults(dataRecs=successfulData, modules=[resultType]):
         upResult = None
         try:
             upResult = uploader.new_result(result.name,
-                                       result.dataName,
-                                       result.moduleName,
-                                       filenames=result.resultFiles,
-                                       overwrite=True)
+                                           result.dataName,
+                                           result.moduleName,
+                                           filenames=result.resultFiles,
+                                           overwrite=True)
         except:
             yield False, result
 
