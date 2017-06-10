@@ -102,6 +102,7 @@ def all_input(wildcards):
 	for output_builder in output_builders:
 		inp += output_builder( wildcards)
 
+        inp = clearExisting(inp)
 	return inp
 
 def loadFiles(inputs, outputs, cmd):
@@ -129,11 +130,20 @@ def loadFiles(inputs, outputs, cmd):
 	print(fullCmd)
 	return fullCmd
 
-		
-		
+def prependOutputDir(filename, sampleName=None, dataName=None, generic=True):
+        if not generic:
+	        pattern = '{}/{}/{}/{}'.format(config['OUTPUT_DIR'], sampleName, dataName, filename)
+        else:
+                pattern = '{odir}/{{sample}}/{{data_name}}/{fname}'.format(odir=config['OUTPUT_DIR'],
+                                                                           fname=filename)
+        return pattern
+
+def clearExisting(files):
+        return [f for f in files if not os.path.isfile(f)]
+
 ################################################################################
 #
-# I/O Utilities
+# Modular Pipelines
 #
 ################################################################################
 

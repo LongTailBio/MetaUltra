@@ -1,19 +1,22 @@
 from meta_ultra.api import api
 
+mp2Pattern = prependOutputDir('{sample}.{data_name}'+config['METAPHLAN2']['EXT'])
+finalPattern = mp2Pattern + '.registered'
+
 def metaphlan2_output(wildcards):
-	tools = config['TOOLS_TO_RUN']
-	inp = []
 	dataNames=[]
 	for sampleName, sampleInfo in config['SAMPLES'].items():
 		for dataName, dataConf in sampleInfo.items():
 			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
+			if dataType in [DataType.SR_WMGS_DNA_SINGLE_END,
+                                        DataType.SR_WMGS_DNA_PAIRED_END,
+                                        DataType.LR_WMGS_ONT_DNA]:
 				dataNames.append((sampleName, dataConf['DATA_NAME']))
 
-	if 'METAPHLAN2' in tools:
-		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']+'.registered'
-		for sample, data in dataNames:
-			inp.append( pattern.format(sample=sample, data_name=data))
+        inp = []
+        for sample, data in dataNames:
+		oFile = finalPattern.format(sample=sample, data_name=data)
+                inp.append(oFile)
 
 	return inp
 
@@ -23,12 +26,14 @@ rule metaphlan2_single_sample:
 	input:
 		reads = getNotHostReads
 	output:
-		main=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'],
+		main=mp2Pattern
 	threads: int(config['METAPHLAN2']['THREADS'])
 	params:
 		sample_name = lambda wc: wc.sample,
 		data_name = lambda wc: wc.data_name,
 		metaphlan2=config['METAPHLAN2']['EXC']['FILEPATH'],
+                bwa=config['BWA']['EXC']['FILEPATH'],
+                metaphlan2Ref=config['METAPHLAN2']['REF']['FILEPATH'],
 		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample_{sample}_{data_name}',
 	resources:
 		time=int(config['METAPHLAN2']['TIME']),
@@ -36,23 +41,32 @@ rule metaphlan2_single_sample:
 
 	run:
 		dataType = getDataType(params.sample_name, params.data_name)
-		if dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+		if dataType == DataType.SR_WMGS_DNA_PAIRED_END:
 			cmd = ('{params.metaphlan2} --input_type fastq ${{I0}},${{I1}}'
-			       ' --nproc {threads} --bowtie2out ${{O0}}.bt2 > ${{O0}}')
+			       ' --nproc {threads} --bowtie2out ${{O0}}.bt2.sam > ${{O0}}')
 			cmd = loadFiles([input.reads[0], input.reads[1]], [output.main], cmd)	 
-		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		elif dataType == DataType.SR_WMGS_DNA_SINGLE_END:
 			cmd = ('{params.metaphlan2} --input_type fastq ${{I0}}'
-			       ' --nproc {threads} --bowtie2out ${{O0}}.bt2 > ${{O0}}')
-			cmd = loadFiles([input.reads[0]], [output.main], cmd)	 
+			       ' --nproc {threads} --bowtie2out ${{O0}}.bt2.sam > ${{O0}}')
+			cmd = loadFiles([input.reads[0]], [output.main], cmd)
+                elif dataType == DataType.LR_WMGS_ONT_DNA:
+                        bwa = ('{params.bwa} mem -x ont2d -t {threads} ${{I1}} ${{I0}} > '
+                               '${{O0}}.bwa.sam ')
+                        cmd = ( bwa + ' && '
+                                '{params.metaphlan2} --input_type sam --nproc {threads} '
+                                '${{O0}}.bwa.sam > ${{O0}}')
+                        cmd = loadFiles([input.reads[0], params.metaphlan2Ref],
+                                        [output.main],
+                                        cmd)
 		shell(cmd)
 
 localrules: register_metaphlan2_single_sample
 		
 rule register_metaphlan2_single_sample:
 	input:
-		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']
+		inp=mp2Pattern
 	output:
-		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT'] + '.registered'
+		flag=finalPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',
