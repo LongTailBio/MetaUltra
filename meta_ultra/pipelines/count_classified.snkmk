@@ -1,35 +1,26 @@
 import meta_ultra.api as api
 
+countPattern= prependOutputDir('{sample}.{data_name}.reads_classified.json')
+finalPattern = countPattern + '.registered'
 
 def count_classified_output(wildcards):
-	tools = config['TOOLS_TO_RUN']
-	inp = []
-	dataSamplePairs=[]
-	for sampleName, dataRecords in config['SAMPLES'].items():
-		for dataName, dataConf in dataRecords.items():
-			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
-				dataSamplePairs.append( (sampleName, dataConf['DATA_NAME']))
-
-	if 'COUNT_CLASSIFIED' in tools:
-		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.reads_classified.json.registered'
-		for sample, data in dataSamplePairs:
-			inp.append( pattern.format(sample=sample, data_name=data))
-	return inp
-
+        return standardOutputFileBuilder(finalPattern,
+                                         DataType.SR_WMGS_DNA_SINGLE_END,
+                                         DataType.SR_WMGS_DNA_PAIRED_END,
+                                         DataType.LR_WMGS_ONT_DNA)
 
 output_builders.append( count_classified_output)
 
-rule count_classified_reads_single:
+rule count_classified_reads:
 	input:
 		host=getHostReads,
 		nothost=getNotHostReads,
-		krakenmpa=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['MPA_EXT']
+		krakenmpa=krakenPattern
 	output:
-		main=config['OUTPUT_DIR']+'{sample}.{data_name}.reads_classified.json'
+		main=countPattern
 	params:
 		script=config['COUNT_CLASSIFIED']['EXC']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX']+'count_classified_reads_single_{sample}_{data_name}'
+		job_name=jobName('count-classified-reads')
 	resources:
 		time=1,
 		n_gb_ram=2
@@ -37,13 +28,13 @@ rule count_classified_reads_single:
 	shell:
 		'{params.script} {input.host[0]} {input.nothost[0]} {input.krakenmpa} > {output.main}'
 
-localrules: register_count_classified_reads_single
+localrules: register_count_classified_reads
                 
-rule register_count_classified_reads_single:
+rule register_count_classified_reads:
 	input:
-		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.reads_classified.json'
+		inp=countPattern
 	output:
-		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.reads_classified.json.registered'
+		flag=finalPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

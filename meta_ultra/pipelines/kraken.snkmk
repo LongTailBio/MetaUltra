@@ -1,25 +1,17 @@
 import meta_ultra.api as api
 
-krakenRawPattern = prependOutputDir('{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT'])
-krakenPattern = prependOutputDir('{sample}.{data_name}.'+config['KRAKEN']['MPA_EXT'])
-finalPattern = krakenPattern + '.registered'
 
 def kraken_output(wildcards):
+    return standardOutputFileBuilder(krakenFlagPattern,
+                                        DataType.SR_WMGS_DNA_SINGLE_END,
+                                        DataType.SR_WMGS_DNA_PAIRED_END,
+                                        DataType.LR_WMGS_ONT_DNA)
 
-	dataSamplePairs= getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
-                                            DataType.SR_WMGS_DNA_PAIRED_END,
-                                            DataType.LR_WMGS_ONT_DNA)
-	inp = []
-	for sample, data in dataSamplePairs:
-                oFile = finalPattern.format(sample=sample, data_name=data)
-		inp.append( oFile)
-                
-	return inp
 
 output_builders.append( kraken_output)
 
 # Kraken
-rule kraken_raw_single_sample:
+rule kraken_raw:
 	input:
 		reads = getNotHostReads
 	output:
@@ -48,7 +40,7 @@ rule kraken_raw_single_sample:
 		shell(cmd)
 
 
-rule kraken_mpa_single:
+rule kraken_mpa:
 	input:
 		raw = krakenRawPattern
 	output:
@@ -65,13 +57,13 @@ rule kraken_mpa_single:
 	shell:
 		'{params.kraken_mpa} {input.raw} --db {params.db} > {output.main}'
 
-localrules: register_kraken_mpa_single
+localrules: register_kraken_mpa
 
-rule register_kraken_mpa_single:
+rule register_kraken_mpa:
 	input:
 		inp=krakenPattern
 	output:
-		flag=finalPattern
+		flag=krakenFlagPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

@@ -1,36 +1,23 @@
 import meta_ultra.api as api
 
 def host_vcf_output(wildcards):
-        dataSamplePairs = getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
-                                             DataType.SR_WMGS_DNA_PAIRED_END)
-        inp = []
-	pattern=config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf.registered'
-	for sample, data in dataSamplePairs:
-		inp.append( pattern.format(sample=sample, data_name=data))
-	return inp
+        return standardOutputFileBuilder(hostVCFFlagPattern,
+                                         DataType.SR_WMGS_DNA_SINGLE_END,
+                                        DataType.SR_WMGS_DNA_PAIRED_END,
+                                        DataType.LR_WMGS_ONT_DNA)
 
 output_builders.append( host_vcf_output)
 
-def getBam(wc):
-        sample_name=wc.sample
-	data_name=wc.data_name
-        dataType = getDataType(sample_name, data_name)
-
-        if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
-                return config['OUTPUT_DIR']+sample_name+'.'+data_name+'.single_host.bam' # from filter host
-        elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
-                return config['OUTPUT_DIR']+sample_name+'.'+data_name+'.paired_host.bam' # from filter host
-
         
-rule sort_bam_single:
+rule sort_bam:
     	input:
-            	bam=getBam
+            	bam=hostBAM
 	output:
-		sortedbam=temp(config['OUTPUT_DIR']+'{sample}.{data_name}.sorted.host.bam')
+		sortedbam=temp(hostVCFSortedBAMPattern)
 	threads: 1
 	params:
 		samtools = config['SAMTOOLS']['EXC']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'sort_host_bam_{sample}_{data_name}',
+		job_name=jobName('sort-host-bam')
 	resources:
 		time=int(config['HOST_VCF']['SORT_TIME']),
 		n_gb_ram=int(config['HOST_VCF']['SORT_RAM'])
@@ -43,9 +30,9 @@ localrules: read_group_bam
 
 rule read_group_bam:
 	input:
-		bam=config['OUTPUT_DIR']+'{sample}.{data_name}.sorted.host.bam'
+		bam=hostVCFSortedBAMPattern
 	output:
-		bam=config['OUTPUT_DIR']+'{sample}.{data_name}.rg_sorted.host.bam'
+		bam=hostVCFReadGroupBAMPattern
 	threads: 1
 	shell:
 		'picard AddOrReplaceReadGroups -XX:ParallelGCThreads=1 I={input.bam} O={output.bam} RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=11'
@@ -59,7 +46,7 @@ rule freebayes_generate_regions:
 	threads: 1
 	params:
                 generate_regions= config['HOST_VCF']['GENERATE_REGIONS']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'freebayes_generate_regions_{sample}_{data_name}',
+		job_name=jobName('freebayes-regions')
 	resources:
 		time=int(config['HOST_VCF']['FREEBAYES_TIME']),
 		n_gb_ram=int(config['HOST_VCF']['FREEBAYES_RAM'])
@@ -69,19 +56,19 @@ rule freebayes_generate_regions:
                 shell(cmd)
 
                 
-rule freebayes_single_sample:
+rule freebayes_sample:
 	input:
-		bam=config['OUTPUT_DIR']+'{sample}.{data_name}.rg_sorted.host.bam',
+		bam=hostVCFReadGroupBAMPattern,
                 genome=config['HOST_VCF']['DB']['FILEPATH'],
 #                regions=config['OUTPUT_DIR']+'{sample}.{data_name}.host.regions'
 	output:
-		main = config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf'
+		main = hostVCFPattern
 	threads: 1
 	version: config['HOST_VCF']['EXC']['VERSION']
 	params:
 		freebayespar = config['HOST_VCF']['EXC']['FILEPATH'],
                 generate_regions= config['HOST_VCF']['GENERATE_REGIONS']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'freebayes_single_sample_{sample}_{data_name}',
+		job_name=jobName('freebayes')
 	resources:
 		time=int(config['HOST_VCF']['FREEBAYES_TIME']),
 		n_gb_ram=int(config['HOST_VCF']['FREEBAYES_RAM'])
@@ -91,13 +78,13 @@ rule freebayes_single_sample:
                 cmd = loadFiles([input.genome, input.bam], [output.main], cmd)
                 shell(cmd)
 
-localrules: register_freebayes_single_sample
+localrules: register_freebayes
 
-rule register_freebayes_single_sample:
+rule register_freebayes:
 	input:
-		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf'
+		inp=hostVCFPattern
 	output:
-		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf.registered'
+		flag=hostVCFFlagPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

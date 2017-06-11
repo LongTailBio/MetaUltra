@@ -1,18 +1,11 @@
 from meta_ultra.api import api
 
-mp2Pattern = prependOutputDir('{sample}.{data_name}'+config['METAPHLAN2']['EXT'])
-finalPattern = mp2Pattern + '.registered'
 
 def metaphlan2_output(wildcards):
-	dataNames=getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
+        return standardOutputFileBuilder(mp2FlagPattern,
+                                         DataType.SR_WMGS_DNA_SINGLE_END,
                                         DataType.SR_WMGS_DNA_PAIRED_END,
                                         DataType.LR_WMGS_ONT_DNA)
-        inp = []
-        for sample, data in dataNames:
-		oFile = finalPattern.format(sample=sample, data_name=data)
-                inp.append(oFile)
-
-	return inp
 
 output_builders.append( metaphlan2_output)
 
@@ -60,7 +53,7 @@ rule register_metaphlan2:
 	input:
 		inp=mp2Pattern
 	output:
-		flag=finalPattern
+		flag=mp2FlagPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

@@ -1,29 +1,11 @@
 import meta_ultra.api as api
 
-hostSingleReads = prependOutputDir('{sample}.{data_name}_host.fastq.gz')
-notHostSingleReads = prependOutputDir('{sample}.{data_name}_not-host.fastq.gz')
-
-hostPaired1Reads = prependOutputDir('{sample}.{data_name}_host_1.fastq.gz')
-hostPaired2Read = prependOutputDir('{sample}.{data_name}_host_2.fastq.gz')
-notHostPaired1Reads = prependOutputDir('{sample}.{data_name}_not-host_1.fastq.gz')
-notHostPaired2Reads = prependOutputDir('{sample}.{data_name}_not-host_2.fastq.gz')
-
-bam = prependOutputDir('{sample}.{data_name}.single_host.bam')
-
-finalPattern= prependOutputDir('{sample}.{data_name}.filter_host.complete')
 
 def filter_host_out(wildcards):
-	dataNames= getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
-                                      DataType.SR_WMGS_DNA_PAIRED_END,
-                                      DataType.LR_WMGS_ONT_DNA)
-
-	# host filtering is an intermediate step so it doesn't get registered
-	# but we keep the flag-as-complete paradigm for consistency
-        inp = []
-	for sample, data in dataNames:
-		inp.append( finalPattern.format(sample=sample, data_name=data))
-
-	return inp
+    return standardOutputFileBuilder(hostFlagPattern,
+	                                    DataType.SR_WMGS_DNA_SINGLE_END,
+                                        DataType.SR_WMGS_DNA_PAIRED_END,
+                                        DataType.LR_WMGS_ONT_DNA)
 
 output_builders.append(filter_host_out)
 
@@ -33,7 +15,7 @@ rule filter_host_single_end:
 	output:
 		host = hostSingleReads,
 		nothost = notHostSingleReads,
-		bam=temp(bam),
+		bam=temp(hostBAM),
 	params:
 		bt2=config['BOWTIE2']['EXC']['FILEPATH'],
                 bwa=confValOrNone('BWA', 'EXC', 'FILEPATH'),
@@ -80,7 +62,7 @@ rule filter_host_paired_end:
                 host2 = hostPaired2Reads,
 		nothost1 = notHostPaired1Reads,
                 nothost2 = notHostPaired2Reads,
-		bam=temp(bam)
+		bam=temp(hostBAM)
 	params:
 		db = config['FILTER_HOST']['DB']['FILEPATH'],
 	    	bt2=config['BOWTIE2']['EXC']['FILEPATH'],

@@ -1,46 +1,34 @@
 import meta_ultra.api as api
 
 def hmp_output(wildcards):
-	tools = config['TOOLS_TO_RUN']
-	inp = []
-	dataSamplePairs=[]
-	for sampleName, dataRecords in config['SAMPLES'].items():
-		for dataName, dataConf in dataRecords.items():
-			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
-				dataSamplePairs.append((sampleName, dataConf['DATA_NAME']))
-
-	if 'HMP_SITE_DISTS' in tools:
-		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.hmp_site_dists.json.registered'
-		for sample, data in dataSamplePairs:
-			inp.append( pattern.format(sample=sample, data_name=data))
-
-	return inp
-
+        return standardOutputFileBuilder(hmpFlagPattern,
+                                         DataType.SR_WMGS_DNA_SINGLE_END,
+                                        DataType.SR_WMGS_DNA_PAIRED_END,
+                                        DataType.LR_WMGS_ONT_DNA)
 output_builders.append( hmp_output)
 
-rule hmp_dists_single:
+rule hmp_dists:
 	input:
-		mpa= config['OUTPUT_DIR']+'{sample}.{data_name}.metaphlan2.tsv',
+		mpa=mp2Pattern,
 	output:
-		main=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json'
+		main=hmpPattern
 	resources:
 		time=1,
 		n_gb_ram=2
 	threads: 1
 	params:
 		script=config['HMP_SITE_DISTS']['EXC']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'hmp_site_dists_single_{sample}_{data_name}'
+		job_name=jobName('hmp-site-dists')
 	shell:
 		'{params.script} {input.mpa} > {output.main}'
 
-localrules: register_hmp_dists_single
+localrules: register_hmp_dists
 
-rule register_hmp_dists_single:
+rule register_hmp_dists:
 	input:
-		inp=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json'
+		inp=hmpPattern
 	output:
-		flag=config['OUTPUT_DIR'] + '{sample}.{data_name}.hmp_site_dists.json.registered'
+		flag=hmpFlagPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',
