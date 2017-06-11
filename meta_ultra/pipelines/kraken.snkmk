@@ -1,19 +1,19 @@
 import meta_ultra.api as api
 
-def kraken_output(wildcards):
-	tools = config['TOOLS_TO_RUN']
-	inp = []
-	dataSamplePairs=[]
-	for sampleName, dataRecords in config['SAMPLES'].items():
-		for dataName, dataConf in dataRecords.items():
-			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]:
-				dataSamplePairs.append( (sampleName, dataConf['DATA_NAME']))
+krakenRawPattern = prependOutputDir('{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT'])
+krakenPattern = prependOutputDir('{sample}.{data_name}.'+config['KRAKEN']['MPA_EXT'])
+finalPattern = krakenPattern + '.registered'
 
-	if 'KRAKEN' in tools:
-		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['KRAKEN']['MPA_EXT']+'.registered'
-		for sample, data in dataSamplePairs:
-			inp.append( pattern.format(sample=sample, data_name=data))
+def kraken_output(wildcards):
+
+	dataSamplePairs= getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
+                                            DataType.SR_WMGS_DNA_PAIRED_END,
+                                            DataType.LR_WMGS_ONT_DNA)
+	inp = []
+	for sample, data in dataSamplePairs:
+                oFile = finalPattern.format(sample=sample, data_name=data)
+		inp.append( oFile)
+                
 	return inp
 
 output_builders.append( kraken_output)
@@ -23,13 +23,13 @@ rule kraken_raw_single_sample:
 	input:
 		reads = getNotHostReads
 	output:
-		main = temp(config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT'])
+		main = temp( krakenRawPattern)
 	threads: int( config['KRAKEN']['THREADS'])
 	version: config['KRAKEN']['EXC']['VERSION']
 	params:
 		kraken = config['KRAKEN']['EXC']['FILEPATH'],
 		db = config['KRAKEN']['DB']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'kraken_raw_single_sample_{sample}_{data_name}',
+		job_name=jobName('kraken', wc.sample, wc.data_name),
 		data_type = lambda wc: config['SAMPLES'][wc.sample][wc.data_name]['DATA_TYPE'] 
 	resources:
 		time=int(config['KRAKEN']['TIME']),
@@ -40,7 +40,8 @@ rule kraken_raw_single_sample:
 			cmd = '{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
 			cmd += '--paired --preload --db {params.db} $I0 $I1 > $O0'
 			cmd = loadFiles([input.reads[0], input.reads[1]], [output.main], cmd)
-		elif dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+		elif dataType in [DataType.SR_WMGS_DNA_SINGLE_END,
+                                  DataType.LR_WMGS_ONT_DNA]:
 			cmd = '{params.kraken} --gzip-compressed --fastq-input --threads {threads} '
 			cmd += '--preload --db {params.db} $I0 > $O0'
 			cmd = loadFiles([input.reads[0]], [output.main], cmd)
@@ -49,15 +50,15 @@ rule kraken_raw_single_sample:
 
 rule kraken_mpa_single:
 	input:
-		raw = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['RAW_EXT']
+		raw = krakenRawPattern
 	output:
-		main = config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['MPA_EXT']
+		main = krakenPattern
 	threads: 1
 	version: config['KRAKEN']['MPA_EXC']['VERSION']
 	params:
 		kraken_mpa = config['KRAKEN']['MPA_EXC']['FILEPATH'],
 		db = config['KRAKEN']['DB']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'kraken_mpa_single_{sample}_{data_name}'
+		job_name=jobName('kraken-mpa')
 	resources:
 		time=int(config['KRAKEN']['MPA_TIME']),
 		n_gb_ram=int(config['KRAKEN']['MPA_RAM'])
@@ -68,9 +69,9 @@ localrules: register_kraken_mpa_single
 
 rule register_kraken_mpa_single:
 	input:
-		inp=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['MPA_EXT']
+		inp=krakenPattern
 	output:
-		flag=config['OUTPUT_DIR']+'{sample}.{data_name}.' + config['KRAKEN']['MPA_EXT'] + '.registered'
+		flag=finalPattern
 	params:
 		conf_name=config['NAME'],
 		sample_name='{sample}',

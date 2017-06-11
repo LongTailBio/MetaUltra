@@ -1,20 +1,12 @@
 import meta_ultra.api as api
 
 def host_vcf_output(wildcards):
-	tools = config['TOOLS_TO_RUN']
-	inp = []
-        allowedDataTypes = [DataType.WGS_DNA_SEQ_SINGLE_END, DataType.WGS_DNA_SEQ_PAIRED_END]
-	dataSamplePairs=[]
-	for sampleName, dataRecords in config['SAMPLES'].items():
-		for dataName, dataConf in dataRecords.items():
-			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in allowedDataTypes:
-				dataSamplePairs.append( (sampleName, dataConf['DATA_NAME']))
-
-	if 'HOST_VCF' in tools:
-		pattern=config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf.registered'
-		for sample, data in dataSamplePairs:
-			inp.append( pattern.format(sample=sample, data_name=data))
+        dataSamplePairs = getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
+                                             DataType.SR_WMGS_DNA_PAIRED_END)
+        inp = []
+	pattern=config['OUTPUT_DIR']+'{sample}.{data_name}.host.vcf.registered'
+	for sample, data in dataSamplePairs:
+		inp.append( pattern.format(sample=sample, data_name=data))
 	return inp
 
 output_builders.append( host_vcf_output)

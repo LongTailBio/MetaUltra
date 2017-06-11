@@ -4,15 +4,9 @@ mp2Pattern = prependOutputDir('{sample}.{data_name}'+config['METAPHLAN2']['EXT']
 finalPattern = mp2Pattern + '.registered'
 
 def metaphlan2_output(wildcards):
-	dataNames=[]
-	for sampleName, sampleInfo in config['SAMPLES'].items():
-		for dataName, dataConf in sampleInfo.items():
-			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
-			if dataType in [DataType.SR_WMGS_DNA_SINGLE_END,
+	dataNames=getDataSamplePairs(DataType.SR_WMGS_DNA_SINGLE_END,
                                         DataType.SR_WMGS_DNA_PAIRED_END,
-                                        DataType.LR_WMGS_ONT_DNA]:
-				dataNames.append((sampleName, dataConf['DATA_NAME']))
-
+                                        DataType.LR_WMGS_ONT_DNA)
         inp = []
         for sample, data in dataNames:
 		oFile = finalPattern.format(sample=sample, data_name=data)
@@ -22,7 +16,7 @@ def metaphlan2_output(wildcards):
 
 output_builders.append( metaphlan2_output)
 
-rule metaphlan2_single_sample:
+rule metaphlan2:
 	input:
 		reads = getNotHostReads
 	output:
@@ -32,9 +26,9 @@ rule metaphlan2_single_sample:
 		sample_name = lambda wc: wc.sample,
 		data_name = lambda wc: wc.data_name,
 		metaphlan2=config['METAPHLAN2']['EXC']['FILEPATH'],
-                bwa=config['BWA']['EXC']['FILEPATH'],
-                metaphlan2Ref=config['METAPHLAN2']['REF']['FILEPATH'],
-		job_name=config['JOB_NAME_PREFIX'] + 'metaphlan2_single_sample_{sample}_{data_name}',
+                bwa=confValOrNone('BWA', 'EXC', 'FILEPATH'),
+                metaphlan2RefBWA=confValOrNone('METAPHLAN2', 'REF_BWA', 'FILEPATH'),
+		job_name=jobName('metaphlan2', wc.sample, wc.data_name),
 	resources:
 		time=int(config['METAPHLAN2']['TIME']),
 		n_gb_ram=int(config['METAPHLAN2']['RAM'])
@@ -55,14 +49,14 @@ rule metaphlan2_single_sample:
                         cmd = ( bwa + ' && '
                                 '{params.metaphlan2} --input_type sam --nproc {threads} '
                                 '${{O0}}.bwa.sam > ${{O0}}')
-                        cmd = loadFiles([input.reads[0], params.metaphlan2Ref],
+                        cmd = loadFiles([input.reads[0], params.metaphlan2RefBWA],
                                         [output.main],
                                         cmd)
 		shell(cmd)
 
-localrules: register_metaphlan2_single_sample
+localrules: register_metaphlan2
 		
-rule register_metaphlan2_single_sample:
+rule register_metaphlan2:
 	input:
 		inp=mp2Pattern
 	output:

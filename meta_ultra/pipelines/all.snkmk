@@ -72,11 +72,12 @@ def getHostReads(wc):
 
 	dataType = getDataType(wc.sample, wc.data_name)
 	reads = []
-	if dataType == DataType.WGS_DNA_SEQ_SINGLE_END:
+	if dataType in [DataType.SR_WMGS_DNA_SINGLE_END,
+                        DataType.LR_WMGS_ONT_DNA]:
 		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host.fastq.gz'
 		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name))
 		
-	elif dataType == DataType.WGS_DNA_SEQ_PAIRED_END:
+	elif dataType in [DataType.SR_WMGS_DNA_PAIRED_END]:
 		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}_host_{num}.fastq.gz'
 		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=1))
 		reads.append( pattern.format(sample=wc.sample, data_name=wc.data_name, num=2))
@@ -141,6 +142,30 @@ def prependOutputDir(filename, sampleName=None, dataName=None, generic=True):
 def clearExisting(files):
         return [f for f in files if not os.path.isfile(f)]
 
+def jobName(moduleName, sampleName, dataName):
+        pass
+
+def confValOrNone(*keys):
+        el = config
+        try:
+                for key in keys:
+                        el = el[key]
+                return el
+        except KeyError:
+                pass
+        return None
+
+def getDataSamplePairs( *allowedDataTypes):
+	dataSamplePairs=[]
+	for sampleName, dataRecords in config['SAMPLES'].items():
+		for dataName, dataConf in dataRecords.items():
+			dataType = DataType.asDataType(dataConf['DATA_TYPE'])
+			if dataType in allowedDataTypes:
+				dataSamplePairs.append( (sampleName, dataConf['DATA_NAME']))
+        return dataSamplePairs
+
+
+
 ################################################################################
 #
 # Modular Pipelines
@@ -165,7 +190,7 @@ snakefiles = {
 for moduleName, snakefile in snakefiles.items():
         if moduleName in config['TOOLS_TO_RUN']:
                 include: snakefile
-        
+
 rule all:
 	input:
 		all_input
