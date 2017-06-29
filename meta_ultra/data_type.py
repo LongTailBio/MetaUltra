@@ -6,7 +6,9 @@ class DataTypeNotFoundError(Exception):
 class DataType(Enum):
     WGS_DNA_SEQ_SINGLE_END='WGS_DNA_SEQ_SINGLE_END'
     WGS_DNA_SEQ_PAIRED_END='WGS_DNA_SEQ_PAIRED_END'
-
+    UBIOME_16S_AMPLICON_SEQ='UBIOME_16S_AMPLICON_SEQ'
+    UBIOME_18S_AMPLICON_SEQ='UBIOME_18S_AMPLICON_SEQ'
+    
     @classmethod
     def asDataType(ctype, val):
         if type(val) == str:

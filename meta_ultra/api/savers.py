@@ -108,7 +108,7 @@ def saveConf(name, confDict, modify=False):
 
 ###########################################################
 
-def saveResult(name, moduleName, resultFilenames, data, conf, sample, experiment, project):
+def saveResult(name, moduleName, resultFilenames, data, conf, sample, experiment, project, modify=False):
     if type(sample) != str:
         sample = sample.name
     if type(conf) != str:
@@ -127,7 +127,7 @@ def saveResult(name, moduleName, resultFilenames, data, conf, sample, experiment
 		    experiment_name=experiment,
 		    project_name=project,
 		    result_files=resultFilenames)
-    return result.save()
+    return result.save(modify=modify)
 
 
 ###########################################################

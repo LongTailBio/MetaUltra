@@ -141,7 +141,9 @@ def loadFiles(inputs, outputs, cmd):
 snakefiles = {
         "SHORTBRED": 'shortbred.snkmk',
         "METAPHLAN2": 'metaphlan2.snkmk',
+        "NO_HOST_FILTER_METAPHLAN2" : 'no_host_filter_metaphlan2.snkmk',
         "KRAKEN": 'kraken.snkmk',
+        "NO_HOST_FILTER_KRAKEN": 'no_host_filter_kraken.snkmk',
         "MASH" : 'mash.snkmk',
         "MICROBE_CENSUS": 'microbe_census.snkmk',
         "FILTER_HOST": 'filter_host.snkmk',

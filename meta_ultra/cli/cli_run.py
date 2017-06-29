@@ -10,12 +10,14 @@ import meta_ultra.conf_builder as conf_builder
 @main.command()
 @click.option('--jobs',default=1,type=int, help='How many jobs should be run simultaneously?')
 @click.option('--choose/--all',default=False,help='Choose specific samples, projects, or experiments to process')
+@click.option('--local/--on-cluster',default=False,help='Run jobs locally')
 @click.option('--conf',default=None,type=str, help='Conf to use')
 @click.option('--dryrun/--wetrun',default=False,help='Show what result files would be built')
 @click.option('--unlock/--locked',default=False,help='Unlock the working directory')
 @click.option('--rerun/--no-rerun',default=False,help='Rebuild files that might be incomplete')
 @click.option('--results',default=None,type=str, help='Directory for output')
-def run( jobs, choose, conf=None, dryrun=False, unlock=False, rerun=False, results=None):
+@click.option('--clean',default=None,type=str, multiple=True, help='Clean metadata of given file')
+def run( jobs, choose, local=False, conf=None, dryrun=False, unlock=False, rerun=False, results=None, clean=None):
     if not conf:
         conf = UserChoice('conf', api.getConfs(), new=addConf).resolve()
     
@@ -41,5 +43,12 @@ def run( jobs, choose, conf=None, dryrun=False, unlock=False, rerun=False, resul
 
     confWithData = conf_builder.addSamplesToConf(confName, dataRecs, outDir=results)              
 
-    api.runModules(confWithData,dataRecs,jobs, dryrun=dryrun, unlock=unlock, rerun=rerun)
+    api.runModules(confWithData,
+                   dataRecs,
+                   jobs,
+                   dryrun=dryrun,
+                   local=local,
+                   unlock=unlock,
+                   rerun=rerun,
+                   cleanMetadata=clean)
 

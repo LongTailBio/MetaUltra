@@ -16,3 +16,5 @@ import meta_ultra.modules.food_and_pets
 import meta_ultra.modules.blastn
 import meta_ultra.modules.hmp_site_dists
 import meta_ultra.modules.host_vcf
+import meta_ultra.modules.no_filter_kraken
+import meta_ultra.modules.no_filter_metaphlan2

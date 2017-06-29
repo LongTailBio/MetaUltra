@@ -33,18 +33,21 @@ def init(dir='.'):
 #
 ################################################################################
 
-def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False):
+def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False,cleanMetadata=False,local=False):
     with open(config.snakemake_static_conf_file(), 'w') as snkConf:
         snkConf.write( jdumps(confWithData))
+    if not local:
+        clustScript = config.cluster_wrapper()
     snakemake(config.snake_file(),
-                     config=confWithData,
-                     cluster=config.cluster_wrapper(),
-                     keepgoing=True,
-                     printshellcmds=True,
-                     dryrun=dryrun,
-                     unlock=unlock,
-                     force_incomplete=rerun,
-                     nodes=jobs)
+              config=confWithData,
+              cluster=clustScript,
+              keepgoing=True,
+              printshellcmds=True,
+              dryrun=dryrun,
+              unlock=unlock,
+              force_incomplete=rerun,
+              nodes=jobs,
+              cleanup_metadata=cleanMetadata)
     
 ################################################################################
 #

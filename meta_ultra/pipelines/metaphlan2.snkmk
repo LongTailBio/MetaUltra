@@ -14,7 +14,7 @@ def metaphlan2_output(wildcards):
 		pattern = config['OUTPUT_DIR']+'{sample}.{data_name}.'+config['METAPHLAN2']['EXT']+'.registered'
 		for sample, data in dataNames:
 			inp.append( pattern.format(sample=sample, data_name=data))
-
+                        
 	return inp
 
 output_builders.append( metaphlan2_output)
