@@ -150,8 +150,12 @@ def getResults(names=None,
     dataRecs = toNameList(dataRecs)
     confs = toNameList(confs)
     dataTypes = convertDataTypes(dataTypes)
-    results = Result.all()
     modules = toNameList(modules)
+    query = Query()
+    if len(projNames) == 1: # hack to test something...
+        results = Result.search(query.project_name == projNames[0])
+    else:
+        results = Result.all()
     out = []
     for  result in results:
         dataRec = getDataRec(result.dataName)

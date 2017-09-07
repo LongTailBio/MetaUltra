@@ -36,8 +36,11 @@ def init(dir='.'):
 def runModules(confWithData,dataRecs,jobs,dryrun=False,unlock=False,rerun=False,cleanMetadata=False,local=False):
     with open(config.snakemake_static_conf_file(), 'w') as snkConf:
         snkConf.write( jdumps(confWithData))
+    clustScript = None
     if not local:
         clustScript = config.cluster_wrapper()
+
+        
     snakemake(config.snake_file(),
               config=confWithData,
               cluster=clustScript,

@@ -25,6 +25,7 @@ if len(config.keys()) == 0:
 if not os.path.isdir(config['OUTPUT_DIR']):
 	os.mkdir(config['OUTPUT_DIR'])
 
+local = config['LOCAL']
 output_builders = []
 
 ################################################################################
@@ -105,27 +106,39 @@ def all_input(wildcards):
 	return inp
 
 def loadFiles(inputs, outputs, cmd):
-	tmpDirCheck = '[ -z "$TMPDIR" ] && TMPDIR=/tmp ; '
+	if local:
+		tmpDirCheck = 'TMPDIR=/tmp ; '
+	else:
+		tmpDirCheck = '[ -z "$TMPDIR" ] && TMPDIR=/tmp ; '
+		
 	uploadCmds = []
 	for i, inp in enumerate(inputs):
-		cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
-		cpCmd += '${{TMPDIR}}/`basename '+inp+'`'
+		if local:
+			cpCmd = ' I{}='.format(i) + inp
+		else:
+			cpCmd = 'rsync -av {} $TMPDIR && I{}='.format(inp,i)
+			cpCmd += '${{TMPDIR}}/`basename '+inp+'`'
 		uploadCmds.append( cpCmd)
 
 	downloadVars = []
 	downloadCmds = []
 	for i, outp in enumerate(outputs):
-		varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}`'.format(outp)
-		downloadVars.append(varCmd)
-		cpCmd = 'rsync -av $O{} {}'.format(i, outp)
-		downloadCmds.append(cpCmd)
+		if local:
+			varCmd = 'O{}='.format(i) + str(outp)
+			downloadVars.append(varCmd)
+		else:
+			varCmd = 'O{}='.format(i) + '${{TMPDIR}}/'+'`basename {}`'.format(outp)			       
+			downloadVars.append(varCmd)
+			cpCmd = 'rsync -av $O{} {}'.format(i, outp)
+			downloadCmds.append(cpCmd)
 
 	uploadCmd = ' && '.join(uploadCmds)
 	downloadVar = ' && '.join(downloadVars)
-	downloadCmd = ' && '.join(downloadCmds)
-
-	fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
-
+	if not local:
+		downloadCmd = ' && '.join(downloadCmds)
+		fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd + ' && ' + downloadCmd
+	else:
+		fullCmd =  tmpDirCheck + uploadCmd + ' && ' + downloadVar + ' && ' + cmd 
 	print(fullCmd)
 	return fullCmd
 

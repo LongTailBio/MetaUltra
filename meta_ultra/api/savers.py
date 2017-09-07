@@ -3,6 +3,7 @@ import meta_ultra.config as config
 from meta_ultra.data_type import DataType
 from meta_ultra.sample_type import SampleType
 from meta_ultra.database import *
+from .getters import *
 import os.path
 import os
 
@@ -80,6 +81,24 @@ def saveSample(name, sampleType, project, metadata, modify=False):
 		    project_name=project,
 		    metadata=metadata)
     return sample.save(modify=modify)
+
+def renameSample(name, newName, clearOld=False):
+    sample = Sample.get(name)
+    sample.name = newName
+    sample.save(modify=True)
+    dataRecs = getData(samples=[name])
+    for dr in dataRecs:
+        dr.sampleName = newName
+        dr.save(modify=True)
+        results = getResults(dataRecs=[dr.name])
+        for r in results:
+            r.sampleName = newName
+            r.save(modify=True)
+    sample.name = newName
+    if clearOld:
+        removeSample(name)
+    return sample
+
 
 ###########################################################
 

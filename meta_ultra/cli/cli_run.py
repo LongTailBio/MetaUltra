@@ -41,7 +41,7 @@ def run( jobs, choose, local=False, conf=None, dryrun=False, unlock=False, rerun
     if type(conf) != str:
         confName = conf.name
 
-    confWithData = conf_builder.addSamplesToConf(confName, dataRecs, outDir=results)              
+    confWithData = conf_builder.addSamplesToConf(confName, dataRecs, outDir=results, local=local)              
 
     api.runModules(confWithData,
                    dataRecs,

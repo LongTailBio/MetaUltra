@@ -34,5 +34,5 @@ cmd = 	cmd.format(job_name=job_properties['params']['job_name'],
                    cmd=jobscript
                    )
 	
-sys.stderr.write('\tRunning: "{}"\n'.format(cmd))
+#sys.stderr.write('\tRunning: "{}"\n'.format(cmd))
 sp.call(cmd, shell=True)
