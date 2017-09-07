@@ -10,31 +10,28 @@ from .project import *
 
 sampleTbl = config.db_sample_table
         
-class Sample(Record):
+class Sample( BaseRecord):
     def __init__(self,**kwargs):
-        super(Sample, self).__init__(kwargs['name'])
-        self.projectName = kwargs['project_name']
-        self.sampleType = SampleType.asSampleType(kwargs['sample_type'])
-        if 'metadata' in kwargs and kwargs['metadata']:
-            self.metadata = kwargs['metadata']
-        else:
-            self.metadata = {}
-
+        super(Sample, self).__init__(**kwargs)
+        self._results = kwargs['results'] # n.b. these are keys not objects
+        self.sampleType = SampleType( kwargs['sample_type'])
+        
     def to_dict(self):
-        out = {
-            'name' : self.name,
-            'project_name':self.projectName,
-            'sample_type':SampleType.asString(self.sampleType),
-            'metadata':self.metadata
-            }
+        out = super(Sample, self).to_dict()
+        out['results'] = self._results
+        out['sample_type'] = str(self.sampleType)
         return out
 
     def validStatus(self):
+        for result 
         try:
             Project.get(self.projectName)
         except NoSuchRecordError:
             return False
         return True
+
+    def results(self):
+        raise NotImplementedError()
 
     
     def __str__(self):

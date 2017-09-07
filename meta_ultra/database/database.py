@@ -28,21 +28,18 @@ class NoSuchRecordError(Exception):
 class InvalidRecordStateError(Exception):
     pass
 
-class Record:
+class BaseRecord:
     dbTbl = None
-    def __init__(self, name):
-        self.name = name
-        self.fileNames = []
-        assert self.fileStatus()
-        
-    def registerFile(self, fname):
-        self.fileNames.append(fname)
-
-    def fileStatus(self):
-        for file in self.fileNames:
-            if not os.path.isfile(file):
-                return False
-        return True
+    def __init__(self, **kwargs):
+        try:
+            self.primaryKey = kwargs['primary_key']
+        except KeyError:
+            self.primaryKey = self.generatePrimaryKey()
+        self.name = kwargs['name']
+        try:
+            self.metadata = kwargs['metadata']
+        except KeyError:
+            self.metadata = {}
         
     def record(self):
         rec = type(self).dbTbl().get(where('name') == self.name)
@@ -52,6 +49,9 @@ class Record:
 
     def saved(self):
         return type(self).exists(self.name)
+
+    def generatePrimaryKey(self):
+        raise NotImplementedError()
     
     def save(self,modify=False):
         if not self.validStatus():
@@ -80,16 +80,25 @@ class Record:
         type(self).dbTbl().remove(eids=[record.eid])
 
     def validStatus(self):
-        return True
+        raise NotImplementedError()
 
+    def to_dict(self):
+        out = {
+            'primary_key' : self.primaryKey,
+            'name': self.name,
+            'metadata': str(self.metadata)
+            }
+        return out
+    
+    
     @classmethod
     def build(ctype, *args, **kwargs):
         return ctype(**kwargs)
 
         
     @classmethod
-    def get(ctype, name):
-        rec = ctype.dbTbl().get(where('name') == name)
+    def get(ctype, primaryKey):
+        rec = ctype.dbTbl().get(where('primary_key') == primaryKey)
         if not rec:
             raise NoSuchRecordError()
         return ctype.build(**rec)
