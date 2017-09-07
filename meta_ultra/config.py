@@ -5,7 +5,7 @@ import sys
 from enum import Enum
 from tinydb.storages import JSONStorage
 from tinydb.middlewares import CachingMiddleware
-
+import atexit
 
 lib_root = os.path.dirname(__file__)
 
@@ -40,8 +40,6 @@ def get_config(path=False):
     if path:
         return os.path.dirname(configPath)
     return TinyDB( configPath)
-
-
         
 def get_repo(dir='.', path=False):
     dir = os.path.abspath(dir)
@@ -49,7 +47,8 @@ def get_repo(dir='.', path=False):
         mu_db = os.path.join(dir,mu_repo_path)
         if path:
             return mu_db
-        mu_db = TinyDB(mu_db)
+        mu_db = TinyDB(mu_db, storage=CachingMiddleware(JSONStorage))
+        atexit.register(lambda : mu_db.close())
         return mu_db
     else:
         # recurse up
