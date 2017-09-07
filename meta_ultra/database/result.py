@@ -9,13 +9,13 @@ class Result( BaseRecord):
     def __init__(self, **kwargs):
         super(Result, self).__init__(**kwargs)
         self._previousResults = kwargs['previous_results']
-        self._files = kwargs['files']
+        self._fileRecords = kwargs['file_records']
         self.resultType = ResultType( kwargs['result_type'])
 
     def to_dict(self):
         out = super(Sample, self).to_dict()
         out['previous_results'] = self._previousResults
-        out['files'] = self._files
+        out['file_records'] = self._fileRecords
         out['result_type'] = str( self.resultType)
         return out
 
