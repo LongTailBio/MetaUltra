@@ -43,16 +43,17 @@ class Result(Record):
             Data.get(self.dataName)
         except NoSuchRecordError:
             return False
-        return True
+        return self.status()
 
     
     def __str__(self):
-        out = '{}\t{}\t{}\t{}\t{}\t{}'.format(self.name,
-                                              self.projectName,
-                                              self.sampleName,
-                                              self.confName,
-                                              self.dataName,
-                                              ' '.join(self.resultFiles))
+        out = '{}\t{}\t{}\t{}\t{}\t{}\t{}'.format(self.name,
+                                                  self.moduleName,
+                                                  self.projectName,
+                                                  self.sampleName,
+                                                  self.confName,
+                                                  self.dataName,
+                                                  ' '.join(self.resultFiles))
         return out
 
     @staticmethod

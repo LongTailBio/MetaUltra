@@ -110,7 +110,7 @@ class ToolBuilder:
 #
 ################################################################################
 	
-def addSamplesToConf(confName, dataRecs, outDir=None, useDefaults=False, fineControl=False):
+def addSamplesToConf(confName, dataRecs, outDir=None, useDefaults=False, fineControl=False, local=False):
 	finalConf = api.getConf(confName).confDict
 	if not finalConf:
 		msg = 'No conf with name {} found. Exiting.\n'.format(confName)
@@ -125,7 +125,9 @@ def addSamplesToConf(confName, dataRecs, outDir=None, useDefaults=False, fineCon
 					  'results/').resolve()
 	newConf['OUTPUT_DIR'] = outDir
 	newConf['OUTPUT_DIR'] = os.path.abspath(newConf['OUTPUT_DIR']) + '/'
-		
+
+	newConf['LOCAL'] = local
+	
 	samples = {}
 	for dataRec in dataRecs:
 		if dataRec.sampleName not in samples:

@@ -4,6 +4,7 @@ from .cli import main
 import click
 from pyarchy import archy
 from json import dumps as jdumps
+from meta_ultra.cli_colors import *
 
 @main.group()
 def view():
@@ -148,21 +149,30 @@ def viewData(names, tree=False, type=None, project=None, sample=None):
         for dataRec in api.getData(names=names, dataTypes=[type], projects=[project], samples=[sample]):
             print(dataRec)
 
-@view.command(name='result')
+@view.command(name='results')
 @click.option('-t','--type',default=None, help='Only show results from data of a given type')
 @click.option('-p','--project',default=None, help='Only show results from the given project')
 @click.option('-s','--sample',default=None, help='Only show results from the given sample')
 @click.option('-d','--data',default=None, help='Only show results from the given data record')
 @click.option('-c','--conf',default=None, help='Only show results from the given conf')
+@click.option('--color/--no-color',default=True, help='Show in color')
 @click.argument('names',nargs=-1)
-def viewResults(names, type=None, project=None, sample=None, data=None, conf=None):
+def viewResults(names, type=None, project=None, sample=None, data=None, conf=None, color=True):
     for result in api.getResults(names=names,
                                  dataTypes=[type],
                                  projects=[project],
                                  samples=[sample],
                                  dataRecs=[data],
                                  confs=[conf]):
-        print(result)
+        if color:
+            startc = cols.OKGREEN
+            if not result.validStatus():
+                startc = cols.FAIL
+            rStr = '{}{}{}'.format(startc, result, cols.ENDC)
+            print(rStr)
+        else:
+                
+            print(result)
 
 
             

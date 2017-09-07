@@ -105,6 +105,15 @@ class Record:
         return recs
 
     @classmethod
+    def where(ctype, **kwargs):
+        q = Query()
+        for k,v in kwargs.items():
+            q &= Query()[k] == v
+        recs = ctype.dbTbl().search(q)
+        recs = [ctype.build(**rec) for rec in recs]
+        return recs
+
+    @classmethod
     def search(ctype, query):
         recs = ctype.dbTbl().search(query)
         recs = [ctype.build(**rec) for rec in recs]

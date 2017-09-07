@@ -1,0 +1,209 @@
+{
+    "BLASTN": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/bin/blastn",
+            "NAME": "blastn",
+            "VERSION": "2.6.0+"
+        }
+    },
+    "BOWTIE2": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/bowtie2",
+            "NAME": "bowtie2",
+            "VERSION": "2.3.0"
+        }
+    },
+    "COUNT_CLASSIFIED": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/Tools/metagenomics_scripts/count_classified_reads.py",
+            "NAME": "count_script",
+            "VERSION": "unknown"
+        }
+    },
+    "DIAMOND": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/Tools/diamond",
+            "NAME": "diamond",
+            "VERSION": "v0.8.36"
+        }
+    },
+    "EMAIL": "dcd3001@med.cornell.edu",
+    "FILTER_HOST": {
+        "DB": {
+            "FILEPATH": "/home/dcd3001/Big/1k_genomes/bt2_human_g1k_v37",
+            "NAME": "bt2_human_g1k_v37",
+            "TOOL_NAME": "host_genome_bt2_index"
+        },
+        "RAM": "5",
+        "THREADS": "6",
+        "TIME": "20"
+    },
+    "FOOD_PETS": {
+        "COUNT_SCRIPT": {
+            "FILEPATH": "/home/dcd3001/Tools/metagenomics_scripts/food_and_pets_count_species.py",
+            "NAME": "count_script",
+            "VERSION": "unknown"
+        },
+        "DB": {
+            "FILEPATH": "/pbtech_mounts/masonlab_scratch_athena/jfoox/db_foodsandpets/foodsandpets",
+            "NAME": "foodsandpets",
+            "TOOL_NAME": "food_and_pets"
+        },
+        "FASTQ_TO_FASTA": {
+            "FILEPATH": "/home/dcd3001/Tools/fastq2fasta.py",
+            "NAME": "fastq_to_fasta",
+            "VERSION": "unknown"
+        },
+        "RAM": "4",
+        "THREADS": "6",
+        "TIME": "99"
+    },
+    "HMP_SITE_DISTS": {
+        "EXC": {
+            "FILEPATH": "python /home/dcd3001/Tools/metagenomics_scripts/hmp_sites_metaphlan_dists.py",
+            "NAME": "hmp_dists",
+            "VERSION": "unknown"
+        }
+    },
+    "HOST_VCF": {
+        "DB": {
+            "FILEPATH": "/home/dcd3001/Big/1k_genomes/human_g1k_v37.fasta",
+            "NAME": "human_g1k_v37",
+            "TOOL_NAME": "Host Genome"
+        },
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/freebayes",
+            "NAME": "freebayes-parallel",
+            "VERSION": "1.1.0"
+        },
+        "FREEBAYES_RAM": "4",
+        "FREEBAYES_TIME": "20",
+        "GENERATE_REGIONS": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/fasta_generate_regions.py",
+            "NAME": "fasta_generate_regions",
+            "VERSION": "unk"
+        },
+        "SORT_RAM": "10",
+        "SORT_TIME": "2",
+        "THREADS": "10"
+    },
+    "HUMANN2": {
+        "DB": {
+            "FILEPATH": "/home/dcd3001/Big/dbs/uniref90-diamond-db/uniref/uniref90_annotated.1.1.dmnd",
+            "NAME": "uniref90_dmnd_humann2",
+            "TOOL_NAME": "humann2_diamond_db"
+        },
+        "DMND_RAM": "5",
+        "DMND_THREADS": "12",
+        "DMND_TIME": "1",
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/humann2",
+            "NAME": "humann2",
+            "VERSION": "v0.9.9"
+        },
+        "RAM": "4",
+        "THREADS": "6",
+        "TIME": "1"
+    },
+    "JOB_NAME_PREFIX": "MUP_",
+    "KRAKEN": {
+        "DB": {
+            "FILEPATH": "/home/dcd3001/.minikraken-db",
+            "NAME": "minikraken",
+            "TOOL_NAME": "Kraken DB"
+        },
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.kraken/kraken",
+            "NAME": "kraken",
+            "VERSION": "0.10.5-beta"
+        },
+        "MPA_EXC": {
+            "FILEPATH": "/home/dcd3001/.kraken/kraken-mpa-report",
+            "NAME": "kraken-mpa-report",
+            "VERSION": "0.10.5-beta"
+        },
+        "MPA_EXT": "mpa_kraken.tsv",
+        "MPA_RAM": "10",
+        "MPA_TIME": "1",
+        "RAM": "4",
+        "RAW_EXT": "raw_kraken.tsv",
+        "THREADS": "6",
+        "TIME": "1"
+    },
+    "METAPHLAN2": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/metaphlan2.py",
+            "NAME": "metaphlan2",
+            "VERSION": "2.2.0"
+        },
+        "EXT": "metaphlan2.tsv",
+        "RAM": "4",
+        "REF": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/pkgs/metaphlan2-2.5.0-py27_1/bin/db_v20/mpa_v20_m200",
+            "NAME": "mpa_v20_m200",
+            "TOOL_NAME": "metaphlan2"
+        },
+        "THREADS": "6",
+        "TIME": "1"
+    },
+    "MICROBE_CENSUS": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/run_microbe_census.py",
+            "NAME": "microbe_census",
+            "VERSION": "1.0.7"
+        },
+        "EXT": "mic_census",
+        "JSON_SCRIPT": {
+            "FILEPATH": "None",
+            "NAME": "microbe_census_json_converter",
+            "VERSION": "unknown"
+        },
+        "RAM": "10",
+        "THREADS": "6",
+        "TIME": "1"
+    },
+    "NAME": "basic_conf",
+    "SAMTOOLS": {
+        "EXC": {
+            "FILEPATH": "/home/dcd3001/.miniconda2/bin/samtools",
+            "NAME": "samtools",
+            "VERSION": "1.3.1"
+        }
+    },
+    "SHORTBRED": {
+        "DBS": [
+            {
+                "FILEPATH": "/home/dcd3001/.shortbred/sample_markers/ShortBRED_ABR_101bp_markers.faa",
+                "NAME": "ShortBRED_ABR_101bp_markers",
+                "TOOL_NAME": "shortbred_quantify"
+            }
+        ],
+        "EXC": {
+            "FILEPATH": "python2 /home/dcd3001/.shortbred/shortbred_quantify.py",
+            "NAME": "shortbred_quantify",
+            "VERSION": "v0.9.5"
+        },
+        "EXT": "shortbred.tsv",
+        "RAM": "4",
+        "THREADS": "6",
+        "TIME": "1"
+    },
+    "THREADS": "6",
+    "TMP_DIR": "/tmp",
+    "TOOLS_TO_RUN": [
+        "SHORTBRED",
+        "METAPHLAN2",
+        "KRAKEN",
+        "BOWTIE2",
+        "DIAMOND",
+        "SAMTOOLS",
+        "MICROBE_CENSUS",
+        "FILTER_HOST",
+        "_HUMANN2",
+        "COUNT_CLASSIFIED",
+        "FOOD_PETS",
+        "BLASTN",
+        "HMP_SITE_DISTS",
+        "_HOST_VCF"
+    ]
+}
