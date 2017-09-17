@@ -15,6 +15,7 @@ class Repo:
             self.repo = TinyDB(self.repoPath, storage=CachingMiddleware(JSONStorage))
         else:
             self.repo = TinyDB(self.repoPath)
+
     def close(self):
         self.repo.close()
 
@@ -36,15 +37,3 @@ class Repo:
             else:
                 return getRepo(searchDir=up, caching=caching)
         
-
-db_conf_table = lambda : get_config().table('conf_table')        
-db_mu_config_remotes = lambda : get_config().table('mu_config_remotes')
-
-db_module_table = lambda : get_repo().table('module_table')
-db_sample_table = lambda : get_repo().table('sample_table')
-db_project_table = lambda : get_repo().table('project_table')
-db_data_table = lambda : get_repo().table('data_table')
-db_experiment_table = lambda : get_repo().table('experiment_table')
-db_result_table = lambda : get_repo().table('result_table')
-db_project_result_table = lambda : get_repo().table('project_result_table')
-
