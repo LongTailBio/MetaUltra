@@ -1,7 +1,5 @@
-from .database import *
+import meta_ultra.config as config
 
-sampleGroupTbl = config.db_sample_group_table
-        
 class SampleGroup( BaseRecord):
     def __init__(self,**kwargs):
         super(SampleGroup, self).__init__(**kwargs)
@@ -53,9 +51,9 @@ class SampleGroup( BaseRecord):
     def subgroups(self):
         raise NotImplementedError()        
     
-    @staticmethod
-    def dbTbl():
-        return sampleGroupTbl()
+    @classmethod
+    def tableName():
+        return config.sample_group_table_name
 
     
     

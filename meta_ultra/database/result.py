@@ -1,9 +1,4 @@
-from .database import *
-from .data_record import *
-from .sample import *
-from .project import *
-from .experiment import *
-resultTbl = config.db_result_table
+import meta_ultra.config as config
 
 class Result( BaseRecord):
     def __init__(self, **kwargs):
@@ -32,7 +27,7 @@ class Result( BaseRecord):
                               self.resultType)
         return out
 
-    @staticmethod
-    def dbTbl():
-        return resultTbl()
+    @classmethod
+    def tableName(ctype):
+        return config.result_table_name
 

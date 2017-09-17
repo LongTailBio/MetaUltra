@@ -1,12 +1,7 @@
-from .database import *
-from .data_record import *
-from .sample import *
-from .project import *
-from .experiment import *
-
-fileRecordTbl = config.db_file_record_table
+import meta_ultra.config as config
 
 class FileRecord( BaseRecord):
+    
     def __init__(self, **kwargs):
         super(Result, self).__init__(**kwargs)
         self.filepath = kwargs['filepath']
@@ -36,7 +31,7 @@ class FileRecord( BaseRecord):
                               self.filepath)
         return out
 
-    @staticmethod
-    def dbTbl():
-        return resultTbl()
+    @classmethod
+    def tableName(ctype):
+        return config.file_record_table_name
 

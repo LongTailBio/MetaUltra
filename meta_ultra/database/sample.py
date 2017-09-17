@@ -1,14 +1,6 @@
-from tinydb import TinyDB, Query, where
 import meta_ultra.config as config
-from meta_ultra.data_type import DataType, DataTypeNotFoundError
-from meta_ultra.sample_type import SampleType, SampleTypeNotFoundError
-from meta_ultra.utils import *
-from os.path import basename
-import json
-from .database import *
-from .project import *
+from .sample_type import *
 
-sampleTbl = config.db_sample_table
         
 class Sample( BaseRecord):
     def __init__(self,**kwargs):
@@ -43,7 +35,7 @@ class Sample( BaseRecord):
                 out += '\t{}={}'.format(k,v)
         return out
 
-    @staticmethod
-    def dbTbl():
-        return sampleTbl()
+    @classmethod
+    def tableName(ctype):
+        return config.sample_table_name
 

@@ -29,7 +29,7 @@ class InvalidRecordStateError(Exception):
     pass
 
 class BaseRecord:
-    dbTbl = None
+    tblName = None
     def __init__(self, **kwargs):
         try:
             self.primaryKey = kwargs['primary_key']
@@ -41,19 +41,19 @@ class BaseRecord:
         except KeyError:
             self.metadata = {}
         
-    def record(self):
-        rec = type(self).dbTbl().get(where('name') == self.name)
+    def record(self, repo=None):
+        rec = type(self).dbTbl(repo).get(where('name') == self.name)
         if not rec:
             raise NoSuchRecordError()
         return rec
 
-    def saved(self):
-        return type(self).exists(self.name)
+    def saved(self, repo=None):
+        return type(self).exists(self.name, repo=repo)
 
     def generatePrimaryKey(self):
         raise NotImplementedError()
     
-    def save(self,modify=False):
+    def save(self, modify=False, repo=None):
         if not self.validStatus():
             raise InvalidRecordStateError()
         
@@ -68,16 +68,16 @@ class BaseRecord:
                         rec[k][subk] = subv
                 else:
                     rec[k] = v
-            type(self).dbTbl().update(rec, eids=[rec.eid])
+            type(self).dbTbl(repo).update(rec, eids=[rec.eid])
             return type(self).get(self.name)
         else:
-            type(self).dbTbl().insert(self.to_dict())
+            type(self).dbTbl(repo).insert(self.to_dict())
             return type(self).get(self.name)
 
     
-    def remove(self):
+    def remove(self, repo=None):
         record = self.record()
-        type(self).dbTbl().remove(eids=[record.eid])
+        type(self).dbTbl(repo).remove(eids=[record.eid])
 
     def validStatus(self):
         raise NotImplementedError()
@@ -97,55 +97,41 @@ class BaseRecord:
 
         
     @classmethod
-    def get(ctype, primaryKey):
-        rec = ctype.dbTbl().get(where('primary_key') == primaryKey)
+    def get(ctype, primaryKey, repo=None):
+        rec = ctype.dbTbl(repo).get(where('primary_key') == primaryKey)
         if not rec:
             raise NoSuchRecordError()
         return ctype.build(**rec)
 
     @classmethod
-    def exists(ctype, name):
-        return ctype.dbTbl().get(where('name') == name) != None
+    def exists(ctype, name, repo=None):
+        return ctype.dbTbl(repo).get(where('name') == name) != None
 
     @classmethod
-    def all(ctype):
-        recs = ctype.dbTbl().all()
+    def all(ctype, repo=None):
+        recs = ctype.dbTbl(repo).all()
         recs = [ctype.build(**rec) for rec in recs]
         return recs
 
     @classmethod
-    def where(ctype, **kwargs):
+    def where(ctype, repo=None, **kwargs):
         q = Query()
         for k,v in kwargs.items():
             q &= Query()[k] == v
-        recs = ctype.dbTbl().search(q)
+        recs = ctype.dbTbl(repo).search(q)
         recs = [ctype.build(**rec) for rec in recs]
         return recs
 
     @classmethod
-    def search(ctype, query):
-        recs = ctype.dbTbl().search(query)
+    def search(ctype, query, repo=None):
+        recs = ctype.dbTbl(repo).search(query)
         recs = [ctype.build(**rec) for rec in recs]
         return recs
 
-    
+    @classmethod
+    def dbTbl(ctype, repo):
+        if repo != None:
+            return repo.table( ctype.tableName())
+        return Repo.getRepo(caching=False).table( ctype.tableName())
 
     
-class Conf(Record):
-    def __init__(self, **kwargs):
-        super(Conf, self).__init__(kwargs['name'])
-        self.confDict = kwargs['conf_dict']
-
-    def to_dict(self):
-        out = {
-            'name': self.name,
-            'conf_dict': self.confDict
-            }
-        return out
-
-    def __str__(self):
-        return self.name
-    
-    @staticmethod
-    def dbTbl():
-        return confTbl()
