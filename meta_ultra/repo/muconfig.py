@@ -25,7 +25,8 @@ class MUConfig:
 class PipelineConfig:
     '''
     PipelineConfig is a part of MUConfig that handles any configuration 
-    related to pipelines.
+    related to pipelines. Basically each installed pipeline is entitled 
+    to a JSONable key-value store.
 
     Values PipelineConfig is responsible for:
      - what pipelines are available
@@ -34,3 +35,15 @@ class PipelineConfig:
     '''
 
     def __init__(self):
+        pass
+
+    def getStored(self, pipeline):
+        pass
+
+    def setStored(self, pipeline, val, mode='merge'):
+        '''
+        merge: if a field exists overwrite with the new field. Add fields that do not exist.
+        overwrite: replace the existing store with val
+        add: add fields that do not already exist but do not change any fields that do
+        '''
+        pass
