@@ -4,6 +4,11 @@
 from setuptools import setup, find_packages
 
 
+version = {}
+with open('meta_ultra/version.py') as version_file:
+    exec(version_file.read(), version)
+
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
@@ -14,8 +19,9 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
-    'tinydb',
-    'snakemake',
+    'tinydb==3.11.1',
+    'snakemake==5.3.0',
+    'py_archy==1.0.2',
 ]
 
 
@@ -26,11 +32,11 @@ test_requirements = [
 
 setup(
     name='meta_ultra',
-    version='0.1.0',
+    version=version['__version__'],
     description='Cohesive pipelines for precision metagenomics',
     long_description=readme + '\n\n' + history,
-    author='David C Danko',
-    author_email='dcd3001@med.cornell.edu',
+    author=version['__author__'],
+    author_email=version['__email__'],
     url='https://github.com/dcdanko/meta_ultra',
     packages=find_packages(exclude=['tests', 'scripts']),
     include_package_data=True,
