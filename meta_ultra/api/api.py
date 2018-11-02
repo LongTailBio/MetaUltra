@@ -182,8 +182,3 @@ def syncOverwrite(remoteName, projects=[], resultsOnly=False, resultType=None):
             yield True, result, response
         else:
             yield False, result, response
-                                     
-    
-
-    
-    
