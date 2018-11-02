@@ -22,6 +22,11 @@ requirements = [
     'tinydb==3.11.1',
     'snakemake==5.3.0',
     'py_archy==1.0.2',
+    'metagenscope_api==0.1.0',
+]
+
+dependency_links = [
+    'git+https://github.com/dcdanko/MetaGenScopeAPI.git#egg=metagenscope_api-0.1.0',
 ]
 
 
@@ -41,6 +46,7 @@ setup(
     packages=find_packages(exclude=['tests', 'scripts']),
     include_package_data=True,
     install_requires=requirements,
+    dependency_links=dependency_links,
     license='MIT',
     zip_safe=False,
     keywords='meta_ultra',
